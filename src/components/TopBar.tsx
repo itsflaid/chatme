@@ -7,15 +7,13 @@ export default function Topbar({ userName }: Props) {
 
   return (
     <div
-      className="flex items-center justify-between px-5 py-4 border-b"
-      style={{ background: "var(--surface)", borderColor: "var(--border)" }}
+      className="flex items-center justify-between px-5 py-4 border-b bg-[var(--surface)] border-[var(--border)]"
     >
-      <h1 className="text-lg font-bold font-sora" style={{ color: "var(--text)" }}>
-        Chat<span style={{ color: "var(--accent)" }}>me</span>
+      <h1 className="text-lg font-bold font-sora text-[var(--text)]">
+        Chat<span className="text-[var(--accent)]">me</span>
       </h1>
       <div
-        className="w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs font-sora"
-        style={{ background: "var(--accent)", color: "var(--bg)" }}
+        className="w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs font-sora bg-[var(--accent)] text-[var(--bg)]"
       >
         {initial}
       </div>

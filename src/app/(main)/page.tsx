@@ -1,56 +1,21 @@
-import { auth } from "@/auth"
-import { redirect } from "next/navigation"
-import { prisma } from "@/lib/prisma"
-import Topbar from "@/components/TopBar"
-import SearchBar from "@/components/SearchBar"
-import RoomList from "@/components/RoomList"
-import AddRoomButton from "@/components/AddRoomButton"
+// Konten kanan default saat belum pilih room
+import { HiOutlineChatBubbleLeftRight } from "react-icons/hi2"
 
-export default async function HomePage() {
-  const session = await auth()
-  if (!session?.user) redirect("/login")
-
-  const rooms = await prisma.room.findMany({
-    where: { userId: session.user.id },
-    orderBy: { updatedAt: "desc" },
-    include: {
-      _count: {
-        select: {
-          messages: { where: { isDone: false } }
-        }
-      }
-    }
-  })
-
+export default function HomePage() {
   return (
-    <div className="min-h-screen flex" style={{ background: "var(--bg)" }}>
-
-      {/* sidebar / full mobile */}
+    <div className="flex-1 flex flex-col items-center justify-center gap-3" style={{ background: "var(--bg)" }}>
       <div
-        className="w-full md:w-80 flex flex-col flex-shrink-0 md:border-r"
-        style={{ borderColor: "var(--border)" }}
+        className="w-16 h-16 rounded-2xl border flex items-center justify-center"
+        style={{ background: "var(--surface)", borderColor: "var(--border)" }}
       >
-        <Topbar userName={session.user.name} />
-        <SearchBar />
-        <RoomList rooms={rooms} />
-        <AddRoomButton />
+        <HiOutlineChatBubbleLeftRight size={28} style={{ color: "var(--text3)" }} />
       </div>
-
-      {/* area kanan desktop */}
-      <div
-        className="hidden md:flex flex-1 items-center justify-center"
-        style={{ background: "var(--bg)" }}
-      >
-        <div className="flex flex-col items-center gap-3 text-center">
-          <p className="text-sm font-semibold font-sora" style={{ color: "var(--text)" }}>
-            Pilih room untuk mulai
-          </p>
-          <p className="text-xs" style={{ color: "var(--text3)" }}>
-            atau buat room baru
-          </p>
-        </div>
-      </div>
-
+      <p className="text-sm font-semibold font-sora" style={{ color: "var(--text)" }}>
+        Pilih room untuk mulai
+      </p>
+      <p className="text-xs" style={{ color: "var(--text3)" }}>
+        atau buat room baru
+      </p>
     </div>
   )
 }

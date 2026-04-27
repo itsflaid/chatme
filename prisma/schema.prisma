@@ -42,7 +42,6 @@ model Room {
 model Message {
   id        String   @id @default(cuid())
   text      String
-  tags      String[] 
   isDone    Boolean  @default(false)
   isPinned  Boolean  @default(false)
   remindAt  DateTime?

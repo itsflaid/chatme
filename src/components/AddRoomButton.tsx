@@ -36,40 +36,31 @@ export default function AddRoomButton() {
 
   return (
     <>
-      {/* tombol di bottom sidebar */}
-      <div className="p-4 border-t bg-[var(--surface)] border-[var(--border)]">
-        <button
-          onClick={() => setOpen(true)}
-          className="w-full flex items-center justify-center gap-2 font-semibold text-sm rounded-xl py-3 transition-opacity font-sora bg-[var(--accent)] text-[var(--bg)] hover:opacity-90"
-        >
-          <FiPlus size={18} />
-          Buat Room Baru
-        </button>
-      </div>
+      <button
+        onClick={() => setOpen(true)}
+        className="absolute bottom-12 right-6 w-12 h-12 rounded-full flex items-center justify-center shadow-lg transition-transform hover:scale-110 z-10 bg-[var(--accent)] text-[var(--bg)]"
+      >
+        <FiPlus size={22} />
+      </button>
 
-      {/* modal */}
       {open && (
         <div
           className="fixed inset-0 z-50 flex items-end justify-center"
           style={{ background: "#00000070", backdropFilter: "blur(4px)" }}
           onClick={(e) => e.target === e.currentTarget && handleClose()}
         >
-          <div className="w-full max-w-md rounded-t-3xl p-6 pb-10 bg-[var(--surface)] border-t border-[var(--border2)]">
-
-            {/* handle bar */}
+          <div
+            className="w-full max-w-md rounded-t-3xl p-6 pb-10 bg-[var(--surface)] border-t border-[var(--border2)]"
+          >
             <div className="w-9 h-1 rounded-full mx-auto mb-5 bg-[var(--border2)]" />
 
-            {/* header */}
             <div className="flex items-center justify-between mb-5">
-              <p className="font-semibold font-sora text-base text-[var(--text)]">
-                Buat Room Baru
-              </p>
+              <p className="font-semibold font-sora text-base text-[var(--text)]">Buat Room Baru</p>
               <button onClick={handleClose} className="text-[var(--text3)] hover:text-[var(--text)] transition-colors">
                 <FiX size={20} />
               </button>
             </div>
 
-            {/* nama room — required */}
             <label className="text-xs text-[var(--text3)] mb-1.5 block">Nama room *</label>
             <input
               className="w-full rounded-xl px-4 py-3 text-sm outline-none mb-4 border bg-[var(--surface2)] border-[var(--border2)] text-[var(--text)] placeholder:text-[var(--text3)] focus:border-[var(--accent)] transition-colors"
@@ -79,8 +70,9 @@ export default function AddRoomButton() {
               onKeyDown={(e) => e.key === "Enter" && handleCreate()}
             />
 
-            {/* description — opsional */}
-            <label className="text-xs text-[var(--text3)] mb-1.5 block">Deskripsi <span className="text-[var(--text3)]">(opsional)</span></label>
+            <label className="text-xs text-[var(--text3)] mb-1.5 block">
+              Deskripsi <span className="text-[var(--text3)]">(opsional)</span>
+            </label>
             <input
               className="w-full rounded-xl px-4 py-3 text-sm outline-none mb-5 border bg-[var(--surface2)] border-[var(--border2)] text-[var(--text)] placeholder:text-[var(--text3)] focus:border-[var(--accent)] transition-colors"
               placeholder="Untuk apa room ini..."
@@ -88,7 +80,6 @@ export default function AddRoomButton() {
               onChange={(e) => setDescription(e.target.value)}
             />
 
-            {/* emoji picker */}
             <label className="text-xs text-[var(--text3)] mb-2 block">Pilih ikon</label>
             <div className="grid grid-cols-7 gap-2 mb-6">
               {EMOJIS.map((e) => (
@@ -103,7 +94,6 @@ export default function AddRoomButton() {
               ))}
             </div>
 
-            {/* submit */}
             <button
               onClick={handleCreate}
               disabled={!name.trim() || loading}
@@ -112,7 +102,6 @@ export default function AddRoomButton() {
             >
               {loading ? "Membuat..." : "Buat Room"}
             </button>
-
           </div>
         </div>
       )}

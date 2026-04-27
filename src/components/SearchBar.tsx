@@ -10,17 +10,14 @@ export default function SearchBar() {
 
   return (
     <div
-      className="px-4 py-3 border-b"
-      style={{ background: "var(--surface)", borderColor: "var(--border)" }}
+      className="px-4 py-3 border-b bg-[var(--surface)] border-[var(--border)]"
     >
       <div
-        className="flex items-center gap-2 rounded-xl px-3 py-2 border"
-        style={{ background: "var(--surface2)", borderColor: "var(--border)" }}
+        className="flex items-center gap-2 rounded-xl px-3 py-2 border bg-[var(--surface2)] border-[var(--border)]"
       >
-        <FiSearch size={14} style={{ color: "var(--text3)" }} className="flex-shrink-0" />
+        <FiSearch size={14}  className="flex-shrink-0 text-[var(--text3)]" />
         <input
-          className="flex-1 bg-transparent text-sm outline-none"
-          style={{ color: "var(--text)" }}
+          className="flex-1 bg-transparent text-sm outline-none text-[var(--text)]"
           placeholder="Cari pesan atau room..."
           value={query}
           onChange={(e) => setQuery(e.target.value)}
