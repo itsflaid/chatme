@@ -11,8 +11,9 @@ model User {
   id            String    @id @default(cuid())
   name          String?
   email         String    @unique
-  emailVerified DateTime?  // ← tambah ini
+  emailVerified DateTime?
   image         String?
+  botAvatar     String?   // avatar bot reminder, null = pakai default icon lonceng
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
@@ -25,13 +26,13 @@ model User {
 }
 
 model Room {
-  id        String   @id @default(cuid())
-  name      String
-  icon      String   @default("💬")
-  userId    String
+  id          String   @id @default(cuid())
+  name        String
+  icon        String   @default("💬")
   description String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  userId      String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   messages Message[]
@@ -40,18 +41,24 @@ model Room {
 }
 
 model Message {
-  id        String   @id @default(cuid())
-  text      String
-  isDone    Boolean  @default(false)
-  isPinned  Boolean  @default(false)
-  remindAt  DateTime?
-  userId    String
-  roomId    String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id              String    @id @default(cuid())
+  text            String
+  isDone          Boolean   @default(false)  // pesan ditandai selesai
+  isPinned        Boolean   @default(false)  // pesan di-pin
+  isBot           Boolean   @default(false)  // true = pesan dari sistem reminder
+  remindAt        DateTime?                  // waktu reminder diset user
+  remindSnoozeAt  DateTime?                  // waktu baru setelah ditunda
+  isRemindDone    Boolean   @default(false)  // reminder sudah di-resolve
+  sourceMessageId String?                    // relasi ke pesan asli yang di-remind
+  userId          String
+  roomId          String
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-  room Room @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  room          Room      @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  sourceMessage Message?  @relation("ReminderSource", fields: [sourceMessageId], references: [id], onDelete: SetNull)
+  reminders     Message[] @relation("ReminderSource")
 
   @@map("messages")
 }

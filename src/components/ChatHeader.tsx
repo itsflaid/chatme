@@ -26,7 +26,7 @@ export default function ChatHeader({
       <div className="flex items-center gap-3 min-w-0">
         
         <button
-          onClick={() => router.back()}
+          onClick={() => router.push("/")}
           className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-[var(--surface2)] transition text-[var(--accent)]"
         >
           <FiArrowLeft size={20} />
