@@ -5,24 +5,41 @@ type Props = {
   name: string
   icon: string
   pendingCount: number
+  isSelected?: boolean
 }
 
-export default function RoomItem({ id, name, icon, pendingCount }: Props) {
+export default function RoomItem({ 
+  id, 
+  name, 
+  icon, 
+  pendingCount, 
+  isSelected = false 
+}: Props) {
   return (
     <Link
       href={`/room/${id}`}
-      className="flex items-center gap-3 px-4 py-3.5 border-b transition-colors cursor-pointer hover:opacity-80 border-[var(--border)]"
+      className={`
+        flex items-center gap-3 px-4 py-3.5 
+        transition-all duration-200 cursor-pointer
+        hover:bg-[var(--surface2)] 
+        ${isSelected ? 'bg-[var(--surface2)]' : 'bg-transparent'}
+      `}
     >
       <div
-        className="w-11 h-11 rounded-2xl border flex items-center justify-center text-xl flex-shrink-0 bg-[var(--surface2)] border-[var(--border)]"
+        className={`
+          w-11 h-11 rounded-full 
+          flex items-center justify-center 
+          text-xl flex-shrink-0 
+          bg-[var(--surface2)] 
+          border border-[var(--border)]
+          overflow-hidden
+        `}
       >
         {icon}
       </div>
 
       <div className="flex-1 min-w-0">
-        <p
-          className="text-sm font-semibold font-sora truncate text-[var(--text)]"
-        >
+        <p className="text-sm font-semibold font-sora truncate text-[var(--text)]">
           {name}
         </p>
         <p className="text-xs mt-0.5 text-[var(--text3)]">
@@ -32,7 +49,16 @@ export default function RoomItem({ id, name, icon, pendingCount }: Props) {
 
       {pendingCount > 0 && (
         <div
-          className="text-xs font-bold px-2 py-0.5 rounded-full font-sora flex-shrink-0 bg-[var(--accent)] text-[var(--bg)]"
+          className="
+            w-5 h-5 
+            flex items-center justify-center
+            text-[10px] font-bold font-sora
+            rounded-full 
+            bg-[var(--accent)] 
+            text-[var(--bg)]
+            flex-shrink-0
+            ring-2 ring-[var(--bg)]
+          "
         >
           {pendingCount}
         </div>

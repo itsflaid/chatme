@@ -22,7 +22,6 @@ export default function ChatHeader({
   return (
     <div className="flex items-center gap-3 px-4 py-3 border-b bg-[var(--surface)] border-[var(--border)]">
       
-      {/* LEFT */}
       <div className="flex items-center gap-3 min-w-0">
         
         <button
@@ -46,7 +45,6 @@ export default function ChatHeader({
         </div>
       </div>
 
-      {/* CENTER (Search lebih proper) */}
       <div className="flex-1 flex justify-center px-2">
         <div className="relative w-full max-w-xs">
           <IoSearch
@@ -61,7 +59,6 @@ export default function ChatHeader({
         </div>
       </div>
 
-      {/* RIGHT */}
       <div className="flex items-center gap-1 flex-shrink-0">
         
         <button className="p-2 rounded-full hover:bg-[var(--surface2)] transition">

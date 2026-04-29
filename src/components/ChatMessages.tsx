@@ -49,12 +49,8 @@ export default function ChatMessages({ messages }: Props) {
         <div key={group.dateLabel}>
           <div className="flex justify-center my-3">
             <span
-              className="text-[11px] px-3 py-1 rounded-full border"
-              style={{
-                color: "var(--text3)",
-                background: "var(--surface)",
-                borderColor: "var(--border)",
-              }}
+              className="text-[11px] px-3 py-1 rounded-full border text-[var(--text3)] bg-[var(--surface)] border-[var(--border)]"
+            
             >
               {group.dateLabel}
             </span>

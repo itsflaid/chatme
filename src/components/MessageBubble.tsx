@@ -16,15 +16,12 @@ export default function MessageBubble({ message }: Props) {
 
   return (
     <div className="flex flex-col items-end">
-      {/* Bubble */}
       <div
-        className="max-w-[82%] rounded-[18px_18px_4px_18px] px-4 py-2.5 relative"
+        className="max-w-[82%] rounded-[18px_18px_4px_18px] px-4 py-2.5 relative bg-[var(--accent)]"
         style={{
-          background: "var(--accent)",
           // opacity: message.isDone ? 0.5 : 1,
         }}
       >
-        {/* pin indicator */}
         {message.isPinned && (
           <div className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-[var(--bg)] flex items-center justify-center">
             <FiBookmark size={11} className="text-[var(--accent)]" />
@@ -32,10 +29,8 @@ export default function MessageBubble({ message }: Props) {
         )}
 
         <p
-          className="text-sm leading-relaxed break-words"
-          style={{
-            color: "var(--bg)",
-          }}
+          className="text-sm leading-relaxed break-words text-[var(--bg)]"
+         
         >
           {message.text}
         </p>
@@ -53,7 +48,6 @@ export default function MessageBubble({ message }: Props) {
         )}
       </div>
 
-      {/* Time + Check */}
       <div className="flex items-center gap-1 mt-1 pr-1">
         <span className="text-[10px] text-[var(--text3)] tabular-nums">
           {time}

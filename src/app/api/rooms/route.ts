@@ -1,6 +1,3 @@
-// API POST /api/rooms
-// Validasi session → buat room di DB → return data room
-
 import { auth } from "@/auth"
 import { prisma } from "@/lib/prisma"
 import { NextResponse } from "next/server"

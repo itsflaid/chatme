@@ -69,14 +69,11 @@ export default function ContextMenu({
         onClick={onClose}
       />
 
-      {/* menu */}
       <div
-        className="fixed z-50 rounded-2xl overflow-hidden border min-w-[200px]"
+        className="fixed z-50 rounded-2xl overflow-hidden border min-w-[200px] bg-[var(--surface2)] border-[var(--border2)]"
         style={{
           top: safeY,
           left: safeX,
-          background: "var(--surface2)",
-          borderColor: "var(--border2)",
           boxShadow: "0 8px 32px #00000050",
           animation: "menuPop 0.15s ease",
         }}
@@ -85,10 +82,9 @@ export default function ContextMenu({
           <button
             key={i}
             onClick={() => { item.onClick(); onClose() }}
-            className="w-full flex items-center gap-3 px-4 py-3 text-sm text-left transition-colors border-b last:border-b-0"
+            className="w-full flex items-center gap-3 px-4 py-3 text-sm text-left transition-colors border-b last:border-b-0 border-[var(--border)]"
             style={{
               color: item.danger ? "#fca5a5" : "var(--text)",
-              borderColor: "var(--border)",
             }}
             onMouseEnter={e => (e.currentTarget.style.background = "var(--surface3)")}
             onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
