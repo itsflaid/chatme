@@ -1,8 +1,7 @@
 import { auth } from "@/auth"
 import { redirect, notFound } from "next/navigation"
 import { prisma } from "@/lib/prisma"
-import ChatHeader from "@/components/ChatHeader"
-import ChatMessages from "@/components/ChatMessages"
+import ChatContainer from "@/components/ChatContainer"
 import ChatInput from "@/components/ChatInput"
 
 type Props = {
@@ -13,28 +12,43 @@ export default async function RoomPage({ params }: Props) {
   const { id } = await params
   const session = await auth()
   if (!session?.user) redirect("/login")
+  const userId = session.user!.id!
 
   const room = await prisma.room.findFirst({
-    where: { id, userId: session.user.id! },
+    where: { id, userId },
   })
   if (!room) notFound()
+
+  const pendingReminders = await prisma.message.findMany({
+    where: {
+      roomId: id,
+      isBot: false,
+      isRemindDone: false,
+      remindAt: { lte: new Date() },
+      reminders: { none: {} }
+    }
+  })
+
+  if (pendingReminders.length > 0) {
+    await prisma.message.createMany({
+      data: pendingReminders.map(reminder => ({
+        text: "Hei! Kamu punya pengingat yang perlu diperhatikan 🔔",
+        isBot: true,
+        sourceMessageId: reminder.id,
+        roomId: id,
+        userId,
+      }))
+    })
+  }
 
   const messages = await prisma.message.findMany({
     where: { roomId: id },
     orderBy: { createdAt: "asc" },
   })
 
-  const pendingCount = messages.filter((m) => !m.isDone).length
-
   return (
     <div className="flex flex-col h-full" style={{ background: "var(--bg)" }}>
-      <ChatHeader
-        name={room.name}
-        icon={room.icon}
-        messageCount={messages.length}
-        pendingCount={pendingCount}
-      />
-      <ChatMessages messages={messages} />
+      <ChatContainer messages={messages} room={room} />
       <ChatInput roomId={id} />
     </div>
   )

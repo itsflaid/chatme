@@ -10,10 +10,9 @@ type Room = {
 
 type Props = {
   rooms: Room[]
-  selectedRoomId?: string
 }
 
-export default function RoomList({ rooms, selectedRoomId }: Props) {
+export default function RoomList({ rooms }: Props) {
   if (rooms.length === 0) return <EmptyRooms />
 
   return (
@@ -25,7 +24,6 @@ export default function RoomList({ rooms, selectedRoomId }: Props) {
           name={room.name}
           icon={room.icon}
           pendingCount={room._count.messages}
-          isSelected={room.id === selectedRoomId} 
         />
       ))}
     </div>

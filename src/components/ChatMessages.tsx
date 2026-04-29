@@ -1,8 +1,11 @@
 import { Message } from "@prisma/client"
 import BubbleWrapper from "./BubbleWrapper"
+import BotBubble from "./BotBubble"
 
 type Props = {
   messages: Message[]
+  onBotDone: (botMessageId: string, sourceMessageId: string) => void
+  onBotSnooze: (botMessageId: string, sourceMessageId: string) => void
 }
 
 function getDateLabel(date: Date): string {
@@ -12,7 +15,11 @@ function getDateLabel(date: Date): string {
 
   if (date.toDateString() === today.toDateString()) return "Hari ini"
   if (date.toDateString() === yesterday.toDateString()) return "Kemarin"
-  return date.toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" })
+  return date.toLocaleDateString("id-ID", { 
+    day: "numeric", 
+    month: "long", 
+    year: "numeric" 
+  })
 }
 
 type GroupedMessages = { dateLabel: string; messages: Message[] }[]
@@ -21,6 +28,7 @@ function groupByDate(messages: Message[]): GroupedMessages {
   return messages.reduce<GroupedMessages>((groups, message) => {
     const dateLabel = getDateLabel(new Date(message.createdAt))
     const lastGroup = groups[groups.length - 1]
+
     if (lastGroup && lastGroup.dateLabel === dateLabel) {
       lastGroup.messages.push(message)
     } else {
@@ -30,7 +38,12 @@ function groupByDate(messages: Message[]): GroupedMessages {
   }, [])
 }
 
-export default function ChatMessages({ messages }: Props) {
+export default function ChatMessages({ 
+  messages, 
+  onBotDone, 
+  onBotSnooze 
+}: Props) {
+  
   if (messages.length === 0) {
     return (
       <div className="flex-1 flex items-center justify-center">
@@ -47,21 +60,127 @@ export default function ChatMessages({ messages }: Props) {
     <div className="flex-1 overflow-y-auto px-4 py-4 flex flex-col gap-2">
       {grouped.map((group) => (
         <div key={group.dateLabel}>
+          {/* Date Label */}
           <div className="flex justify-center my-3">
             <span
-              className="text-[11px] px-3 py-1 rounded-full border text-[var(--text3)] bg-[var(--surface)] border-[var(--border)]"
-            
+              className="text-[11px] px-3 py-1 rounded-full border 
+                         text-[var(--text3)] bg-[var(--surface)] border-[var(--border)]"
             >
               {group.dateLabel}
             </span>
           </div>
+
+          {/* Messages */}
           <div className="flex flex-col gap-2">
-            {group.messages.map((message) => (
-              <BubbleWrapper key={message.id} message={message} />
-            ))}
+            {group.messages.map((message) => {
+              if (message.isBot) {
+                // Cari pesan asli (source message) jika ada
+                const sourceMessage = message.sourceMessageId
+                  ? messages.find((m) => m.id === message.sourceMessageId) ?? null
+                  : null
+
+                return (
+                  <BotBubble
+                    key={message.id}
+                    message={message}
+                    sourceMessage={sourceMessage}
+                    onDone={() => onBotDone(message.id, message.sourceMessageId!)}
+                    onSnooze={() => onBotSnooze(message.id, message.sourceMessageId!)}
+                  />
+                )
+              }
+
+              // Pesan biasa (user)
+              return <BubbleWrapper key={message.id} message={message} />
+            })}
           </div>
         </div>
       ))}
     </div>
   )
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// import { Message } from "@prisma/client"
+// import BubbleWrapper from "./BubbleWrapper"
+
+// type Props = {
+//   messages: Message[]
+// }
+
+// function getDateLabel(date: Date): string {
+//   const today = new Date()
+//   const yesterday = new Date(today)
+//   yesterday.setDate(yesterday.getDate() - 1)
+
+//   if (date.toDateString() === today.toDateString()) return "Hari ini"
+//   if (date.toDateString() === yesterday.toDateString()) return "Kemarin"
+//   return date.toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" })
+// }
+
+// type GroupedMessages = { dateLabel: string; messages: Message[] }[]
+
+// function groupByDate(messages: Message[]): GroupedMessages {
+//   return messages.reduce<GroupedMessages>((groups, message) => {
+//     const dateLabel = getDateLabel(new Date(message.createdAt))
+//     const lastGroup = groups[groups.length - 1]
+//     if (lastGroup && lastGroup.dateLabel === dateLabel) {
+//       lastGroup.messages.push(message)
+//     } else {
+//       groups.push({ dateLabel, messages: [message] })
+//     }
+//     return groups
+//   }, [])
+// }
+
+// export default function ChatMessages({ messages }: Props) {
+//   if (messages.length === 0) {
+//     return (
+//       <div className="flex-1 flex items-center justify-center">
+//         <p className="text-sm" style={{ color: "var(--text3)" }}>
+//           Belum ada pesan. Mulai ketik sesuatu!
+//         </p>
+//       </div>
+//     )
+//   }
+
+//   const grouped = groupByDate(messages)
+
+//   return (
+//     <div className="flex-1 overflow-y-auto px-4 py-4 flex flex-col gap-2">
+//       {grouped.map((group) => (
+//         <div key={group.dateLabel}>
+//           <div className="flex justify-center my-3">
+//             <span
+//               className="text-[11px] px-3 py-1 rounded-full border text-[var(--text3)] bg-[var(--surface)] border-[var(--border)]"
+            
+//             >
+//               {group.dateLabel}
+//             </span>
+//           </div>
+//           <div className="flex flex-col gap-2">
+//             {group.messages.map((message) => (
+//               <BubbleWrapper key={message.id} message={message} />
+//             ))}
+//           </div>
+//         </div>
+//       ))}
+//     </div>
+//   )
+// }

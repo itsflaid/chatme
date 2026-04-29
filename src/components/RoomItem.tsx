@@ -5,7 +5,6 @@ type Props = {
   name: string
   icon: string
   pendingCount: number
-  isSelected?: boolean
 }
 
 export default function RoomItem({ 
@@ -13,7 +12,6 @@ export default function RoomItem({
   name, 
   icon, 
   pendingCount, 
-  isSelected = false 
 }: Props) {
   return (
     <Link
@@ -21,8 +19,7 @@ export default function RoomItem({
       className={`
         flex items-center gap-3 px-4 py-3.5 
         transition-all duration-200 cursor-pointer
-        hover:bg-[var(--surface2)] 
-        ${isSelected ? 'bg-[var(--surface2)]' : 'bg-transparent'}
+        hover:bg-[var(--surface2)] bg-transparent
       `}
     >
       <div
@@ -50,7 +47,8 @@ export default function RoomItem({
       {pendingCount > 0 && (
         <div
           className="
-            w-5 h-5 
+            min-w-[20px] h-5 
+            aspect-square
             flex items-center justify-center
             text-[10px] font-bold font-sora
             rounded-full 
