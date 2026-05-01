@@ -1,8 +1,8 @@
 import { auth } from "@/auth"
 import { redirect, notFound } from "next/navigation"
 import { prisma } from "@/lib/prisma"
-import ChatContainer from "@/components/ChatContainer"
-import ChatInput from "@/components/ChatInput"
+import ChatContainer from "@/components/chat/ChatContainer"
+import ChatInput from "@/components/chat/ChatInput"
 
 type Props = {
   params: Promise<{ id: string }>

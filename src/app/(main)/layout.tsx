@@ -1,11 +1,11 @@
 import { auth } from "@/auth"
 import { redirect } from "next/navigation"
 import { prisma } from "@/lib/prisma"
-import Topbar from "@/components/TopBar"
-import SearchBar from "@/components/SearchBar"
-import RoomList from "@/components/RoomList"
-import AddRoomButton from "@/components/AddRoomButton"
-import MobileLayout from "@/components/MobileLayout"
+import Topbar from "@/components/sidebar/TopBar"
+import SearchBar from "@/components/sidebar/SearchBar"
+import RoomList from "@/components/sidebar/RoomList"
+import AddRoomButton from "@/components/sidebar/AddRoomButton"
+import MobileLayout from "@/components/layouts/MobileLayout"
 
 export default async function MainLayout({ children }: { children: React.ReactNode }) {
   const session = await auth()

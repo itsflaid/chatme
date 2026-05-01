@@ -2,8 +2,8 @@
 
 import { useState, useRef, useCallback } from "react"
 import { useRouter } from "next/navigation"
-import ContextMenu from "./ContextMenu"
-import RemindModal from "./RemindModal"
+import ContextMenu from "@/components/chat/modals/ContextMenu"
+import RemindModal from "@/components/chat/modals/RemindModal"
 import MessageBubble from "./MessageBubble"
 import { Message } from "@prisma/client"
 

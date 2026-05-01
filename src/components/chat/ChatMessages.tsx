@@ -1,6 +1,6 @@
 import { Message } from "@prisma/client"
-import BubbleWrapper from "./BubbleWrapper"
-import BotBubble from "./BotBubble"
+import BubbleWrapper from "../chat/bubble/BubbleWrapper"
+import BotBubble from "../chat/bubble/BotBubble"
 
 type Props = {
   messages: Message[]

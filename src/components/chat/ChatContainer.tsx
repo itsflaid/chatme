@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation"
 import { Message } from "@prisma/client"
 import ChatMessages from "./ChatMessages"
 import ChatHeader from "./ChatHeader"
-import SnoozeModal from "./SnoozeModal"
+import SnoozeModal from "./modals/SnoozeModal"
 
 type Props = {
   messages: Message[]
