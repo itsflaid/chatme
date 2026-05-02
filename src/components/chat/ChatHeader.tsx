@@ -1,36 +1,43 @@
-"use client";
+"use client"
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { FiArrowLeft, FiMoreVertical, FiX, FiCheck } from "react-icons/fi";
-import { IoSearch, IoNotificationsOutline } from "react-icons/io5";
-import { Message } from "@prisma/client";
-import { motion, AnimatePresence } from "framer-motion";
+import { useState } from "react"
+import { useRouter } from "next/navigation"
+import { FiArrowLeft, FiMoreVertical, FiX, FiCheck }  from "react-icons/fi"
+import { IoSearch, IoNotificationsOutline } from "react-icons/io5"
+import { Message } from "@prisma/client"
+import RoomSettingsMenu from "./modals/RoomSettingsMenu"
+import EditRoomModal from "./modals/EditRoomModal"
+import DeleteRoomModal from "./modals/DeleteRoomModal"
+import PinnedMessagesModal from "./modals/PinnedMessagesModal"
 
 type Props = {
-  name: string;
-  icon: string;
-  messageCount: number;
-  pendingCount: number;
-  reminders: Message[];
-  onReminderDone: (messageId: string) => void;
-};
+  roomId: string
+  name: string
+  icon: string
+  description: string | null
+  messageCount: number
+  pendingCount: number
+  reminders: Message[]
+  messages: Message[]
+  onReminderDone: (messageId: string) => void
+}
 
 export default function ChatHeader({
-  name,
-  icon,
-  messageCount,
-  pendingCount,
-  reminders,
-  onReminderDone,
+  roomId, name, icon, description,
+  messageCount, pendingCount,
+  reminders, messages, onReminderDone
 }: Props) {
-  const router = useRouter();
-  const [showReminders, setShowReminders] = useState(false);
+  const router = useRouter()
+  const [showMenu, setShowMenu] = useState(false)
+  const [showEdit, setShowEdit] = useState(false)
+  const [showDelete, setShowDelete] = useState(false)
+  const [showPinned, setShowPinned] = useState(false)
+  const [showReminders, setShowReminders] = useState(false)
 
   return (
     <>
-      {/* Header Utama */}
-      <div className="flex items-center gap-3 px-4 py-3 border-b bg-[var(--surface)] border-[var(--border)]">
+      <div className="relative flex items-center gap-3 px-4 py-3 border-b bg-[var(--surface)] border-[var(--border)]">
+
         <div className="flex items-center gap-3 min-w-0">
           <button
             onClick={() => router.push("/")}
@@ -44,9 +51,7 @@ export default function ChatHeader({
           </div>
 
           <div className="flex flex-col min-w-0">
-            <span className="text-sm font-semibold truncate text-[var(--text)]">
-              {name}
-            </span>
+            <span className="text-sm font-semibold truncate text-[var(--text)]">{name}</span>
             <span className="text-xs text-[var(--text3)] truncate">
               {pendingCount} reminder · {messageCount} pesan
             </span>
@@ -55,10 +60,7 @@ export default function ChatHeader({
 
         <div className="flex-1 flex justify-center px-2">
           <div className="relative w-full max-w-xs">
-            <IoSearch
-              size={16}
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text3)]"
-            />
+            <IoSearch size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text3)]" />
             <input
               type="text"
               placeholder="Cari pesan..."
@@ -68,6 +70,7 @@ export default function ChatHeader({
         </div>
 
         <div className="flex items-center gap-1 flex-shrink-0">
+          {/* bell + badge reminder */}
           <button
             onClick={() => setShowReminders(true)}
             className="relative p-2 rounded-full hover:bg-[var(--surface2)] transition"
@@ -83,92 +86,104 @@ export default function ChatHeader({
             )}
           </button>
 
-          <button className="p-2 rounded-full hover:bg-[var(--surface2)] transition text-[var(--text2)]">
+          {/* titik tiga */}
+          <button
+            onClick={() => setShowMenu(true)}
+            className="p-2 rounded-full hover:bg-[var(--surface2)] transition text-[var(--text2)]"
+          >
             <FiMoreVertical size={18} />
           </button>
         </div>
+
+        {/* dropdown menu */}
+        {showMenu && (
+          <RoomSettingsMenu
+            onEdit={() => setShowEdit(true)}
+            onPinned={() => setShowPinned(true)}
+            onDelete={() => setShowDelete(true)}
+            onClose={() => setShowMenu(false)}
+          />
+        )}
       </div>
 
-      <AnimatePresence>
-        {showReminders && (
-          <div
-            className="fixed inset-0 z-50 flex items-end justify-center"
-            style={{ background: "#00000070", backdropFilter: "blur(4px)" }}
-            onClick={(e) => e.target === e.currentTarget && setShowReminders(false)}
-          >
-            <motion.div
-              className="w-full max-w-md rounded-t-3xl p-6 pb-10"
-              style={{ 
-                background: "var(--surface)", 
-                borderTop: "1px solid var(--border2)" 
-              }}
-              initial={{ y: "100%" }}
-              animate={{ y: 0 }}
-              exit={{ y: "100%" }}
-              transition={{ 
-                type: "spring", 
-                stiffness: 300, 
-                damping: 30 
-              }}
-            >
-              <div className="w-9 h-1 rounded-full mx-auto mb-5 bg-[var(--border2)]" />
-
-              <div className="flex items-center justify-between mb-4">
-                <p className="font-semibold font-sora text-sm text-[var(--text)]">
-                  Reminder Aktif
-                </p>
-                <button 
-                  onClick={() => setShowReminders(false)} 
-                  className="text-[var(--text3)] hover:text-[var(--text)] transition"
-                >
-                  <FiX size={18} />
-                </button>
-              </div>
-
-              {reminders.length === 0 ? (
-                <p className="text-sm text-center py-6 text-[var(--text3)]">
-                  Tidak ada reminder aktif
-                </p>
-              ) : (
-                <div className="flex flex-col gap-3 max-h-80 overflow-y-auto">
-                  {reminders.map((r) => (
-                    <div
-                      key={r.id}
-                      className="flex items-center gap-3 p-3 rounded-xl border"
-                      style={{ background: "var(--surface2)", borderColor: "var(--border2)" }}
-                    >
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm truncate text-[var(--text)]">{r.text}</p>
-                        {r.remindAt && (
-                          <p className="text-[11px] mt-0.5 text-[var(--accent)]">
-                            🔔 {new Date(r.remindAt).toLocaleDateString("id-ID", {
-                              day: "numeric", 
-                              month: "short",
-                              hour: "2-digit", 
-                              minute: "2-digit"
-                            })}
-                          </p>
-                        )}
-                      </div>
-
-                      <button
-                        onClick={() => {
-                          onReminderDone(r.id);
-                          setShowReminders(false);
-                        }}
-                        className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 transition-all hover:scale-110 active:scale-95"
-                        style={{ background: "var(--accent)", color: "var(--bg)" }}
-                      >
-                        <FiCheck size={14} />
-                      </button>
+      {/* modal reminder list */}
+      {showReminders && (
+        <div
+          className="fixed inset-0 z-50 flex items-end justify-center"
+          style={{ background: "#00000070", backdropFilter: "blur(4px)" }}
+          onClick={(e) => e.target === e.currentTarget && setShowReminders(false)}
+        >
+          <div className="w-full max-w-md rounded-t-3xl p-6 pb-10 bg-[var(--surface)] border-t border-[var(--border2)]">
+            <div className="w-9 h-1 rounded-full mx-auto mb-5 bg-[var(--border2)]" />
+            <div className="flex items-center justify-between mb-4">
+              <p className="font-semibold font-sora text-sm text-[var(--text)]">Reminder Aktif</p>
+              <button onClick={() => setShowReminders(false)} className="text-[var(--text3)]">
+                <FiX size={18} />
+              </button>
+            </div>
+            {reminders.length === 0 ? (
+              <p className="text-sm text-center py-6 text-[var(--text3)]">Tidak ada reminder aktif</p>
+            ) : (
+              <div className="flex flex-col gap-3 max-h-80 overflow-y-auto">
+                {reminders.map((r) => (
+                  <div
+                    key={r.id}
+                    className="flex items-center gap-3 p-3 rounded-xl border"
+                    style={{ background: "var(--surface2)", borderColor: "var(--border2)" }}
+                  >
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm truncate text-[var(--text)]">{r.text}</p>
+                      {r.remindAt && (
+                        <p className="text-[11px] mt-0.5 text-[var(--accent)]">
+                          🔔 {new Date(r.remindAt).toLocaleDateString("id-ID", {
+                            day: "numeric", month: "short",
+                            hour: "2-digit", minute: "2-digit"
+                          })}
+                        </p>
+                      )}
                     </div>
-                  ))}
-                </div>
-              )}
-            </motion.div>
+                    <button
+                      onClick={() => { onReminderDone(r.id); setShowReminders(false) }}
+                      className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 hover:opacity-80"
+                      style={{ background: "var(--accent)", color: "var(--bg)" }}
+                    >
+                      <FiCheck size={14} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
-        )}
-      </AnimatePresence>
+        </div>
+      )}
+
+      {/* modal edit */}
+      {showEdit && (
+        <EditRoomModal
+          roomId={roomId}
+          initialName={name}
+          initialIcon={icon}
+          initialDescription={description}
+          onClose={() => setShowEdit(false)}
+        />
+      )}
+
+      {/* modal hapus */}
+      {showDelete && (
+        <DeleteRoomModal
+          roomId={roomId}
+          roomName={name}
+          onClose={() => setShowDelete(false)}
+        />
+      )}
+
+      {/* modal pin */}
+      {showPinned && (
+        <PinnedMessagesModal
+          messages={messages}
+          onClose={() => setShowPinned(false)}
+        />
+      )}
     </>
   )
 }

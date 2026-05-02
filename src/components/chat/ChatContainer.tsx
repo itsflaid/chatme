@@ -9,7 +9,7 @@ import SnoozeModal from "./modals/SnoozeModal"
 
 type Props = {
   messages: Message[]
-  room: { name: string; icon: string }
+  room: { id: string; name: string; icon: string; description: string | null }
 }
 
 export default function ChatContainer({ messages, room }: Props) {
@@ -61,11 +61,14 @@ export default function ChatContainer({ messages, room }: Props) {
   return (
     <>
       <ChatHeader
+        roomId={room.id}
         name={room.name}
         icon={room.icon}
+        description={room.description}
         messageCount={messages.filter(m => !m.isBot).length}
         pendingCount={pendingCount}
         reminders={reminders}
+        messages={messages}
         onReminderDone={handleReminderDone}
       />
       <ChatMessages

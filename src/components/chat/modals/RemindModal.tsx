@@ -42,10 +42,8 @@ export default function RemindModal({ messageId, messageText, onClose }: Props) 
         className="w-full max-w-md rounded-t-3xl p-6 pb-10"
         style={{ background: "var(--surface)", borderTop: "1px solid var(--border2)" }}
       >
-        {/* handle */}
         <div className="w-9 h-1 rounded-full mx-auto mb-5 bg-[var(--border2)]" />
 
-        {/* header */}
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
             <FiBell size={16} style={{ color: "var(--accent)" }} />
@@ -58,7 +56,6 @@ export default function RemindModal({ messageId, messageText, onClose }: Props) 
           </button>
         </div>
 
-        {/* preview pesan */}
         <div
           className="rounded-xl px-4 py-3 mb-5 border text-sm"
           style={{
@@ -70,7 +67,6 @@ export default function RemindModal({ messageId, messageText, onClose }: Props) 
           {messageText.length > 60 ? messageText.slice(0, 60) + "..." : messageText}
         </div>
 
-        {/* datetime picker */}
         <label className="text-xs mb-1.5 block" style={{ color: "var(--text3)" }}>
           Ingatkan pada
         </label>

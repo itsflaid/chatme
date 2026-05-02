@@ -36,12 +36,15 @@ export default function AddRoomButton() {
 
   return (
     <>
-      <button
-        onClick={() => setOpen(true)}
-        className="absolute bottom-12 right-6 w-12 h-12 rounded-full flex items-center justify-center shadow-lg transition-transform hover:scale-110 z-10 bg-[var(--accent)] text-[var(--bg)]"
-      >
-        <FiPlus size={22} />
-      </button>
+      {/* wrapper — ini yang jadi anchor FAB, bukan seluruh halaman */}
+      <div className="relative h-20 flex-shrink-0">
+        <button
+          onClick={() => setOpen(true)}
+          className="absolute bottom-10 right-5 w-12 h-12 rounded-full flex items-center justify-center shadow-lg transition-all duration-200 hover:scale-110 hover:rotate-90 z-10 bg-[var(--accent)] text-[var(--bg)]"
+        >
+          <FiPlus size={22} />
+        </button>
+      </div>
 
       {open && (
         <div
@@ -49,9 +52,7 @@ export default function AddRoomButton() {
           style={{ background: "#00000070", backdropFilter: "blur(4px)" }}
           onClick={(e) => e.target === e.currentTarget && handleClose()}
         >
-          <div
-            className="w-full max-w-md rounded-t-3xl p-6 pb-10 bg-[var(--surface)] border-t border-[var(--border2)]"
-          >
+          <div className="w-full max-w-md rounded-t-3xl p-6 pb-10 bg-[var(--surface)] border-t border-[var(--border2)]">
             <div className="w-9 h-1 rounded-full mx-auto mb-5 bg-[var(--border2)]" />
 
             <div className="flex items-center justify-between mb-5">
@@ -64,7 +65,7 @@ export default function AddRoomButton() {
             <label className="text-xs text-[var(--text3)] mb-1.5 block">Nama room *</label>
             <input
               className="w-full rounded-xl px-4 py-3 text-sm outline-none mb-4 border bg-[var(--surface2)] border-[var(--border2)] text-[var(--text)] placeholder:text-[var(--text3)] focus:border-[var(--accent)] transition-colors"
-              placeholder="Contoh: Tugas, Warung, Random..."
+              placeholder="Contoh: Tugas, Catatan, Random..."
               value={name}
               onChange={(e) => setName(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleCreate()}
