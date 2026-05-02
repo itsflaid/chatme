@@ -6,6 +6,7 @@ type Room = {
   name: string
   icon: string
   _count: { messages: number }
+  messages: { text: string; createdAt: Date }[]
 }
 
 type Props = {
@@ -24,6 +25,7 @@ export default function RoomList({ rooms }: Props) {
           name={room.name}
           icon={room.icon}
           pendingCount={room._count.messages}
+          lastMessage={room.messages[0] ?? null}
         />
       ))}
     </div>

@@ -46,7 +46,7 @@ export default function ChatMessages({
   
   if (messages.length === 0) {
     return (
-      <div className="flex-1 flex items-center justify-center">
+      <div className="flex-1 flex items-center justify-center ">
         <p className="text-sm" style={{ color: "var(--text3)" }}>
           Belum ada pesan. Mulai ketik sesuatu!
         </p>
@@ -57,7 +57,7 @@ export default function ChatMessages({
   const grouped = groupByDate(messages)
 
   return (
-    <div className="flex-1 overflow-y-auto px-4 py-4 flex flex-col gap-2">
+    <div className="flex-1 overflow-y-auto px-10 py-4 flex flex-col gap-2">
       {grouped.map((group) => (
         <div key={group.dateLabel}>
           {/* Date Label */}

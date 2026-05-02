@@ -19,6 +19,12 @@ export default async function MainLayout({ children }: { children: React.ReactNo
         select: {
           messages: { where: { isDone: false } }
         }
+      },
+      messages: {
+        where: {isBot: false},
+        orderBy: { createdAt: "desc" },
+        take: 1,
+        select: { text: true, createdAt: true }
       }
     }
   })

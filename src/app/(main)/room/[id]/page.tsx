@@ -25,21 +25,30 @@ export default async function RoomPage({ params }: Props) {
       isBot: false,
       isRemindDone: false,
       remindAt: { lte: new Date() },
-      reminders: { none: {} }
+      // reminders: { none: {} }
     }
   })
 
-  if (pendingReminders.length > 0) {
-    await prisma.message.createMany({
-      data: pendingReminders.map(reminder => ({
-        text: "Hei! Kamu punya pengingat yang perlu diperhatikan 🔔",
-        isBot: true,
-        sourceMessageId: reminder.id,
-        roomId: id,
-        userId,
-      }))
-    })
+  for (const reminder of pendingReminders) {
+  const existing = await prisma.message.findFirst({
+    where: {
+      sourceMessageId: reminder.id,
+      isBot: true,
+    },
+  })
+
+  if (!existing) {
+    await prisma.message.create({
+  data: {
+    text: "🔔 Pengingat",
+    isBot: true,
+    sourceMessageId: reminder.id,
+    roomId: id,
+    userId,
+  },
+})
   }
+}
 
   const messages = await prisma.message.findMany({
     where: { roomId: id },
