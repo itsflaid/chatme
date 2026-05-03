@@ -18,7 +18,7 @@ export const metadata: Metadata = {
   description: "Your second brain, in a chat.",
   
   applicationName: "Chatme",
-  manifest: "/manifest",
+  // manifest: "/manifest",
   
   keywords: ["note", "notes", "chat", "second brain", "reminder", "productivity", "catatan"],
   
