@@ -10,9 +10,17 @@ type Props = {
   message: Message
   onUpdate: (id: string, patch: Partial<Message>) => void
   onRemove: (id: string) => void
+  isNew?: boolean
+  searchQuery?: string
 }
 
-export default function BubbleWrapper({ message, onUpdate, onRemove }: Props) {
+export default function BubbleWrapper({
+  message,
+  onUpdate,
+  onRemove,
+  isNew = false,
+  searchQuery = "",
+}: Props) {
   const [menuPos, setMenuPos] = useState<{ x: number; y: number } | null>(null)
   const [showRemind, setShowRemind] = useState(false)
   const touchTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -38,9 +46,7 @@ export default function BubbleWrapper({ message, onUpdate, onRemove }: Props) {
   }, [message.text])
 
   const handleToggleDone = useCallback(() => {
-    // optimistic
     onUpdate(message.id, { isDone: !message.isDone })
-    // sync background
     fetch(`/api/messages/${message.id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
@@ -49,9 +55,7 @@ export default function BubbleWrapper({ message, onUpdate, onRemove }: Props) {
   }, [message.id, message.isDone, onUpdate])
 
   const handleTogglePin = useCallback(() => {
-    // optimistic
     onUpdate(message.id, { isPinned: !message.isPinned })
-    // sync background
     fetch(`/api/messages/${message.id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
@@ -60,16 +64,12 @@ export default function BubbleWrapper({ message, onUpdate, onRemove }: Props) {
   }, [message.id, message.isPinned, onUpdate])
 
   const handleDelete = useCallback(() => {
-    // optimistic
     onRemove(message.id)
-    // sync background
     fetch(`/api/messages/${message.id}`, { method: "DELETE" })
   }, [message.id, onRemove])
 
   const handleRemindSave = useCallback((remindAt: Date) => {
-    // optimistic
     onUpdate(message.id, { remindAt })
-    // sync background
     fetch(`/api/messages/${message.id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
@@ -85,7 +85,11 @@ export default function BubbleWrapper({ message, onUpdate, onRemove }: Props) {
         onTouchEnd={handleTouchEnd}
         onTouchMove={handleTouchEnd}
       >
-        <MessageBubble message={message} />
+        <MessageBubble
+          message={message}
+          isNew={isNew}
+          searchQuery={searchQuery}
+        />
       </div>
 
       {menuPos && (

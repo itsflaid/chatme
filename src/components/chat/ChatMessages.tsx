@@ -11,6 +11,8 @@ type Props = {
   onBotSnooze: (botMessageId: string, sourceMessageId: string) => void
   onMessageUpdate: (id: string, patch: Partial<Message>) => void
   onMessageRemove: (id: string) => void
+  searchQuery?: string
+  activeMatchId?: string | null
 }
 
 function getDateLabel(date: Date): string {
@@ -19,7 +21,9 @@ function getDateLabel(date: Date): string {
   yesterday.setDate(yesterday.getDate() - 1)
   if (date.toDateString() === today.toDateString()) return "Hari ini"
   if (date.toDateString() === yesterday.toDateString()) return "Kemarin"
-  return date.toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" })
+  return date.toLocaleDateString("id-ID", {
+    day: "numeric", month: "long", year: "numeric"
+  })
 }
 
 type GroupedMessages = { dateLabel: string; messages: Message[] }[]
@@ -38,18 +42,37 @@ function groupByDate(messages: Message[]): GroupedMessages {
 }
 
 export default function ChatMessages({
-  messages, onBotDone, onBotSnooze, onMessageUpdate, onMessageRemove
+  messages,
+  onBotDone,
+  onBotSnooze,
+  onMessageUpdate,
+  onMessageRemove,
+  searchQuery = "",
+  activeMatchId = null,
 }: Props) {
   const bottomRef = useRef<HTMLDivElement>(null)
+  const activeRef = useRef<HTMLDivElement>(null)
 
+  // scroll ke bawah saat pesan baru — hanya kalau tidak sedang search
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" })
-  }, [messages])
+    if (!searchQuery) {
+      bottomRef.current?.scrollIntoView({ behavior: "smooth" })
+    }
+  }, [messages, searchQuery])
+
+  // scroll ke hasil search aktif
+  useEffect(() => {
+    if (activeMatchId) {
+      activeRef.current?.scrollIntoView({ behavior: "smooth", block: "center" })
+    }
+  }, [activeMatchId])
 
   if (messages.length === 0) {
     return (
       <div className="flex-1 flex items-center justify-center">
-        <p className="text-sm text-[var(--text3)]">Belum ada pesan. Mulai ketik sesuatu!</p>
+        <p className="text-sm text-[var(--text3)]">
+          Belum ada pesan. Mulai ketik sesuatu!
+        </p>
       </div>
     )
   }
@@ -67,6 +90,12 @@ export default function ChatMessages({
           </div>
           <div className="flex flex-col gap-2">
             {group.messages.map((message) => {
+              const isTemp = message.id.startsWith("temp-")
+              const isActiveMatch = message.id === activeMatchId
+              const isMatch = searchQuery.trim() &&
+                !message.isBot &&
+                message.text.toLowerCase().includes(searchQuery.toLowerCase())
+
               if (message.isBot) {
                 const sourceMessage = message.sourceMessageId
                   ? messages.find(m => m.id === message.sourceMessageId) ?? null
@@ -78,17 +107,31 @@ export default function ChatMessages({
                     sourceMessage={sourceMessage}
                     onDone={() => onBotDone(message.id, message.sourceMessageId!)}
                     onSnooze={() => onBotSnooze(message.id, message.sourceMessageId!)}
+                    isNew={isTemp}
                   />
                 )
               }
 
               return (
-                <BubbleWrapper
+                <div
                   key={message.id}
-                  message={message}
-                  onUpdate={onMessageUpdate}
-                  onRemove={onMessageRemove}
-                />
+                  ref={isActiveMatch ? activeRef : null}
+                  className="rounded-2xl transition-all duration-300"
+                  style={{
+                    outline: isActiveMatch
+                      ? "2px solid var(--accent)"
+                      : "none",
+                    opacity: searchQuery.trim() && !isMatch ? 0.35 : 1,
+                  }}
+                >
+                  <BubbleWrapper
+                    message={message}
+                    onUpdate={onMessageUpdate}
+                    onRemove={onMessageRemove}
+                    isNew={isTemp}
+                    searchQuery={searchQuery}
+                  />
+                </div>
               )
             })}
           </div>

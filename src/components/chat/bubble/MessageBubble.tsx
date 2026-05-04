@@ -8,9 +8,41 @@ import { userBubbleAnim } from "@/lib/animation"
 type Props = {
   message: Message
   isNew?: boolean
+  searchQuery?: string
 }
 
-export default function MessageBubble({ message, isNew = true }: Props) {
+function highlightText(text: string, query: string) {
+  if (!query.trim()) return <>{text}</>
+  const parts = text.split(new RegExp(`(${query})`, "gi"))
+  return (
+    <>
+      {parts.map((part, i) =>
+        part.toLowerCase() === query.toLowerCase() ? (
+          <mark
+            key={i}
+            style={{
+              background: "var(--bg)",
+              color: "var(--accent)",
+              borderRadius: "3px",
+              padding: "0 2px",
+              fontWeight: 600,
+            }}
+          >
+            {part}
+          </mark>
+        ) : (
+          part
+        )
+      )}
+    </>
+  )
+}
+
+export default function MessageBubble({
+  message,
+  isNew = false,
+  searchQuery = "",
+}: Props) {
   if (!message) return null
 
   const time = new Date(message.createdAt).toLocaleTimeString("id-ID", {
@@ -26,15 +58,21 @@ export default function MessageBubble({ message, isNew = true }: Props) {
       transition={userBubbleAnim.transition}
       className="flex flex-col items-end"
     >
-      <div className="max-w-[82%] rounded-[18px_18px_4px_18px] px-4 py-2.5 relative bg-[var(--accent)]">
+      <div
+        className="max-w-[82%] rounded-[18px_18px_4px_18px] px-4 py-2.5 relative bg-[var(--accent)]"
+        // style={{ opacity: message.isDone ? 0.5 : 1 }}
+      >
         {message.isPinned && (
           <div className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-[var(--bg)] flex items-center justify-center">
             <FiBookmark size={11} className="text-[var(--accent)]" />
           </div>
         )}
 
-        <p className="text-sm leading-relaxed break-words text-[var(--bg)]">
-          {message.text}
+        <p
+          className="text-sm leading-relaxed break-words text-[var(--bg)]"
+          style={{ textDecoration: message.isDone ? "line-through" : "none" }}
+        >
+          {highlightText(message.text, searchQuery)}
         </p>
 
         {message.remindAt && !message.isRemindDone && (

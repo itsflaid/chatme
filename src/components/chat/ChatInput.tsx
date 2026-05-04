@@ -11,7 +11,12 @@ type Props = {
   onMessageReplace: (tempId: string, realMessage: Message) => void
 }
 
-export default function ChatInput({ roomId, userId, onMessageAdd, onMessageReplace }: Props) {
+export default function ChatInput({
+  roomId,
+  userId,
+  onMessageAdd,
+  onMessageReplace,
+}: Props) {
   const [text, setText] = useState("")
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
@@ -27,7 +32,7 @@ export default function ChatInput({ roomId, userId, onMessageAdd, onMessageRepla
     const trimmed = text.trim()
     const tempId = `temp-${Date.now()}`
 
-    // optimistic — tampil langsung
+    // optimistic — tampil langsung dengan animasi
     const tempMessage: Message = {
       id: tempId,
       text: trimmed,
@@ -43,6 +48,7 @@ export default function ChatInput({ roomId, userId, onMessageAdd, onMessageRepla
       createdAt: new Date(),
       updatedAt: new Date(),
     }
+
     onMessageAdd(tempMessage)
     setText("")
     if (textareaRef.current) textareaRef.current.style.height = "auto"
@@ -56,7 +62,7 @@ export default function ChatInput({ roomId, userId, onMessageAdd, onMessageRepla
 
     if (res.ok) {
       const realMessage = await res.json()
-      // replace temp dengan data asli dari server
+      // replace temp dengan data asli — tidak trigger animasi karena isNew = false
       onMessageReplace(tempId, realMessage)
     }
   }

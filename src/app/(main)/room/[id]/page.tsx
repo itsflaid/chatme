@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic"
+
 import { auth } from "@/auth"
 import { redirect, notFound } from "next/navigation"
 import { prisma } from "@/lib/prisma"
@@ -18,6 +20,7 @@ export default async function RoomPage({ params }: Props) {
   })
   if (!room) notFound()
 
+  // cek + buat bot message dulu
   const pendingReminders = await prisma.message.findMany({
     where: {
       roomId: id,
@@ -40,6 +43,7 @@ export default async function RoomPage({ params }: Props) {
     })
   }
 
+  // fetch semua messages — sudah include bot message baru
   const messages = await prisma.message.findMany({
     where: { roomId: id },
     orderBy: { createdAt: "asc" },

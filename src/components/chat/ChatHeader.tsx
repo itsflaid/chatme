@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { FiArrowLeft, FiMoreVertical, FiX, FiCheck }  from "react-icons/fi"
+import { FiArrowLeft, FiMoreVertical, FiX, FiCheck } from "react-icons/fi"
 import { IoSearch, IoNotificationsOutline } from "react-icons/io5"
 import { Message } from "@prisma/client"
 import RoomSettingsMenu from "./modals/RoomSettingsMenu"
@@ -20,12 +20,24 @@ type Props = {
   reminders: Message[]
   messages: Message[]
   onReminderDone: (messageId: string) => void
+
+  // Props untuk search (baru)
+  searchQuery: string
+  onSearch: (query: string) => void
 }
 
 export default function ChatHeader({
-  roomId, name, icon, description,
-  messageCount, pendingCount,
-  reminders, messages, onReminderDone
+  roomId,
+  name,
+  icon,
+  description,
+  messageCount,
+  pendingCount,
+  reminders,
+  messages,
+  onReminderDone,
+  searchQuery,
+  onSearch,
 }: Props) {
   const router = useRouter()
   const [showMenu, setShowMenu] = useState(false)
@@ -58,14 +70,30 @@ export default function ChatHeader({
           </div>
         </div>
 
+        {/* SEARCH BAR */}
         <div className="flex-1 flex justify-center px-2">
           <div className="relative w-full max-w-xs">
-            <IoSearch size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text3)]" />
+            <IoSearch
+              size={16}
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text3)]"
+            />
+            
             <input
               type="text"
+              value={searchQuery}
+              onChange={(e) => onSearch(e.target.value)}
               placeholder="Cari pesan..."
-              className="w-full pl-9 pr-3 py-1.5 text-sm rounded-full bg-[var(--surface2)] text-[var(--text)] placeholder:text-[var(--text3)] outline-none focus:ring-1 focus:ring-[var(--accent)] transition"
+              className="w-full pl-9 pr-10 py-1.5 text-sm rounded-full bg-[var(--surface2)] text-[var(--text)] placeholder:text-[var(--text3)] outline-none focus:ring-1 focus:ring-[var(--accent)] transition"
             />
+
+            {searchQuery && (
+              <button
+                onClick={() => onSearch("")}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--text3)] hover:text-[var(--text2)] transition"
+              >
+                <FiX size={16} />
+              </button>
+            )}
           </div>
         </div>
 
@@ -106,7 +134,7 @@ export default function ChatHeader({
         )}
       </div>
 
-      {/* modal reminder list */}
+      {/* Modal Reminder List */}
       {showReminders && (
         <div
           className="fixed inset-0 z-50 flex items-end justify-center"
@@ -121,6 +149,7 @@ export default function ChatHeader({
                 <FiX size={18} />
               </button>
             </div>
+
             {reminders.length === 0 ? (
               <p className="text-sm text-center py-6 text-[var(--text3)]">Tidak ada reminder aktif</p>
             ) : (
@@ -136,14 +165,19 @@ export default function ChatHeader({
                       {r.remindAt && (
                         <p className="text-[11px] mt-0.5 text-[var(--accent)]">
                           🔔 {new Date(r.remindAt).toLocaleDateString("id-ID", {
-                            day: "numeric", month: "short",
-                            hour: "2-digit", minute: "2-digit"
+                            day: "numeric",
+                            month: "short",
+                            hour: "2-digit",
+                            minute: "2-digit",
                           })}
                         </p>
                       )}
                     </div>
                     <button
-                      onClick={() => { onReminderDone(r.id); setShowReminders(false) }}
+                      onClick={() => {
+                        onReminderDone(r.id)
+                        setShowReminders(false)
+                      }}
                       className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 hover:opacity-80"
                       style={{ background: "var(--accent)", color: "var(--bg)" }}
                     >
@@ -157,7 +191,7 @@ export default function ChatHeader({
         </div>
       )}
 
-      {/* modal edit */}
+      {/* Modal lainnya */}
       {showEdit && (
         <EditRoomModal
           roomId={roomId}
@@ -168,7 +202,6 @@ export default function ChatHeader({
         />
       )}
 
-      {/* modal hapus */}
       {showDelete && (
         <DeleteRoomModal
           roomId={roomId}
@@ -177,7 +210,6 @@ export default function ChatHeader({
         />
       )}
 
-      {/* modal pin */}
       {showPinned && (
         <PinnedMessagesModal
           messages={messages}
