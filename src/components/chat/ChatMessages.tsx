@@ -2,25 +2,24 @@
 
 import { useEffect, useRef } from "react"
 import { Message } from "@prisma/client"
-import BubbleWrapper from "../chat/bubble/BubbleWrapper"
-import BotBubble from "../chat/bubble/BotBubble"
+import BubbleWrapper from "./bubble/BubbleWrapper"
+import BotBubble from "./bubble/BotBubble"
 
 type Props = {
   messages: Message[]
   onBotDone: (botMessageId: string, sourceMessageId: string) => void
   onBotSnooze: (botMessageId: string, sourceMessageId: string) => void
+  onMessageUpdate: (id: string, patch: Partial<Message>) => void
+  onMessageRemove: (id: string) => void
 }
 
 function getDateLabel(date: Date): string {
   const today = new Date()
   const yesterday = new Date(today)
   yesterday.setDate(yesterday.getDate() - 1)
-
   if (date.toDateString() === today.toDateString()) return "Hari ini"
   if (date.toDateString() === yesterday.toDateString()) return "Kemarin"
-  return date.toLocaleDateString("id-ID", {
-    day: "numeric", month: "long", year: "numeric"
-  })
+  return date.toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" })
 }
 
 type GroupedMessages = { dateLabel: string; messages: Message[] }[]
@@ -38,10 +37,11 @@ function groupByDate(messages: Message[]): GroupedMessages {
   }, [])
 }
 
-export default function ChatMessages({ messages, onBotDone, onBotSnooze }: Props) {
+export default function ChatMessages({
+  messages, onBotDone, onBotSnooze, onMessageUpdate, onMessageRemove
+}: Props) {
   const bottomRef = useRef<HTMLDivElement>(null)
 
-  // scroll ke bawah setiap messages berubah
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" })
   }, [messages])
@@ -49,9 +49,7 @@ export default function ChatMessages({ messages, onBotDone, onBotSnooze }: Props
   if (messages.length === 0) {
     return (
       <div className="flex-1 flex items-center justify-center">
-        <p className="text-sm text-[var(--text3)]">
-          Belum ada pesan. Mulai ketik sesuatu!
-        </p>
+        <p className="text-sm text-[var(--text3)]">Belum ada pesan. Mulai ketik sesuatu!</p>
       </div>
     )
   }
@@ -71,7 +69,7 @@ export default function ChatMessages({ messages, onBotDone, onBotSnooze }: Props
             {group.messages.map((message) => {
               if (message.isBot) {
                 const sourceMessage = message.sourceMessageId
-                  ? messages.find((m) => m.id === message.sourceMessageId) ?? null
+                  ? messages.find(m => m.id === message.sourceMessageId) ?? null
                   : null
                 return (
                   <BotBubble
@@ -83,13 +81,19 @@ export default function ChatMessages({ messages, onBotDone, onBotSnooze }: Props
                   />
                 )
               }
-              return <BubbleWrapper key={message.id} message={message} />
+
+              return (
+                <BubbleWrapper
+                  key={message.id}
+                  message={message}
+                  onUpdate={onMessageUpdate}
+                  onRemove={onMessageRemove}
+                />
+              )
             })}
           </div>
         </div>
       ))}
-
-      {/* anchor scroll otomatis */}
       <div ref={bottomRef} />
     </div>
   )

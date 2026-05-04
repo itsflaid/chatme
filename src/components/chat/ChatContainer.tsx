@@ -1,33 +1,51 @@
 "use client"
 
 import { useState } from "react"
-import { useRouter } from "next/navigation"
 import { Message } from "@prisma/client"
 import ChatMessages from "./ChatMessages"
 import ChatHeader from "./ChatHeader"
+import ChatInput from "./ChatInput"
 import SnoozeModal from "./modals/SnoozeModal"
 
 type Props = {
   messages: Message[]
   room: { id: string; name: string; icon: string; description: string | null }
+  userId: string
 }
 
-export default function ChatContainer({ messages, room }: Props) {
+export default function ChatContainer({ messages: initialMessages, room, userId }: Props) {
+  const [messages, setMessages] = useState<Message[]>(initialMessages)
   const [snoozeBotId, setSnoozeBotId] = useState<string | null>(null)
   const [snoozeSourceId, setSnoozeSourceId] = useState<string | null>(null)
-  const router = useRouter()
 
   const reminders = messages.filter(m => !m.isBot && m.remindAt && !m.isRemindDone)
   const pendingCount = messages.filter(m => !m.isDone && !m.isBot).length
 
+  function updateMessage(id: string, patch: Partial<Message>) {
+    setMessages(prev => prev.map(m => m.id === id ? { ...m, ...patch } : m))
+  }
+
+  function removeMessage(id: string) {
+    setMessages(prev => prev.filter(m => m.id !== id))
+  }
+
+  function addMessage(message: Message) {
+    setMessages(prev => [...prev, message])
+  }
+
+  function replaceMessage(tempId: string, realMessage: Message) {
+    setMessages(prev => prev.map(m => m.id === tempId ? realMessage : m))
+  }
+
   async function handleBotDone(botMessageId: string, sourceMessageId: string) {
-    await fetch(`/api/messages/${sourceMessageId}`, {
+    updateMessage(sourceMessageId, { isDone: true, isRemindDone: true })
+    removeMessage(botMessageId)
+    fetch(`/api/messages/${sourceMessageId}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ isDone: true, isRemindDone: true }),
     })
-    await fetch(`/api/messages/${botMessageId}`, { method: "DELETE" })
-    router.refresh()
+    fetch(`/api/messages/${botMessageId}`, { method: "DELETE" })
   }
 
   function handleBotSnooze(botMessageId: string, sourceMessageId: string) {
@@ -38,24 +56,25 @@ export default function ChatContainer({ messages, room }: Props) {
   async function handleSnoozeSelect(minutes: number) {
     if (!snoozeBotId || !snoozeSourceId) return
     const newRemindAt = new Date(Date.now() + minutes * 60 * 1000)
-    await fetch(`/api/messages/${snoozeSourceId}`, {
+    updateMessage(snoozeSourceId, { remindAt: newRemindAt })
+    removeMessage(snoozeBotId)
+    fetch(`/api/messages/${snoozeSourceId}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ remindAt: newRemindAt.toISOString() }),
     })
-    await fetch(`/api/messages/${snoozeBotId}`, { method: "DELETE" })
+    fetch(`/api/messages/${snoozeBotId}`, { method: "DELETE" })
     setSnoozeBotId(null)
     setSnoozeSourceId(null)
-    router.refresh()
   }
 
   async function handleReminderDone(messageId: string) {
-    await fetch(`/api/messages/${messageId}`, {
+    updateMessage(messageId, { isRemindDone: true, isDone: true })
+    fetch(`/api/messages/${messageId}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ isRemindDone: true, isDone: true }),
     })
-    router.refresh()
   }
 
   return (
@@ -75,6 +94,14 @@ export default function ChatContainer({ messages, room }: Props) {
         messages={messages}
         onBotDone={handleBotDone}
         onBotSnooze={handleBotSnooze}
+        onMessageUpdate={updateMessage}
+        onMessageRemove={removeMessage}
+      />
+      <ChatInput
+        roomId={room.id}
+        userId={userId}
+        onMessageAdd={addMessage}
+        onMessageReplace={replaceMessage}
       />
       {snoozeBotId && (
         <SnoozeModal

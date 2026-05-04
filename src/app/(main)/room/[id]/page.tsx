@@ -2,7 +2,6 @@ import { auth } from "@/auth"
 import { redirect, notFound } from "next/navigation"
 import { prisma } from "@/lib/prisma"
 import ChatContainer from "@/components/chat/ChatContainer"
-import ChatInput from "@/components/chat/ChatInput"
 
 type Props = {
   params: Promise<{ id: string }>
@@ -25,30 +24,21 @@ export default async function RoomPage({ params }: Props) {
       isBot: false,
       isRemindDone: false,
       remindAt: { lte: new Date() },
-      // reminders: { none: {} }
+      reminders: { none: {} }
     }
   })
 
-  for (const reminder of pendingReminders) {
-  const existing = await prisma.message.findFirst({
-    where: {
-      sourceMessageId: reminder.id,
-      isBot: true,
-    },
-  })
-
-  if (!existing) {
-    await prisma.message.create({
-  data: {
-    text: "🔔 Pengingat",
-    isBot: true,
-    sourceMessageId: reminder.id,
-    roomId: id,
-    userId,
-  },
-})
+  if (pendingReminders.length > 0) {
+    await prisma.message.createMany({
+      data: pendingReminders.map(reminder => ({
+        text: "Hei! Kamu punya pengingat yang perlu diperhatikan 🔔",
+        isBot: true,
+        sourceMessageId: reminder.id,
+        roomId: id,
+        userId,
+      }))
+    })
   }
-}
 
   const messages = await prisma.message.findMany({
     where: { roomId: id },
@@ -57,8 +47,11 @@ export default async function RoomPage({ params }: Props) {
 
   return (
     <div className="flex flex-col h-full" style={{ background: "var(--bg)" }}>
-      <ChatContainer messages={messages} room={room} />
-      <ChatInput roomId={id} />
+      <ChatContainer
+        messages={messages}
+        room={room}
+        userId={userId}
+      />
     </div>
   )
 }

@@ -1,35 +1,46 @@
-// Modal set reminder — muncul setelah tap "Ingatkan" di context menu
-// User pilih tanggal & jam, lalu disimpan ke DB
-// "use client"
-
 "use client"
 
 import { useState } from "react"
-import { useRouter } from "next/navigation"
 import { FiBell, FiX } from "react-icons/fi"
 
 type Props = {
   messageId: string
   messageText: string
   onClose: () => void
+  onSave?: (remindAt: Date) => void
 }
 
-export default function RemindModal({ messageId, messageText, onClose }: Props) {
+export default function RemindModal({ messageId, messageText, onClose, onSave }: Props) {
   const [datetime, setDatetime] = useState("")
   const [loading, setLoading] = useState(false)
-  const router = useRouter()
 
   async function handleSave() {
     if (!datetime) return
     setLoading(true)
+    const remindAt = new Date(datetime)
+
+    // kalau ada onSave callback, pakai optimistic
+    if (onSave) {
+      onSave(remindAt)
+      // sync background
+      fetch(`/api/messages/${messageId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ remindAt: remindAt.toISOString() }),
+      })
+      setLoading(false)
+      onClose()
+      return
+    }
+
+    // fallback kalau tidak ada onSave
     await fetch(`/api/messages/${messageId}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ remindAt: new Date(datetime).toISOString() }),
+      body: JSON.stringify({ remindAt: remindAt.toISOString() }),
     })
     setLoading(false)
     onClose()
-    router.refresh()
   }
 
   return (
@@ -39,59 +50,41 @@ export default function RemindModal({ messageId, messageText, onClose }: Props) 
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
       <div
-        className="w-full max-w-md rounded-t-3xl p-6 pb-10"
-        style={{ background: "var(--surface)", borderTop: "1px solid var(--border2)" }}
+        className="w-full max-w-md rounded-t-3xl p-6 pb-10 bg-[var(--surface)] border-t border-[var(--border2)]"
       >
         <div className="w-9 h-1 rounded-full mx-auto mb-5 bg-[var(--border2)]" />
 
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
-            <FiBell size={16} style={{ color: "var(--accent)" }} />
-            <p className="font-semibold font-sora text-sm" style={{ color: "var(--text)" }}>
-              Set Pengingat
-            </p>
+            <FiBell size={16} className="text-[var(--accent)]" />
+            <p className="font-semibold font-sora text-sm text-[var(--text)]">Set Pengingat</p>
           </div>
-          <button onClick={onClose} style={{ color: "var(--text3)" }}>
+          <button onClick={onClose} className="text-[var(--text3)]">
             <FiX size={18} />
           </button>
         </div>
 
         <div
-          className="rounded-xl px-4 py-3 mb-5 border text-sm"
-          style={{
-            background: "var(--surface2)",
-            borderColor: "var(--border2)",
-            color: "var(--text2)",
-          }}
+          className="rounded-xl px-4 py-3 mb-5 border text-sm text-[var(--text2)]"
+          style={{ background: "var(--surface2)", borderColor: "var(--border2)" }}
         >
           {messageText.length > 60 ? messageText.slice(0, 60) + "..." : messageText}
         </div>
 
-        <label className="text-xs mb-1.5 block" style={{ color: "var(--text3)" }}>
-          Ingatkan pada
-        </label>
+        <label className="text-xs mb-1.5 block text-[var(--text3)]">Ingatkan pada</label>
         <input
           type="datetime-local"
-          className="w-full rounded-xl px-4 py-3 text-sm outline-none border mb-5 transition-colors"
-          style={{
-            background: "var(--surface2)",
-            borderColor: datetime ? "var(--accent)" : "var(--border2)",
-            color: "var(--text)",
-          }}
+          className="w-full rounded-xl px-4 py-3 text-sm outline-none border mb-5 transition-colors bg-[var(--surface2)] text-[var(--text)]"
+          style={{ borderColor: datetime ? "var(--accent)" : "var(--border2)" }}
           value={datetime}
           onChange={(e) => setDatetime(e.target.value)}
         />
 
-        {/* submit */}
         <button
           onClick={handleSave}
           disabled={!datetime || loading}
-          className="w-full py-3 rounded-xl font-semibold text-sm font-sora transition-opacity"
-          style={{
-            background: "var(--accent)",
-            color: "var(--bg)",
-            opacity: !datetime || loading ? 0.5 : 1,
-          }}
+          className="w-full py-3 rounded-xl font-semibold text-sm font-sora transition-opacity bg-[var(--accent)] text-[var(--bg)]"
+          style={{ opacity: !datetime || loading ? 0.5 : 1 }}
         >
           {loading ? "Menyimpan..." : "Simpan Pengingat"}
         </button>
