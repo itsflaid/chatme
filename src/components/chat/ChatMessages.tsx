@@ -80,7 +80,7 @@ export default function ChatMessages({
   const grouped = groupByDate(messages)
 
   return (
-    <div className="flex-1 overflow-y-auto px-10 py-4 flex flex-col gap-2">
+    <div className="flex-1 overflow-y-auto px-3 sm:px-10 py-4 flex flex-col gap-2">
       {grouped.map((group) => (
         <div key={group.dateLabel}>
           <div className="flex justify-center my-3">

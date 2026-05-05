@@ -5,6 +5,7 @@ import { useState, useEffect } from "react"
 import { Message } from "@prisma/client"
 import { FiBell } from "react-icons/fi"
 import { botBubbleAnim } from "@/lib/animation"
+import Image from "next/image"
 
 type Props = {
   message: Message
@@ -73,11 +74,14 @@ export default function BotBubble({
       transition={botBubbleAnim.transition}
       className="flex flex-col items-start gap-1 my-2"
     >
-      {/* bubble teks — selalu ada */}
       <div className="flex items-end gap-2">
-        <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 mb-1 bg-[var(--surface2)] border border-[var(--border)]">
-          <FiBell size={16} className="text-[var(--accent)]" />
-        </div>
+        <Image
+          src="/bot.png"
+          alt="Bot"
+          width={32}
+          height={32}
+          className="rounded-full flex-shrink-0 mb-1"
+        />
         <div
           className="rounded-[18px_18px_18px_4px] px-4 py-2.5 max-w-[240px]"
           style={{ background: "var(--surface2)", border: "1px solid var(--border)" }}
