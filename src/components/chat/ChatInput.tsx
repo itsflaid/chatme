@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useRef } from "react"
+import { useRouter } from "next/navigation"
 import { FiSend } from "react-icons/fi"
 import { Message } from "@prisma/client"
 
@@ -9,6 +10,7 @@ type Props = {
   userId: string
   onMessageAdd: (message: Message) => void
   onMessageReplace: (tempId: string, realMessage: Message) => void
+  onCheckReminders: () => void
 }
 
 export default function ChatInput({
@@ -16,9 +18,11 @@ export default function ChatInput({
   userId,
   onMessageAdd,
   onMessageReplace,
+  onCheckReminders,
 }: Props) {
   const [text, setText] = useState("")
   const textareaRef = useRef<HTMLTextAreaElement>(null)
+  const router = useRouter()
 
   function autoResize() {
     const el = textareaRef.current
@@ -32,7 +36,6 @@ export default function ChatInput({
     const trimmed = text.trim()
     const tempId = `temp-${Date.now()}`
 
-    // optimistic — tampil langsung dengan animasi
     const tempMessage: Message = {
       id: tempId,
       text: trimmed,
@@ -53,7 +56,6 @@ export default function ChatInput({
     setText("")
     if (textareaRef.current) textareaRef.current.style.height = "auto"
 
-    // sync ke server
     const res = await fetch("/api/messages", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -62,8 +64,13 @@ export default function ChatInput({
 
     if (res.ok) {
       const realMessage = await res.json()
-      // replace temp dengan data asli — tidak trigger animasi karena isNew = false
       onMessageReplace(tempId, realMessage)
+
+      // cek reminder yang triggered
+      onCheckReminders()
+
+      // refresh sidebar room list — update preview pesan terakhir
+      setTimeout(() => router.refresh(), 500)
     }
   }
 

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Message } from "@prisma/client"
 import { FiChevronUp, FiChevronDown, FiX } from "react-icons/fi"
 import ChatMessages from "./ChatMessages"
@@ -26,8 +26,7 @@ export default function ChatContainer({ messages: initialMessages, room, userId 
 
   const matchedMessages = searchQuery.trim()
     ? messages.filter(m =>
-        !m.isBot &&
-        m.text.toLowerCase().includes(searchQuery.toLowerCase())
+        !m.isBot && m.text.toLowerCase().includes(searchQuery.toLowerCase())
       )
     : []
 
@@ -47,17 +46,24 @@ export default function ChatContainer({ messages: initialMessages, room, userId 
     setMessages(prev => prev.map(m => m.id === tempId ? realMessage : m))
   }
 
+  // cek reminder triggered — dipanggil setelah kirim pesan
+  async function handleCheckReminders() {
+    const res = await fetch(`/api/rooms/${room.id}/reminders`)
+    if (!res.ok) return
+    const newBotMessages: Message[] = await res.json()
+    if (newBotMessages.length > 0) {
+      setMessages(prev => [...prev, ...newBotMessages])
+    }
+  }
+
   function handleSearch(query: string) {
     setSearchQuery(query)
     setActiveIndex(0)
   }
 
   async function handleBotDone(botMessageId: string, sourceMessageId: string) {
-    // update local state — TIDAK hapus bot message, cuma tandai done
     updateMessage(sourceMessageId, { isDone: true, isRemindDone: true })
     updateMessage(botMessageId, { isRemindDone: true })
-
-    // sync background
     fetch(`/api/messages/${sourceMessageId}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
@@ -78,12 +84,8 @@ export default function ChatContainer({ messages: initialMessages, room, userId 
   async function handleSnoozeSelect(minutes: number) {
     if (!snoozeBotId || !snoozeSourceId) return
     const newRemindAt = new Date(Date.now() + minutes * 60 * 1000)
-
-    // update local state — TIDAK hapus bot message
     updateMessage(snoozeSourceId, { remindAt: newRemindAt })
     updateMessage(snoozeBotId, { isRemindDone: true })
-
-    // sync background
     fetch(`/api/messages/${snoozeSourceId}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
@@ -94,7 +96,6 @@ export default function ChatContainer({ messages: initialMessages, room, userId 
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ isRemindDone: true }),
     })
-
     setSnoozeBotId(null)
     setSnoozeSourceId(null)
   }
@@ -107,6 +108,25 @@ export default function ChatContainer({ messages: initialMessages, room, userId 
       body: JSON.stringify({ isRemindDone: true, isDone: true }),
     })
   }
+
+  useEffect(() => {
+  const interval = setInterval(async () => {
+    const res = await fetch(`/api/rooms/${room.id}/reminders`)
+    if (!res.ok) return
+
+    const newBotMessages: Message[] = await res.json()
+
+    if (newBotMessages.length > 0) {
+      setMessages(prev => {
+        const existingIds = new Set(prev.map(m => m.id))
+        const newOnes = newBotMessages.filter(m => !existingIds.has(m.id))
+        return [...prev, ...newOnes]
+      })
+    }
+  }, 5000)
+
+  return () => clearInterval(interval)
+}, [room.id])
 
   return (
     <>
@@ -124,7 +144,6 @@ export default function ChatContainer({ messages: initialMessages, room, userId 
         onSearch={handleSearch}
       />
 
-      {/* search result bar */}
       {searchQuery.trim() && (
         <div
           className="flex items-center justify-between px-4 py-2 border-b text-xs"
@@ -179,6 +198,7 @@ export default function ChatContainer({ messages: initialMessages, room, userId 
         userId={userId}
         onMessageAdd={addMessage}
         onMessageReplace={replaceMessage}
+        onCheckReminders={handleCheckReminders}
       />
 
       {snoozeBotId && (

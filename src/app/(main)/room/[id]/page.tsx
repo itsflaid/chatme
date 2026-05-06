@@ -50,7 +50,7 @@ export default async function RoomPage({ params }: Props) {
   })
 
   return (
-    <div className="flex flex-col h-full" style={{ background: "var(--bg)" }}>
+    <div className="flex flex-col" style={{ background: "var(--bg)", height: "100dvh" }}>
       <ChatContainer
         messages={messages}
         room={room}
