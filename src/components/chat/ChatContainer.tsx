@@ -129,7 +129,7 @@ export default function ChatContainer({ messages: initialMessages, room, userId 
 }, [room.id])
 
   return (
-    <>
+    <div className="flex flex-col flex-1 min-h-0">
       <ChatHeader
         roomId={room.id}
         name={room.name}
@@ -207,6 +207,6 @@ export default function ChatContainer({ messages: initialMessages, room, userId 
           onClose={() => { setSnoozeBotId(null); setSnoozeSourceId(null) }}
         />
       )}
-    </>
+    </div>
   )
 }

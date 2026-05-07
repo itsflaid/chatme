@@ -12,7 +12,10 @@ export default function MobileLayout({ sidebar, children }: Props) {
   const isInRoom = pathname.startsWith("/room/")
 
   return (
-    <div className="h-screen flex overflow-hidden bg-[var(--bg)]">
+    <div
+      className="flex overflow-hidden bg-[var(--bg)]"
+      style={{ height: "100dvh" }}
+    >
 
       <div className="hidden md:flex w-80 flex-col flex-shrink-0 border-r border-[var(--border)]">
         {sidebar}
@@ -24,14 +27,14 @@ export default function MobileLayout({ sidebar, children }: Props) {
       <div className="flex md:hidden w-full  relative overflow-hidden" style={{ height: "100dvh" }}>
 
         <div
-          className="absolute inset-0 flex flex-col transition-transform duration-300 ease-in-out"
+          className="absolute inset-0 min-h-0 flex flex-col transition-transform duration-300 ease-in-out"
           style={{ transform: isInRoom ? "translateX(-100%)" : "translateX(0)" }}
         >
           {sidebar}
         </div>
 
         <div
-          className="absolute inset-0 flex flex-col transition-transform duration-300 ease-in-out"
+          className="absolute inset-0 min-h-0 flex flex-col transition-transform duration-300 ease-in-out"
           style={{ transform: isInRoom ? "translateX(0)" : "translateX(100%)" }}
         >
           {children}
