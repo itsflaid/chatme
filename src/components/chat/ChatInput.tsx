@@ -82,7 +82,7 @@ export default function ChatInput({
   }
 
   return (
-    <div className="flex items-end gap-3 px-4 pb-6">
+    <div className="flex items-end gap-3 px-4 py-2 sm:py-3">
       <textarea
         ref={textareaRef}
         className="flex-1 max-h-[110px] rounded-2xl px-4 py-2.5 text-sm outline-none resize-none border leading-relaxed bg-[var(--surface2)] border-[var(--border2)] text-[var(--text)]"
