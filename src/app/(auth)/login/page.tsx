@@ -17,7 +17,7 @@ export default function LoginPage() {
             className="absolute inset-0 opacity-80"
             style={{
               background:
-                "radial-gradient(circle at 18% 18%, rgba(245,197,24,0.18), transparent 28%), linear-gradient(135deg, #121212 0%, #181818 48%, #10201c 100%)",
+                "linear-gradient(135deg, var(--bg) 0%, var(--surface) 52%, var(--bg2) 100%)",
             }}
           />
           <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.035)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.035)_1px,transparent_1px)] bg-[length:34px_34px]" />
@@ -51,9 +51,9 @@ export default function LoginPage() {
                 Catatan, obrolan, dan pengingat dalam satu ruang yang tenang.
               </p>
 
-              <div className="mt-8 w-full max-w-md rounded-2xl border border-[var(--border)] bg-[rgba(18,18,18,0.78)] p-3 shadow-2xl shadow-black/30 backdrop-blur">
-                <div className="flex items-center gap-3 border-b border-[var(--border)] pb-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[var(--accent)] font-sora text-lg font-bold text-[var(--bg)]">
+              <div className="neo-panel mt-8 w-full max-w-md -rotate-1 rounded-2xl bg-[var(--surface)] p-3">
+                <div className="flex items-center gap-3 border-b-2 border-[var(--neo-line)] pb-3">
+                  <div className="neo-button flex h-10 w-10 items-center justify-center rounded-xl bg-[var(--accent)] font-sora text-lg font-bold text-[var(--bg)]">
                     C
                   </div>
                   <div className="min-w-0">
@@ -63,13 +63,13 @@ export default function LoginPage() {
                 </div>
 
                 <div className="flex flex-col gap-3 pt-4">
-                  <div className="ml-auto max-w-[78%] rounded-2xl rounded-br-md bg-[var(--accent)] px-4 py-2.5 text-sm leading-relaxed text-[var(--bg)]">
+                  <div className="neo-card ml-auto max-w-[78%] rotate-1 rounded-xl rounded-br-sm bg-[var(--accent)] px-4 py-2.5 text-sm leading-relaxed text-[var(--bg)]">
                     Review konsep dashboard jam 4 sore
                   </div>
-                  <div className="mr-auto max-w-[82%] rounded-2xl rounded-bl-md border border-[var(--border2)] bg-[var(--surface2)] px-4 py-2.5 text-sm leading-relaxed">
+                  <div className="neo-card mr-auto max-w-[82%] -rotate-1 rounded-xl rounded-bl-sm bg-[var(--surface2)] px-4 py-2.5 text-sm leading-relaxed">
                     Jangan lupa: Review konsep dashboard
                   </div>
-                  <div className="flex items-center justify-between rounded-xl border border-[rgba(45,212,191,0.28)] bg-[rgba(45,212,191,0.08)] px-3 py-2">
+                  <div className="neo-card flex items-center justify-between rounded-xl bg-[var(--bg)] px-3 py-2">
                     <div className="flex min-w-0 items-center gap-2">
                       <FiCheckCircle className="flex-shrink-0 text-[#2dd4bf]" size={16} />
                       <span className="truncate text-xs text-[var(--text2)]">Selesai ditandai</span>
@@ -96,10 +96,10 @@ export default function LoginPage() {
               </p>
             </div>
 
-            <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-5 shadow-xl shadow-black/20 sm:p-6">
+            <div className="neo-panel rounded-2xl bg-[var(--surface)] p-5 sm:p-6">
               <button
                 onClick={() => signIn("google", { callbackUrl: "/" })}
-                className="group flex w-full items-center justify-between rounded-xl border border-[var(--border2)] bg-[var(--surface2)] px-4 py-3.5 text-sm font-semibold text-[var(--text)] transition hover:border-[rgba(245,197,24,0.55)] hover:bg-[var(--surface3)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:ring-offset-2 focus:ring-offset-[var(--bg)]"
+                className="neo-button group flex w-full items-center justify-between rounded-xl bg-[var(--surface2)] px-4 py-3.5 text-sm font-semibold text-[var(--text)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:ring-offset-2 focus:ring-offset-[var(--bg)]"
               >
                 <span className="flex items-center gap-3">
                   <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24">
@@ -117,15 +117,15 @@ export default function LoginPage() {
               </button>
 
               <div className="mt-5 grid grid-cols-3 gap-2 text-center">
-                <div className="rounded-xl border border-[var(--border)] bg-[var(--bg)] px-3 py-3">
+                <div className="neo-card rounded-xl bg-[var(--bg)] px-3 py-3">
                   <p className="font-sora text-sm font-bold text-[var(--accent)]">Chat</p>
                   <p className="mt-1 text-[11px] text-[var(--text3)]">cepat</p>
                 </div>
-                <div className="rounded-xl border border-[var(--border)] bg-[var(--bg)] px-3 py-3">
+                <div className="neo-card rounded-xl bg-[var(--bg)] px-3 py-3">
                   <p className="font-sora text-sm font-bold text-[#2dd4bf]">Todo</p>
                   <p className="mt-1 text-[11px] text-[var(--text3)]">rapi</p>
                 </div>
-                <div className="rounded-xl border border-[var(--border)] bg-[var(--bg)] px-3 py-3">
+                <div className="neo-card rounded-xl bg-[var(--bg)] px-3 py-3">
                   <p className="font-sora text-sm font-bold text-[#60a5fa]">Ingat</p>
                   <p className="mt-1 text-[11px] text-[var(--text3)]">tepat</p>
                 </div>

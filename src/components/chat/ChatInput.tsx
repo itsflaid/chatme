@@ -82,10 +82,10 @@ export default function ChatInput({
   }
 
   return (
-    <div className="flex items-end gap-3 px-4 py-2 sm:py-3">
+    <div className="flex items-end gap-3 px-4 py-3 sm:px-6">
       <textarea
         ref={textareaRef}
-        className="flex-1 max-h-[110px] rounded-2xl px-4 py-2.5 text-sm outline-none resize-none border leading-relaxed bg-[var(--surface2)] border-[var(--border2)] text-[var(--text)]"
+        className="neo-input flex-1 max-h-[110px] rounded-xl bg-[var(--surface2)] px-4 py-2.5 text-sm leading-relaxed text-[var(--text)] outline-none resize-none"
         placeholder="Ketik sesuatu..."
         rows={1}
         value={text}
@@ -95,7 +95,7 @@ export default function ChatInput({
       <button
         onClick={handleSend}
         disabled={!text.trim()}
-        className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 transition-opacity bg-[var(--accent)] text-[var(--bg)]"
+        className="neo-button w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 transition-opacity bg-[var(--accent)] text-[var(--bg)]"
         style={{ opacity: !text.trim() ? 0.5 : 1 }}
       >
         <FiSend size={16} />

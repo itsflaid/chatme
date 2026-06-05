@@ -40,7 +40,7 @@ export default function AddRoomButton() {
       <div className="relative h-20 flex-shrink-0">
         <button
           onClick={() => setOpen(true)}
-          className="absolute bottom-10 right-5 w-12 h-12 rounded-full flex items-center justify-center shadow-lg transition-all duration-200 hover:scale-110 hover:rotate-90 z-10 bg-[var(--accent)] text-[var(--bg)]"
+          className="neo-button absolute bottom-10 right-5 z-10 flex h-12 w-12 rotate-3 items-center justify-center rounded-xl bg-[var(--accent)] text-[var(--bg)] transition-all duration-200 hover:rotate-12"
         >
           <FiPlus size={22} />
         </button>
@@ -52,8 +52,8 @@ export default function AddRoomButton() {
           style={{ background: "#00000070", backdropFilter: "blur(4px)" }}
           onClick={(e) => e.target === e.currentTarget && handleClose()}
         >
-          <div className="w-full max-w-md rounded-t-3xl p-6 pb-10 bg-[var(--surface)] border-t border-[var(--border2)]">
-            <div className="w-9 h-1 rounded-full mx-auto mb-5 bg-[var(--border2)]" />
+          <div className="neo-panel w-[calc(100%-24px)] max-w-md rounded-2xl bg-[var(--surface)] p-6 pb-8">
+            <div className="w-12 h-2 rotate-1 rounded-md mx-auto mb-5 bg-[var(--accent)] border-2 border-[var(--neo-line)]" />
 
             <div className="flex items-center justify-between mb-5">
               <p className="font-semibold font-sora text-base text-[var(--text)]">Buat Room Baru</p>
@@ -64,7 +64,7 @@ export default function AddRoomButton() {
 
             <label className="text-xs text-[var(--text3)] mb-1.5 block">Nama room *</label>
             <input
-              className="w-full rounded-xl px-4 py-3 text-sm outline-none mb-4 border bg-[var(--surface2)] border-[var(--border2)] text-[var(--text)] placeholder:text-[var(--text3)] focus:border-[var(--accent)] transition-colors"
+                className="neo-input w-full rounded-xl px-4 py-3 text-sm outline-none mb-4 bg-[var(--surface2)] text-[var(--text)] placeholder:text-[var(--text3)] focus:border-[var(--accent)] transition-colors"
               placeholder="Contoh: Tugas, Catatan, Random..."
               value={name}
               onChange={(e) => setName(e.target.value)}
@@ -75,7 +75,7 @@ export default function AddRoomButton() {
               Deskripsi <span className="text-[var(--text3)]">(opsional)</span>
             </label>
             <input
-              className="w-full rounded-xl px-4 py-3 text-sm outline-none mb-5 border bg-[var(--surface2)] border-[var(--border2)] text-[var(--text)] placeholder:text-[var(--text3)] focus:border-[var(--accent)] transition-colors"
+              className="neo-input w-full rounded-xl px-4 py-3 text-sm outline-none mb-5 bg-[var(--surface2)] text-[var(--text)] placeholder:text-[var(--text3)] focus:border-[var(--accent)] transition-colors"
               placeholder="Untuk apa room ini..."
               value={description}
               onChange={(e) => setDescription(e.target.value)}
@@ -87,8 +87,8 @@ export default function AddRoomButton() {
                 <button
                   key={e}
                   onClick={() => setIcon(e)}
-                  className="w-10 h-10 rounded-xl flex items-center justify-center text-xl border-2 transition-colors bg-[var(--surface2)]"
-                  style={{ borderColor: icon === e ? "var(--accent)" : "transparent" }}
+                  className="neo-button w-10 h-10 rounded-lg flex items-center justify-center text-xl transition-colors"
+                  style={{ background: icon === e ? "var(--accent)" : "var(--surface2)", color: "var(--text)" }}
                 >
                   {e}
                 </button>
@@ -98,7 +98,7 @@ export default function AddRoomButton() {
             <button
               onClick={handleCreate}
               disabled={!name.trim() || loading}
-              className="w-full py-3 rounded-xl font-semibold text-sm font-sora transition-opacity bg-[var(--accent)] text-[var(--bg)]"
+              className="neo-button w-full py-3 rounded-xl font-semibold text-sm font-sora transition-opacity bg-[var(--accent)] text-[var(--bg)]"
               style={{ opacity: !name.trim() || loading ? 0.5 : 1 }}
             >
               {loading ? "Membuat..." : "Buat Room"}

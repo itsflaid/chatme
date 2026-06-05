@@ -30,30 +30,25 @@ export default function RoomItem({ id, name, icon, pendingCount, lastMessage }: 
   return (
     <Link
       href={`/room/${id}`}
-      className="flex items-center gap-3 px-4 py-3.5 border-b transition-all duration-150 cursor-pointer relative"
+      className="neo-card mb-3 flex items-center gap-3 rounded-xl px-3 py-3 transition-all duration-150 cursor-pointer relative hover:-translate-x-0.5 hover:-translate-y-0.5"
       style={{
-        borderColor: "var(--border)",
-        background: isActive ? "var(--surface2)" : "transparent",
+        background: isActive ? "var(--accent)" : "var(--surface)",
       }}
       onMouseEnter={e => {
-        if (!isActive) e.currentTarget.style.background = "var(--surface)"
+        if (!isActive) e.currentTarget.style.background = "var(--surface3)"
       }}
       onMouseLeave={e => {
-        if (!isActive) e.currentTarget.style.background = "transparent"
+        if (!isActive) e.currentTarget.style.background = "var(--surface)"
       }}
     >
       {isActive && (
-        <div
-          className="absolute left-0 top-0 bottom-0 w-[3px] rounded-r-full"
-          style={{ background: "var(--accent)" }}
-        />
+        <div className="absolute -left-2 top-3 h-5 w-5 rotate-12 rounded-md border-2 border-[var(--neo-line)] bg-[var(--bg)]" />
       )}
 
       <div
-        className="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl flex-shrink-0 border"
+        className="w-12 h-12 rounded-lg flex items-center justify-center text-2xl flex-shrink-0 neo-button"
         style={{
-          background: isActive ? "var(--surface3)" : "var(--surface2)",
-          borderColor: isActive ? "var(--accent)" : "var(--border)",
+          background: isActive ? "var(--bg)" : "var(--surface2)",
         }}
       >
         {icon}
@@ -63,12 +58,12 @@ export default function RoomItem({ id, name, icon, pendingCount, lastMessage }: 
         <div className="flex items-center justify-between gap-2 mb-0.5">
           <p
             className="text-sm font-semibold font-sora truncate"
-            style={{ color: isActive ? "var(--accent)" : "var(--text)" }}
+            style={{ color: isActive ? "var(--bg)" : "var(--text)" }}
           >
             {name}
           </p>
           {lastMessage && (
-            <span className="text-[11px] flex-shrink-0" style={{ color: "var(--text3)" }}>
+            <span className="text-[11px] flex-shrink-0" style={{ color: isActive ? "var(--bg)" : "var(--text3)" }}>
               {formatTime(new Date(lastMessage.createdAt))}
             </span>
           )}
@@ -76,7 +71,7 @@ export default function RoomItem({ id, name, icon, pendingCount, lastMessage }: 
 
         <p
           className="text-xs truncate"
-          style={{ color: isActive ? "var(--text2)" : "var(--text3)" }}
+          style={{ color: isActive ? "var(--bg)" : "var(--text3)" }}
         >
           {lastMessage ? lastMessage.text : "Belum ada pesan"}
         </p>
@@ -84,8 +79,8 @@ export default function RoomItem({ id, name, icon, pendingCount, lastMessage }: 
 
       {pendingCount > 0 && (
         <div
-          className="text-[11px] font-bold px-2 py-0.5 rounded-full font-sora flex-shrink-0"
-          style={{ background: "var(--accent)", color: "var(--bg)" }}
+          className="rounded-md border-2 border-[var(--neo-line)] px-2 py-0.5 text-[11px] font-bold font-sora flex-shrink-0 shadow-[2px_2px_0_var(--neo-shadow)]"
+          style={{ background: isActive ? "var(--bg)" : "var(--accent)", color: isActive ? "var(--accent)" : "var(--bg)" }}
         >
           {pendingCount}
         </div>

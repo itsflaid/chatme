@@ -70,11 +70,10 @@ export default function ContextMenu({
       />
 
       <div
-        className="fixed z-50 rounded-2xl overflow-hidden border min-w-[200px] bg-[var(--surface2)] border-[var(--border2)]"
+        className="neo-panel fixed z-50 min-w-[200px] overflow-hidden rounded-xl bg-[var(--surface2)]"
         style={{
           top: safeY,
           left: safeX,
-          boxShadow: "0 8px 32px #00000050",
           animation: "menuPop 0.15s ease",
         }}
       >
@@ -82,7 +81,7 @@ export default function ContextMenu({
           <button
             key={i}
             onClick={() => { item.onClick(); onClose() }}
-            className="w-full flex items-center gap-3 px-4 py-3 text-sm text-left transition-colors border-b last:border-b-0 border-[var(--border)]"
+            className="w-full flex items-center gap-3 px-4 py-3 text-sm text-left transition-colors border-b-2 last:border-b-0 border-[var(--neo-line)]"
             style={{
               color: item.danger ? "#fca5a5" : "var(--text)",
             }}

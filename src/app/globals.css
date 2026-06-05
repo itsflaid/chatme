@@ -19,6 +19,8 @@
     --text: #fafafa;
     --text2: #a3a3a3;
     --text3: #525252;
+  --neo-line: #8a6f08;
+  --neo-shadow: #8a6f08;
   }
 
   :root[data-theme="light"] {
@@ -37,10 +39,16 @@
     --text: #161a17;
     --text2: #556158;
     --text3: #879188;
+    --neo-line: #111111;
+    --neo-shadow: #111111;
   }
 
   body {
     background-color: var(--bg);
+    background-image:
+      linear-gradient(var(--border) 1px, transparent 1px),
+      linear-gradient(90deg, var(--border) 1px, transparent 1px);
+    background-size: 28px 28px;
     color: var(--text);
   }
 
@@ -102,4 +110,37 @@
 
 .animate-shake {
   animation: shake 0.6s ease;
+}
+
+@layer components {
+  .neo-panel {
+    border: 2px solid var(--neo-line);
+    box-shadow: 5px 5px 0 var(--neo-shadow);
+  }
+
+  .neo-card {
+    border: 2px solid var(--neo-line);
+    box-shadow: 4px 4px 0 var(--neo-shadow);
+  }
+
+  .neo-button {
+    border: 2px solid var(--neo-line);
+    box-shadow: 3px 3px 0 var(--neo-shadow);
+    transition: transform 140ms ease, box-shadow 140ms ease, background-color 140ms ease, opacity 140ms ease;
+  }
+
+  .neo-button:hover:not(:disabled) {
+    transform: translate(-1px, -1px);
+    box-shadow: 5px 5px 0 var(--neo-shadow);
+  }
+
+  .neo-button:active:not(:disabled) {
+    transform: translate(2px, 2px);
+    box-shadow: 1px 1px 0 var(--neo-shadow);
+  }
+
+  .neo-input {
+    border: 2px solid var(--neo-line);
+    box-shadow: 3px 3px 0 var(--neo-shadow);
+  }
 }

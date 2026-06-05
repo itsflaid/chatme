@@ -80,11 +80,11 @@ export default function BotBubble({
           alt="Bot"
           width={32}
           height={32}
-          className="rounded-full flex-shrink-0 mb-1"
+          className="neo-button rounded-lg flex-shrink-0 mb-1 bg-[var(--surface)]"
         />
         <div
-          className="rounded-[18px_18px_18px_4px] px-4 py-2.5 max-w-[240px]"
-          style={{ background: "var(--surface2)", border: "1px solid var(--border)" }}
+          className="neo-card max-w-[240px] -rotate-[0.4deg] rounded-xl rounded-bl-sm px-4 py-2.5"
+          style={{ background: "var(--surface2)" }}
         >
           <p className="text-sm leading-relaxed text-[var(--text)] line-clamp-2">
             🔔 Jangan lupa: {truncate(reminderText)}
@@ -119,14 +119,13 @@ export default function BotBubble({
           >
             <div
               id={cardId}
-              className="w-full max-w-[340px] rounded-3xl p-5 shadow-xl"
-              style={{
-                background: "linear-gradient(145deg, #2c2508, #1f1a00)",
-                border: "1px solid rgba(250, 204, 21, 0.15)",
+            className="neo-panel w-full max-w-[340px] rotate-1 rounded-2xl p-5"
+            style={{
+                background: "var(--surface)",
               }}
             >
               <div className="flex items-center gap-3 mb-4">
-                <div className="w-11 h-11 rounded-2xl flex items-center justify-center bg-[var(--accent)]">
+                <div className="neo-button w-11 h-11 rounded-xl flex items-center justify-center bg-[var(--accent)]">
                   <FiBell size={22} className="text-[var(--bg)]" />
                 </div>
                 <p className="text-xs uppercase tracking-widest font-medium text-[var(--accent)]">
@@ -141,14 +140,13 @@ export default function BotBubble({
               <div className="flex gap-3">
                 <button
                   onClick={handleDone}
-                  className="flex-1 py-3 rounded-2xl font-semibold text-sm bg-[var(--accent)] text-[var(--bg)] active:scale-[0.97]"
+                  className="neo-button flex-1 rounded-xl bg-[var(--accent)] py-3 text-sm font-semibold text-[var(--bg)]"
                 >
                   Selesai
                 </button>
                 <button
                   onClick={handleSnooze}
-                  className="flex-1 py-3 rounded-2xl font-semibold text-sm text-[var(--text)]"
-                  style={{ border: "1px solid rgba(250, 204, 21, 0.3)" }}
+                  className="neo-button flex-1 rounded-xl bg-[var(--surface2)] py-3 text-sm font-semibold text-[var(--text)]"
                 >
                   Tunda
                 </button>

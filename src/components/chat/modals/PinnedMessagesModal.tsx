@@ -37,8 +37,8 @@ export default function PinnedMessagesModal({ messages, onClose }: Props) {
       style={{ background: "#00000070", backdropFilter: "blur(4px)" }}
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
-      <div className="w-full max-w-md rounded-t-3xl p-6 pb-10 bg-[var(--surface)] border-t border-[var(--border2)]">
-        <div className="w-9 h-1 rounded-full mx-auto mb-5 bg-[var(--border2)]" />
+      <div className="neo-panel w-[calc(100%-24px)] max-w-md rounded-2xl bg-[var(--surface)] p-6 pb-8">
+        <div className="w-12 h-2 rotate-1 rounded-md mx-auto mb-5 bg-[var(--accent)] border-2 border-[var(--neo-line)]" />
 
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
@@ -61,7 +61,7 @@ export default function PinnedMessagesModal({ messages, onClose }: Props) {
             {pinned.map((msg) => (
               <div
                 key={msg.id}
-                className="flex items-start gap-3 p-3 rounded-xl border"
+                className="neo-card flex items-start gap-3 rounded-xl p-3"
                 style={{ background: "var(--surface2)", borderColor: "var(--border2)" }}
               >
                 <div className="flex-1 min-w-0">
@@ -76,7 +76,7 @@ export default function PinnedMessagesModal({ messages, onClose }: Props) {
                 <div className="flex flex-col gap-1.5 flex-shrink-0">
                   <button
                     onClick={() => handleDone(msg.id)}
-                    className="w-7 h-7 rounded-full flex items-center justify-center transition-opacity hover:opacity-80"
+                    className="neo-button w-7 h-7 rounded-lg flex items-center justify-center transition-opacity hover:opacity-80"
                     style={{ background: "var(--accent)", color: "var(--bg)" }}
                     title="Tandai selesai"
                   >
@@ -84,7 +84,7 @@ export default function PinnedMessagesModal({ messages, onClose }: Props) {
                   </button>
                   <button
                     onClick={() => handleUnpin(msg.id)}
-                    className="w-7 h-7 rounded-full flex items-center justify-center transition-opacity hover:opacity-80"
+                    className="neo-button w-7 h-7 rounded-lg flex items-center justify-center transition-opacity hover:opacity-80"
                     style={{ background: "var(--surface3)", color: "var(--text2)" }}
                     title="Unpin"
                   >

@@ -59,11 +59,11 @@ export default function MessageBubble({
       className="flex flex-col items-end"
     >
       <div
-        className="max-w-[82%] rounded-[18px_18px_4px_18px] px-4 py-2.5 relative bg-[var(--accent)]"
+        className="neo-card max-w-[82%] rotate-[0.4deg] rounded-xl rounded-br-sm px-4 py-2.5 relative bg-[var(--accent)]"
         // style={{ opacity: message.isDone ? 0.5 : 1 }}
       >
         {message.isPinned && (
-          <div className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-[var(--bg)] flex items-center justify-center">
+            <div className="absolute -top-2 -right-2 w-6 h-6 rotate-12 rounded-md border-2 border-[var(--neo-line)] bg-[var(--bg)] flex items-center justify-center shadow-[2px_2px_0_var(--neo-shadow)]">
             <FiBookmark size={11} className="text-[var(--accent)]" />
           </div>
         )}
@@ -76,7 +76,7 @@ export default function MessageBubble({
         </p>
 
         {message.remindAt && !message.isRemindDone && (
-          <span className="text-[10px] flex items-center gap-1 mt-1 text-[#3a2e00]">
+          <span className="mt-2 flex w-fit items-center gap-1 rounded-md border-2 border-[var(--neo-line)] bg-[var(--bg)] px-2 py-0.5 text-[10px] text-[var(--accent)]">
             🔔{" "}
             {new Date(message.remindAt).toLocaleDateString("id-ID", {
               day: "numeric",

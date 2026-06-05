@@ -48,17 +48,17 @@ export default function ChatHeader({
 
   return (
     <>
-      <div className="relative flex items-center gap-3 px-4 py-3 border-b bg-[var(--surface)] border-[var(--border)]">
+      <div className="relative m-3 mb-0 flex items-center gap-3 rounded-xl bg-[var(--surface)] px-3 py-3 neo-panel">
 
         <div className="flex items-center gap-3 min-w-0">
           <button
             onClick={() => router.push("/")}
-            className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-[var(--surface2)] transition text-[var(--accent)]"
+            className="neo-button w-8 h-8 flex items-center justify-center rounded-lg bg-[var(--surface2)] transition text-[var(--accent)]"
           >
             <FiArrowLeft size={20} />
           </button>
 
-          <div className="w-10 h-10 rounded-full flex items-center justify-center text-lg border flex-shrink-0 bg-[var(--surface2)] border-[var(--border2)]">
+          <div className="neo-button w-10 h-10 rounded-lg flex items-center justify-center text-lg flex-shrink-0 bg-[var(--surface2)]">
             {icon}
           </div>
 
@@ -83,7 +83,7 @@ export default function ChatHeader({
               value={searchQuery}
               onChange={(e) => onSearch(e.target.value)}
               placeholder="Cari pesan..."
-              className="w-full pl-9 pr-10 py-1.5 text-sm rounded-full bg-[var(--surface2)] text-[var(--text)] placeholder:text-[var(--text3)] outline-none focus:ring-1 focus:ring-[var(--accent)] transition"
+              className="neo-input w-full rounded-xl bg-[var(--surface2)] py-1.5 pl-9 pr-10 text-sm text-[var(--text)] placeholder:text-[var(--text3)] outline-none focus:ring-1 focus:ring-[var(--accent)] transition"
             />
 
             {searchQuery && (
@@ -101,12 +101,12 @@ export default function ChatHeader({
           {/* bell + badge reminder */}
           <button
             onClick={() => setShowReminders(true)}
-            className="relative p-2 rounded-full hover:bg-[var(--surface2)] transition"
+            className="neo-button relative rounded-lg bg-[var(--surface2)] p-2 transition"
           >
             <IoNotificationsOutline size={18} className="text-[var(--text2)]" />
             {reminders.length > 0 && (
               <span
-                className="absolute top-1 right-1 w-4 h-4 rounded-full text-[10px] font-bold font-sora flex items-center justify-center"
+                className="absolute -right-1 -top-1 flex h-4 w-4 rotate-6 items-center justify-center rounded-md border-2 border-[var(--neo-line)] text-[10px] font-bold font-sora"
                 style={{ background: "var(--accent)", color: "var(--bg)" }}
               >
                 {reminders.length}
@@ -117,7 +117,7 @@ export default function ChatHeader({
           {/* titik tiga */}
           <button
             onClick={() => setShowMenu(true)}
-            className="p-2 rounded-full hover:bg-[var(--surface2)] transition text-[var(--text2)]"
+            className="neo-button rounded-lg bg-[var(--surface2)] p-2 transition text-[var(--text2)]"
           >
             <FiMoreVertical size={18} />
           </button>
@@ -141,8 +141,8 @@ export default function ChatHeader({
           style={{ background: "#00000070", backdropFilter: "blur(4px)" }}
           onClick={(e) => e.target === e.currentTarget && setShowReminders(false)}
         >
-          <div className="w-full max-w-md rounded-t-3xl p-6 pb-10 bg-[var(--surface)] border-t border-[var(--border2)]">
-            <div className="w-9 h-1 rounded-full mx-auto mb-5 bg-[var(--border2)]" />
+          <div className="neo-panel w-[calc(100%-24px)] max-w-md rounded-2xl bg-[var(--surface)] p-6 pb-8">
+            <div className="w-12 h-2 -rotate-1 rounded-md mx-auto mb-5 bg-[var(--accent)] border-2 border-[var(--neo-line)]" />
             <div className="flex items-center justify-between mb-4">
               <p className="font-semibold font-sora text-sm text-[var(--text)]">Reminder Aktif</p>
               <button onClick={() => setShowReminders(false)} className="text-[var(--text3)]">
@@ -157,7 +157,7 @@ export default function ChatHeader({
                 {reminders.map((r) => (
                   <div
                     key={r.id}
-                    className="flex items-center gap-3 p-3 rounded-xl border"
+                    className="neo-card flex items-center gap-3 rounded-xl p-3"
                     style={{ background: "var(--surface2)", borderColor: "var(--border2)" }}
                   >
                     <div className="flex-1 min-w-0">
@@ -178,7 +178,7 @@ export default function ChatHeader({
                         onReminderDone(r.id)
                         setShowReminders(false)
                       }}
-                      className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 hover:opacity-80"
+                      className="neo-button w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 hover:opacity-80"
                       style={{ background: "var(--accent)", color: "var(--bg)" }}
                     >
                       <FiCheck size={14} />

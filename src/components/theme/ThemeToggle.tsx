@@ -36,7 +36,7 @@ export default function ThemeToggle({ className = "" }: Props) {
       onClick={toggleTheme}
       aria-label={isLight ? "Aktifkan dark mode" : "Aktifkan light mode"}
       title={isLight ? "Dark mode" : "Light mode"}
-      className={`h-8 w-8 flex-shrink-0 rounded-full border border-[var(--border2)] bg-[var(--surface2)] text-[var(--text2)] transition hover:border-[var(--accent)] hover:text-[var(--accent)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:ring-offset-2 focus:ring-offset-[var(--bg)] ${className}`}
+      className={`neo-button h-8 w-8 flex-shrink-0 rounded-lg bg-[var(--surface2)] text-[var(--text2)] hover:text-[var(--accent)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:ring-offset-2 focus:ring-offset-[var(--bg)] ${className}`}
     >
       <span className="flex h-full w-full items-center justify-center">
         {isLight ? <FiMoon size={15} /> : <FiSun size={15} />}

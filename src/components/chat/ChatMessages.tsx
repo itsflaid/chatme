@@ -80,11 +80,11 @@ export default function ChatMessages({
   const grouped = groupByDate(messages)
 
   return (
-    <div className="flex-1 min-h-0 overflow-y-auto px-3 sm:px-10 py-4 flex flex-col gap-2">
+    <div className="flex-1 min-h-0 overflow-y-auto px-3 sm:px-10 py-5 flex flex-col gap-2">
       {grouped.map((group) => (
         <div key={group.dateLabel}>
           <div className="flex justify-center my-3">
-            <span className="text-[11px] px-3 py-1 rounded-full border text-[var(--text3)] bg-[var(--surface)] border-[var(--border)]">
+            <span className="neo-card rotate-1 rounded-lg bg-[var(--surface)] px-3 py-1 text-[11px] font-semibold text-[var(--text3)]">
               {group.dateLabel}
             </span>
           </div>

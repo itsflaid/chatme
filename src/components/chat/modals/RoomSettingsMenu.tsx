@@ -21,11 +21,9 @@ export default function RoomSettingsMenu({ onEdit, onPinned, onDelete, onClose }
       <div className="fixed inset-0 z-40" onClick={onClose} />
 
       <div
-        className="absolute right-4 top-14 z-50 rounded-2xl overflow-hidden border min-w-[180px]"
+        className="neo-panel absolute right-4 top-16 z-50 min-w-[180px] overflow-hidden rounded-xl"
         style={{
           background: "var(--surface2)",
-          borderColor: "var(--border2)",
-          boxShadow: "0 8px 32px #00000050",
           animation: "menuPop 0.15s ease",
         }}
       >
@@ -33,9 +31,9 @@ export default function RoomSettingsMenu({ onEdit, onPinned, onDelete, onClose }
           <button
             key={i}
             onClick={() => { item.onClick(); onClose() }}
-            className="w-full flex items-center gap-3 px-4 py-3 text-sm text-left border-b last:border-b-0 transition-colors"
+            className="w-full flex items-center gap-3 px-4 py-3 text-sm text-left border-b-2 last:border-b-0 transition-colors"
             style={{
-              borderColor: "var(--border)",
+              borderColor: "var(--neo-line)",
               color: item.danger ? "#fca5a5" : "var(--text)",
             }}
             onMouseEnter={e => e.currentTarget.style.background = "var(--surface3)"}
