@@ -17,7 +17,7 @@ export default async function MainLayout({ children }: { children: React.ReactNo
     include: {
       _count: {
         select: {
-          messages: { where: { isDone: false } }
+          messages: { where: { isDone: false, isBot: false } }
         }
       },
       messages: {

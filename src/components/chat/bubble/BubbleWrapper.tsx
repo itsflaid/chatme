@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useRef, useCallback } from "react"
+import { useRouter } from "next/navigation"
 import ContextMenu from "@/components/chat/modals/ContextMenu"
 import RemindModal from "@/components/chat/modals/RemindModal"
 import MessageBubble from "./MessageBubble"
@@ -24,6 +25,7 @@ export default function BubbleWrapper({
   const [menuPos, setMenuPos] = useState<{ x: number; y: number } | null>(null)
   const [showRemind, setShowRemind] = useState(false)
   const touchTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const router = useRouter()
 
   function openMenu(x: number, y: number) { setMenuPos({ x, y }) }
 
@@ -45,14 +47,20 @@ export default function BubbleWrapper({
     navigator.clipboard?.writeText(message.text)
   }, [message.text])
 
-  const handleToggleDone = useCallback(() => {
-    onUpdate(message.id, { isDone: !message.isDone })
-    fetch(`/api/messages/${message.id}`, {
+  const handleToggleDone = useCallback(async () => {
+    const nextIsDone = !message.isDone
+    onUpdate(message.id, { isDone: nextIsDone })
+
+    const res = await fetch(`/api/messages/${message.id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ isDone: !message.isDone }),
+      body: JSON.stringify({ isDone: nextIsDone }),
     })
-  }, [message.id, message.isDone, onUpdate])
+
+    if (res.ok) {
+      router.refresh()
+    }
+  }, [message.id, message.isDone, onUpdate, router])
 
   const handleTogglePin = useCallback(() => {
     onUpdate(message.id, { isPinned: !message.isPinned })
