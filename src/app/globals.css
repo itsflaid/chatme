@@ -4,6 +4,7 @@
 
 @layer base {
   :root {
+    color-scheme: dark;
     --bg: #121212;
     --bg2: #222222;
     --surface: #161616;
@@ -18,6 +19,24 @@
     --text: #fafafa;
     --text2: #a3a3a3;
     --text3: #525252;
+  }
+
+  :root[data-theme="light"] {
+    color-scheme: light;
+    --bg: #f6f8f5;
+    --bg2: #e8eee8;
+    --surface: #ffffff;
+    --surface2: #eef3ee;
+    --surface3: #e0e8e0;
+    --border: #dde5dd;
+    --border2: #c7d2c8;
+    --accent: #c49000;
+    --accent2: #a87300;
+    --accent3: #6f4f00;
+    --accent-dim: #c490001a;
+    --text: #161a17;
+    --text2: #556158;
+    --text3: #879188;
   }
 
   body {

@@ -3,10 +3,14 @@
 import { signIn } from "next-auth/react"
 import Image from "next/image"
 import { FiArrowRight, FiCheckCircle, FiClock, FiLock } from "react-icons/fi"
+import ThemeToggle from "@/components/theme/ThemeToggle"
 
 export default function LoginPage() {
   return (
     <main className="min-h-screen overflow-hidden bg-[var(--bg)] text-[var(--text)]">
+      <div className="fixed right-4 top-4 z-30 sm:right-6 sm:top-6">
+        <ThemeToggle className="shadow-lg shadow-black/10" />
+      </div>
       <div className="grid min-h-screen lg:grid-cols-[1.02fr_0.98fr]">
         <section className="relative flex min-h-[58vh] flex-col justify-between border-b border-[var(--border)] px-5 py-5 sm:px-8 lg:min-h-screen lg:border-b-0 lg:border-r lg:px-12 lg:py-10">
           <div
