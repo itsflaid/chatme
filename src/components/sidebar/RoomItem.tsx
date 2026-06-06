@@ -58,12 +58,12 @@ export default function RoomItem({ id, name, icon, pendingCount, lastMessage }: 
         <div className="flex items-center justify-between gap-2 mb-0.5">
           <p
             className="text-sm font-semibold font-sora truncate"
-            style={{ color: isActive ? "var(--bg)" : "var(--text)" }}
+            style={{ color: isActive ? "var(--accent-ink)" : "var(--text)" }}
           >
             {name}
           </p>
           {lastMessage && (
-            <span className="text-[11px] flex-shrink-0" style={{ color: isActive ? "var(--bg)" : "var(--text3)" }}>
+            <span className="text-[11px] flex-shrink-0" style={{ color: isActive ? "var(--accent-ink)" : "var(--text3)" }}>
               {formatTime(new Date(lastMessage.createdAt))}
             </span>
           )}
@@ -71,7 +71,7 @@ export default function RoomItem({ id, name, icon, pendingCount, lastMessage }: 
 
         <p
           className="text-xs truncate"
-          style={{ color: isActive ? "var(--bg)" : "var(--text3)" }}
+          style={{ color: isActive ? "var(--accent-ink)" : "var(--text3)" }}
         >
           {lastMessage ? lastMessage.text : "Belum ada pesan"}
         </p>
@@ -80,7 +80,10 @@ export default function RoomItem({ id, name, icon, pendingCount, lastMessage }: 
       {pendingCount > 0 && (
         <div
           className="rounded-md border-2 border-[var(--neo-line)] px-2 py-0.5 text-[11px] font-bold font-sora flex-shrink-0 shadow-[2px_2px_0_var(--neo-shadow)]"
-          style={{ background: isActive ? "var(--bg)" : "var(--accent)", color: isActive ? "var(--accent)" : "var(--bg)" }}
+          style={{
+            background: isActive ? "var(--accent-ink)" : "var(--accent)",
+            color: isActive ? "var(--accent)" : "var(--accent-ink)",
+          }}
         >
           {pendingCount}
         </div>

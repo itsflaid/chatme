@@ -126,7 +126,7 @@ export default function BotBubble({
             >
               <div className="flex items-center gap-3 mb-4">
                 <div className="neo-button w-11 h-11 rounded-xl flex items-center justify-center bg-[var(--accent)]">
-                  <FiBell size={22} className="text-[var(--bg)]" />
+                  <FiBell size={22} className="text-[var(--accent-ink)]" />
                 </div>
                 <p className="text-xs uppercase tracking-widest font-medium text-[var(--accent)]">
                   PENGINGAT
@@ -140,7 +140,7 @@ export default function BotBubble({
               <div className="flex gap-3">
                 <button
                   onClick={handleDone}
-                  className="neo-button flex-1 rounded-xl bg-[var(--accent)] py-3 text-sm font-semibold text-[var(--bg)]"
+                  className="neo-button flex-1 rounded-xl bg-[var(--accent)] py-3 text-sm font-semibold text-[var(--accent-ink)]"
                 >
                   Selesai
                 </button>

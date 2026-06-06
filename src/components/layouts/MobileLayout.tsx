@@ -9,7 +9,7 @@ type Props = {
 
 export default function MobileLayout({ sidebar, children }: Props) {
   const pathname = usePathname()
-  const isInRoom = pathname.startsWith("/room/")
+  const isContentPage = pathname.startsWith("/room/") || pathname === "/profile"
 
   return (
     <div
@@ -28,14 +28,14 @@ export default function MobileLayout({ sidebar, children }: Props) {
 
         <div
           className="absolute inset-0 min-h-0 flex flex-col transition-transform duration-300 ease-in-out"
-          style={{ transform: isInRoom ? "translateX(-100%)" : "translateX(0)" }}
+          style={{ transform: isContentPage ? "translateX(-100%)" : "translateX(0)" }}
         >
           {sidebar}
         </div>
 
         <div
           className="absolute inset-0 min-h-0 flex flex-col transition-transform duration-300 ease-in-out"
-          style={{ transform: isInRoom ? "translateX(0)" : "translateX(100%)" }}
+          style={{ transform: isContentPage ? "translateX(0)" : "translateX(100%)" }}
         >
           {children}
         </div>

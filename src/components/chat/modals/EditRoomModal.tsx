@@ -87,7 +87,7 @@ export default function EditRoomModal({
         <button
           onClick={handleSave}
           disabled={!name.trim() || loading}
-          className="w-full py-3 rounded-xl font-semibold text-sm font-sora transition-opacity bg-[var(--accent)] text-[var(--bg)]"
+          className="w-full py-3 rounded-xl font-semibold text-sm font-sora transition-opacity bg-[var(--accent)] text-[var(--accent-ink)]"
           style={{ opacity: !name.trim() || loading ? 0.5 : 1 }}
         >
           {loading ? "Menyimpan..." : "Simpan"}

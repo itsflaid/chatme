@@ -3,14 +3,10 @@
 import { signIn } from "next-auth/react"
 import Image from "next/image"
 import { FiArrowRight, FiCheckCircle, FiClock, FiLock } from "react-icons/fi"
-import ThemeToggle from "@/components/theme/ThemeToggle"
 
 export default function LoginPage() {
   return (
     <main className="min-h-screen overflow-hidden bg-[var(--bg)] text-[var(--text)]">
-      <div className="fixed right-4 top-4 z-30 sm:right-6 sm:top-6">
-        <ThemeToggle className="shadow-lg shadow-black/10" />
-      </div>
       <div className="grid min-h-screen lg:grid-cols-[1.02fr_0.98fr]">
         <section className="relative flex min-h-[58vh] flex-col justify-between border-b border-[var(--border)] px-5 py-5 sm:px-8 lg:min-h-screen lg:border-b-0 lg:border-r lg:px-12 lg:py-10">
           <div
@@ -20,7 +16,7 @@ export default function LoginPage() {
                 "linear-gradient(135deg, var(--bg) 0%, var(--surface) 52%, var(--bg2) 100%)",
             }}
           />
-          <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.035)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.035)_1px,transparent_1px)] bg-[length:34px_34px]" />
+          <div className="absolute inset-0 bg-[linear-gradient(rgba(169,195,165,0.08)_1px,transparent_1px),linear-gradient(90deg,rgba(169,195,165,0.08)_1px,transparent_1px)] bg-[length:34px_34px]" />
 
           <div className="relative z-10 flex items-center gap-3">
             <Image
@@ -39,7 +35,7 @@ export default function LoginPage() {
 
           <div className="relative z-10 mx-auto flex w-full max-w-xl flex-1 items-center py-10">
             <div className="w-full">
-              <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-[rgba(245,197,24,0.25)] bg-[rgba(245,197,24,0.09)] px-3 py-1.5 text-xs font-medium text-[var(--accent2)]">
+              <div className="neo-card mb-5 inline-flex items-center gap-2 rounded-lg bg-[var(--paper)] px-3 py-1.5 text-xs font-bold text-[var(--accent-ink)]">
                 <FiClock size={13} />
                 <span>Reminder hari ini</span>
               </div>
@@ -53,7 +49,7 @@ export default function LoginPage() {
 
               <div className="neo-panel mt-8 w-full max-w-md -rotate-1 rounded-2xl bg-[var(--surface)] p-3">
                 <div className="flex items-center gap-3 border-b-2 border-[var(--neo-line)] pb-3">
-                  <div className="neo-button flex h-10 w-10 items-center justify-center rounded-xl bg-[var(--accent)] font-sora text-lg font-bold text-[var(--bg)]">
+                  <div className="neo-button flex h-10 w-10 items-center justify-center rounded-xl bg-[var(--accent)] font-sora text-lg font-bold text-[var(--accent-ink)]">
                     C
                   </div>
                   <div className="min-w-0">
@@ -63,7 +59,7 @@ export default function LoginPage() {
                 </div>
 
                 <div className="flex flex-col gap-3 pt-4">
-                  <div className="neo-card ml-auto max-w-[78%] rotate-1 rounded-xl rounded-br-sm bg-[var(--accent)] px-4 py-2.5 text-sm leading-relaxed text-[var(--bg)]">
+                  <div className="neo-card ml-auto max-w-[78%] rotate-1 rounded-xl rounded-br-sm bg-[var(--accent)] px-4 py-2.5 text-sm leading-relaxed text-[var(--accent-ink)]">
                     Review konsep dashboard jam 4 sore
                   </div>
                   <div className="neo-card mr-auto max-w-[82%] -rotate-1 rounded-xl rounded-bl-sm bg-[var(--surface2)] px-4 py-2.5 text-sm leading-relaxed">
@@ -71,10 +67,10 @@ export default function LoginPage() {
                   </div>
                   <div className="neo-card flex items-center justify-between rounded-xl bg-[var(--bg)] px-3 py-2">
                     <div className="flex min-w-0 items-center gap-2">
-                      <FiCheckCircle className="flex-shrink-0 text-[#2dd4bf]" size={16} />
+                      <FiCheckCircle className="flex-shrink-0 text-[var(--coral)]" size={16} />
                       <span className="truncate text-xs text-[var(--text2)]">Selesai ditandai</span>
                     </div>
-                    <span className="text-xs font-semibold text-[#2dd4bf]">0 aktif</span>
+                    <span className="text-xs font-semibold text-[var(--coral)]">0 aktif</span>
                   </div>
                 </div>
               </div>
@@ -122,11 +118,11 @@ export default function LoginPage() {
                   <p className="mt-1 text-[11px] text-[var(--text3)]">cepat</p>
                 </div>
                 <div className="neo-card rounded-xl bg-[var(--bg)] px-3 py-3">
-                  <p className="font-sora text-sm font-bold text-[#2dd4bf]">Todo</p>
+                  <p className="font-sora text-sm font-bold text-[var(--sage)]">Todo</p>
                   <p className="mt-1 text-[11px] text-[var(--text3)]">rapi</p>
                 </div>
                 <div className="neo-card rounded-xl bg-[var(--bg)] px-3 py-3">
-                  <p className="font-sora text-sm font-bold text-[#60a5fa]">Ingat</p>
+                  <p className="font-sora text-sm font-bold text-[var(--coral)]">Ingat</p>
                   <p className="mt-1 text-[11px] text-[var(--text3)]">tepat</p>
                 </div>
               </div>

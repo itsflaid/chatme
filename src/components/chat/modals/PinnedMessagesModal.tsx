@@ -77,7 +77,7 @@ export default function PinnedMessagesModal({ messages, onClose }: Props) {
                   <button
                     onClick={() => handleDone(msg.id)}
                     className="neo-button w-7 h-7 rounded-lg flex items-center justify-center transition-opacity hover:opacity-80"
-                    style={{ background: "var(--accent)", color: "var(--bg)" }}
+                    style={{ background: "var(--accent)", color: "var(--accent-ink)" }}
                     title="Tandai selesai"
                   >
                     <FiCheck size={13} />

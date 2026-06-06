@@ -95,7 +95,7 @@ export default function ChatInput({
       <button
         onClick={handleSend}
         disabled={!text.trim()}
-        className="neo-button w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 transition-opacity bg-[var(--accent)] text-[var(--bg)]"
+        className="neo-button w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 transition-opacity bg-[var(--accent)] text-[var(--accent-ink)]"
         style={{ opacity: !text.trim() ? 0.5 : 1 }}
       >
         <FiSend size={16} />

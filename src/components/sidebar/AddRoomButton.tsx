@@ -40,7 +40,7 @@ export default function AddRoomButton() {
       <div className="relative h-20 flex-shrink-0">
         <button
           onClick={() => setOpen(true)}
-          className="neo-button absolute bottom-10 right-5 z-10 flex h-12 w-12 rotate-3 items-center justify-center rounded-xl bg-[var(--accent)] text-[var(--bg)] transition-all duration-200 hover:rotate-12"
+          className="neo-button absolute bottom-10 right-5 z-10 flex h-12 w-12 rotate-3 items-center justify-center rounded-xl bg-[var(--accent)] text-[var(--accent-ink)] transition-all duration-200 hover:rotate-12"
         >
           <FiPlus size={22} />
         </button>
@@ -98,7 +98,7 @@ export default function AddRoomButton() {
             <button
               onClick={handleCreate}
               disabled={!name.trim() || loading}
-              className="neo-button w-full py-3 rounded-xl font-semibold text-sm font-sora transition-opacity bg-[var(--accent)] text-[var(--bg)]"
+              className="neo-button w-full py-3 rounded-xl font-semibold text-sm font-sora transition-opacity bg-[var(--accent)] text-[var(--accent-ink)]"
               style={{ opacity: !name.trim() || loading ? 0.5 : 1 }}
             >
               {loading ? "Membuat..." : "Buat Room"}

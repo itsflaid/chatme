@@ -83,7 +83,7 @@ export default function RemindModal({ messageId, messageText, onClose, onSave }:
         <button
           onClick={handleSave}
           disabled={!datetime || loading}
-          className="w-full py-3 rounded-xl font-semibold text-sm font-sora transition-opacity bg-[var(--accent)] text-[var(--bg)]"
+          className="w-full py-3 rounded-xl font-semibold text-sm font-sora transition-opacity bg-[var(--accent)] text-[var(--accent-ink)]"
           style={{ opacity: !datetime || loading ? 0.5 : 1 }}
         >
           {loading ? "Menyimpan..." : "Simpan Pengingat"}

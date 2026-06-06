@@ -45,12 +45,13 @@ export default function ChatHeader({
   const [showDelete, setShowDelete] = useState(false)
   const [showPinned, setShowPinned] = useState(false)
   const [showReminders, setShowReminders] = useState(false)
+  const [showMobileSearch, setShowMobileSearch] = useState(false)
 
   return (
     <>
       <div className="relative m-3 mb-0 flex items-center gap-3 rounded-xl bg-[var(--surface)] px-3 py-3 neo-panel">
 
-        <div className="flex items-center gap-3 min-w-0">
+        <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-3">
           <button
             onClick={() => router.push("/")}
             className="neo-button w-8 h-8 flex items-center justify-center rounded-lg bg-[var(--surface2)] transition text-[var(--accent)]"
@@ -62,7 +63,7 @@ export default function ChatHeader({
             {icon}
           </div>
 
-          <div className="flex flex-col min-w-0">
+          <div className="flex min-w-0 flex-1 flex-col">
             <span className="text-sm font-semibold truncate text-[var(--text)]">{name}</span>
             <span className="text-xs text-[var(--text3)] truncate">
               {pendingCount} reminder · {messageCount} pesan
@@ -71,7 +72,7 @@ export default function ChatHeader({
         </div>
 
         {/* SEARCH BAR */}
-        <div className="flex-1 flex justify-center px-2">
+        <div className="hidden flex-1 justify-center px-2 md:flex">
           <div className="relative w-full max-w-xs">
             <IoSearch
               size={16}
@@ -97,7 +98,16 @@ export default function ChatHeader({
           </div>
         </div>
 
-        <div className="flex items-center gap-1 flex-shrink-0">
+        <div className="flex items-center gap-1.5 flex-shrink-0">
+          <button
+            onClick={() => setShowMobileSearch(value => !value)}
+            className="neo-button relative rounded-lg bg-[var(--surface2)] p-2 text-[var(--text2)] transition md:hidden"
+            aria-label="Cari pesan"
+            aria-expanded={showMobileSearch}
+          >
+            <IoSearch size={18} />
+          </button>
+
           {/* bell + badge reminder */}
           <button
             onClick={() => setShowReminders(true)}
@@ -107,7 +117,7 @@ export default function ChatHeader({
             {reminders.length > 0 && (
               <span
                 className="absolute -right-1 -top-1 flex h-4 w-4 rotate-6 items-center justify-center rounded-md border-2 border-[var(--neo-line)] text-[10px] font-bold font-sora"
-                style={{ background: "var(--accent)", color: "var(--bg)" }}
+                style={{ background: "var(--accent)", color: "var(--accent-ink)" }}
               >
                 {reminders.length}
               </span>
@@ -133,6 +143,35 @@ export default function ChatHeader({
           />
         )}
       </div>
+
+      {showMobileSearch && (
+        <div className="mx-3 mt-3 md:hidden">
+          <div className="relative">
+            <IoSearch
+              size={16}
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text3)]"
+            />
+            <input
+              autoFocus
+              type="text"
+              value={searchQuery}
+              onChange={(e) => onSearch(e.target.value)}
+              placeholder="Cari pesan..."
+              className="neo-input w-full rounded-xl bg-[var(--surface)] py-2.5 pl-9 pr-10 text-sm text-[var(--text)] placeholder:text-[var(--text3)] outline-none focus:ring-1 focus:ring-[var(--accent)]"
+            />
+            <button
+              onClick={() => {
+                onSearch("")
+                setShowMobileSearch(false)
+              }}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--text3)]"
+              aria-label="Tutup pencarian"
+            >
+              <FiX size={16} />
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Modal Reminder List */}
       {showReminders && (
@@ -179,7 +218,7 @@ export default function ChatHeader({
                         setShowReminders(false)
                       }}
                       className="neo-button w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 hover:opacity-80"
-                      style={{ background: "var(--accent)", color: "var(--bg)" }}
+                      style={{ background: "var(--accent)", color: "var(--accent-ink)" }}
                     >
                       <FiCheck size={14} />
                     </button>

@@ -46,19 +46,6 @@ export const metadata: Metadata = {
   },
 };
 
-const themeScript = `
-(() => {
-  try {
-    const stored = localStorage.getItem("chatme-theme");
-    const prefersLight = window.matchMedia("(prefers-color-scheme: light)").matches;
-    const theme = stored || (prefersLight ? "light" : "dark");
-    document.documentElement.dataset.theme = theme;
-  } catch {
-    document.documentElement.dataset.theme = "dark";
-  }
-})();
-`;
-
 export default function RootLayout({ 
   children 
 }: { 
@@ -66,9 +53,6 @@ export default function RootLayout({
 }) {
   return (
     <html lang="id">
-      <head>
-        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
-      </head>
       <body className={`${geist.variable} ${sora.variable} antialiased`}>
         {children}
       </body>

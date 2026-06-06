@@ -69,7 +69,7 @@ export default function MessageBubble({
         )}
 
         <p
-          className="text-sm leading-relaxed break-words text-[var(--bg)]"
+          className="text-sm leading-relaxed break-words text-[var(--accent-ink)]"
           style={{ textDecoration: message.isDone ? "line-through" : "none" }}
         >
           {highlightText(message.text, searchQuery)}
