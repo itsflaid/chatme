@@ -4,24 +4,26 @@
 
 "use client"
 
-import { FiCopy, FiCheck, FiBell, FiBookmark, FiTrash2 } from "react-icons/fi"
+import { FiCopy, FiCheck, FiBell, FiBookmark, FiTrash2, FiCheckCircle } from "react-icons/fi"
 
 type Props = {
   x: number
   y: number
   isDone: boolean
   isPinned: boolean
+  hasActiveReminder: boolean
   onCopy: () => void
   onToggleDone: () => void
   onRemind: () => void
+  onMarkReminded: () => void
   onTogglePin: () => void
   onDelete: () => void
   onClose: () => void
 }
 
 export default function ContextMenu({
-  x, y, isDone, isPinned,
-  onCopy, onToggleDone, onRemind, onTogglePin, onDelete, onClose
+  x, y, isDone, isPinned, hasActiveReminder,
+  onCopy, onToggleDone, onRemind, onMarkReminded, onTogglePin, onDelete, onClose
 }: Props) {
 
   // pastiin menu tidak keluar dari viewport
@@ -42,9 +44,9 @@ export default function ContextMenu({
       danger: false,
     },
     {
-      icon: <FiBell size={15} />,
-      label: "Ingatkan",
-      onClick: onRemind,
+      icon: hasActiveReminder ? <FiCheckCircle size={15} /> : <FiBell size={15} />,
+      label: hasActiveReminder ? "Tandai sudah diingatkan" : "Ingatkan",
+      onClick: hasActiveReminder ? onMarkReminded : onRemind,
       danger: false,
     },
     {
