@@ -16,11 +16,12 @@ export async function GET(_req: Request, { params }: Props) {
   const pendingReminders = await prisma.message.findMany({
     where: {
       roomId: id,
+      userId,
       isBot: false,
       isRemindDone: false,
       remindAt: { lte: new Date() },
-      reminders: { none: {} }
-    }
+      reminders: { none: {} },
+    },
   })
 
   if (pendingReminders.length === 0) {
@@ -28,25 +29,29 @@ export async function GET(_req: Request, { params }: Props) {
   }
 
   await prisma.message.createMany({
-    data: pendingReminders.map(reminder => ({
-      text: "", // 🔥 kosong aja gapapa (UI ga pake ini)
+    data: pendingReminders.map((reminder) => ({
+      text: "",
       isBot: true,
       sourceMessageId: reminder.id,
       roomId: id,
       userId,
-    }))
+    })),
   })
 
   const newBotMessages = await prisma.message.findMany({
     where: {
       roomId: id,
+      userId,
       isBot: true,
-      sourceMessageId: { in: pendingReminders.map(r => r.id) }
+      sourceMessageId: { in: pendingReminders.map((reminder) => reminder.id) },
     },
     include: {
-      sourceMessage: true // 🔥 penting!
+      sourceMessage: true,
+      checklistItems: {
+        orderBy: { position: "asc" },
+      },
     },
-    orderBy: { createdAt: "asc" }
+    orderBy: { createdAt: "asc" },
   })
 
   return NextResponse.json(newBotMessages)

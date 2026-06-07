@@ -5,11 +5,13 @@ import { useRouter } from "next/navigation"
 import ContextMenu from "@/components/chat/modals/ContextMenu"
 import RemindModal from "@/components/chat/modals/RemindModal"
 import MessageBubble from "./MessageBubble"
-import { Message } from "@prisma/client"
+import ChecklistBubble from "./ChecklistBubble"
+import { MessageType } from "@prisma/client"
+import type { ChatMessage } from "@/types/chat"
 
 type Props = {
-  message: Message
-  onUpdate: (id: string, patch: Partial<Message>) => void
+  message: ChatMessage
+  onUpdate: (id: string, patch: Partial<ChatMessage>) => void
   onRemove: (id: string) => void
   isNew?: boolean
   searchQuery?: string
@@ -49,18 +51,42 @@ export default function BubbleWrapper({
 
   const handleToggleDone = useCallback(async () => {
     const nextIsDone = !message.isDone
-    onUpdate(message.id, { isDone: nextIsDone })
+    if (message.type === MessageType.CHECKLIST) {
+      const nextItems = message.checklistItems.map((item) => ({
+        ...item,
+        isDone: nextIsDone,
+      }))
+      onUpdate(message.id, { isDone: nextIsDone, checklistItems: nextItems })
 
+      const res = await fetch(`/api/messages/${message.id}/checklist`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: message.text,
+          items: nextItems.map((item) => ({
+            text: item.text,
+            isDone: item.isDone,
+          })),
+        }),
+      })
+
+      if (res.ok) {
+        const updated: ChatMessage = await res.json()
+        onUpdate(message.id, updated)
+        router.refresh()
+      }
+      return
+    }
+
+    onUpdate(message.id, { isDone: nextIsDone })
     const res = await fetch(`/api/messages/${message.id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ isDone: nextIsDone }),
     })
 
-    if (res.ok) {
-      router.refresh()
-    }
-  }, [message.id, message.isDone, onUpdate, router])
+    if (res.ok) router.refresh()
+  }, [message, onUpdate, router])
 
   const handleTogglePin = useCallback(() => {
     onUpdate(message.id, { isPinned: !message.isPinned })
@@ -105,11 +131,15 @@ export default function BubbleWrapper({
         onTouchEnd={handleTouchEnd}
         onTouchMove={handleTouchEnd}
       >
-        <MessageBubble
-          message={message}
-          isNew={isNew}
-          searchQuery={searchQuery}
-        />
+        {message.type === MessageType.CHECKLIST ? (
+          <ChecklistBubble message={message} onUpdate={onUpdate} />
+        ) : (
+          <MessageBubble
+            message={message}
+            isNew={isNew}
+            searchQuery={searchQuery}
+          />
+        )}
       </div>
 
       {menuPos && (
