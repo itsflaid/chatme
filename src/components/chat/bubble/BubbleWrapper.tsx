@@ -77,11 +77,23 @@ export default function BubbleWrapper({
   }, [message.id, onRemove])
 
   const handleRemindSave = useCallback((remindAt: Date) => {
-    onUpdate(message.id, { remindAt })
+    onUpdate(message.id, { remindAt, isRemindDone: false })
     fetch(`/api/messages/${message.id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ remindAt: remindAt.toISOString() }),
+      body: JSON.stringify({
+        remindAt: remindAt.toISOString(),
+        isRemindDone: false,
+      }),
+    })
+  }, [message.id, onUpdate])
+
+  const handleMarkReminded = useCallback(() => {
+    onUpdate(message.id, { isRemindDone: true })
+    fetch(`/api/messages/${message.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ isRemindDone: true }),
     })
   }, [message.id, onUpdate])
 
@@ -106,9 +118,11 @@ export default function BubbleWrapper({
           y={menuPos.y}
           isDone={message.isDone}
           isPinned={message.isPinned}
+          hasActiveReminder={Boolean(message.remindAt && !message.isRemindDone)}
           onCopy={handleCopy}
           onToggleDone={handleToggleDone}
           onRemind={() => { setMenuPos(null); setShowRemind(true) }}
+          onMarkReminded={handleMarkReminded}
           onTogglePin={handleTogglePin}
           onDelete={handleDelete}
           onClose={() => setMenuPos(null)}

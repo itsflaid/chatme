@@ -95,7 +95,7 @@ export default function MessageBubble({
         <IoCheckmarkDone
           size={16}
           className={`transition-all ${
-            message.isDone ? "text-[var(--accent)]" : "text-[var(--text3)]"
+            message.isDone ? "text-[var(--success)]" : "text-[var(--text3)]"
           }`}
         />
       </div>
