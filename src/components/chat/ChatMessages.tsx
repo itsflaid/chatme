@@ -1,15 +1,15 @@
 "use client"
 
 import { useEffect, useRef } from "react"
-import { Message } from "@prisma/client"
 import BubbleWrapper from "./bubble/BubbleWrapper"
 import BotBubble from "./bubble/BotBubble"
+import type { ChatMessage } from "@/types/chat"
 
 type Props = {
-  messages: Message[]
+  messages: ChatMessage[]
   onBotDone: (botMessageId: string, sourceMessageId: string) => void
   onBotSnooze: (botMessageId: string, sourceMessageId: string) => void
-  onMessageUpdate: (id: string, patch: Partial<Message>) => void
+  onMessageUpdate: (id: string, patch: Partial<ChatMessage>) => void
   onMessageRemove: (id: string) => void
   searchQuery?: string
   activeMatchId?: string | null
@@ -26,9 +26,9 @@ function getDateLabel(date: Date): string {
   })
 }
 
-type GroupedMessages = { dateLabel: string; messages: Message[] }[]
+type GroupedMessages = { dateLabel: string; messages: ChatMessage[] }[]
 
-function groupByDate(messages: Message[]): GroupedMessages {
+function groupByDate(messages: ChatMessage[]): GroupedMessages {
   return messages.reduce<GroupedMessages>((groups, message) => {
     const dateLabel = getDateLabel(new Date(message.createdAt))
     const lastGroup = groups[groups.length - 1]

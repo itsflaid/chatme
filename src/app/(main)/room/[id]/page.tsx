@@ -47,6 +47,11 @@ export default async function RoomPage({ params }: Props) {
   const messages = await prisma.message.findMany({
     where: { roomId: id },
     orderBy: { createdAt: "asc" },
+    include: {
+      checklistItems: {
+        orderBy: { position: "asc" },
+      },
+    },
   })
 
   return (

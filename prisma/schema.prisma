@@ -43,6 +43,7 @@ model Room {
 model Message {
   id              String    @id @default(cuid())
   text            String
+  type            MessageType @default(TEXT)
   isDone          Boolean   @default(false)  // pesan ditandai selesai
   isPinned        Boolean   @default(false)  // pesan di-pin
   isBot           Boolean   @default(false)  // true = pesan dari sistem reminder
@@ -59,8 +60,29 @@ model Message {
   room          Room      @relation(fields: [roomId], references: [id], onDelete: Cascade)
   sourceMessage Message?  @relation("ReminderSource", fields: [sourceMessageId], references: [id], onDelete: SetNull)
   reminders     Message[] @relation("ReminderSource")
+  checklistItems ChecklistItem[]
 
   @@map("messages")
+}
+
+model ChecklistItem {
+  id        String   @id @default(cuid())
+  text      String
+  isDone    Boolean  @default(false)
+  position  Int
+  messageId String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  message Message @relation(fields: [messageId], references: [id], onDelete: Cascade)
+
+  @@index([messageId, position])
+  @@map("checklist_items")
+}
+
+enum MessageType {
+  TEXT
+  CHECKLIST
 }
 
 model Account {

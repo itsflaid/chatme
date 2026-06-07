@@ -2,14 +2,17 @@
 
 import { useState, useRef } from "react"
 import { useRouter } from "next/navigation"
-import { FiSend } from "react-icons/fi"
-import { Message } from "@prisma/client"
+import { FiPlus, FiSend } from "react-icons/fi"
+import { MessageType } from "@prisma/client"
+import ChecklistComposer from "./modals/ChecklistComposer"
+import type { ChatMessage } from "@/types/chat"
 
 type Props = {
   roomId: string
   userId: string
-  onMessageAdd: (message: Message) => void
-  onMessageReplace: (tempId: string, realMessage: Message) => void
+  onMessageAdd: (message: ChatMessage) => void
+  onMessageReplace: (tempId: string, realMessage: ChatMessage) => void
+  onMessageRemove: (id: string) => void
   onCheckReminders: () => void
 }
 
@@ -18,9 +21,12 @@ export default function ChatInput({
   userId,
   onMessageAdd,
   onMessageReplace,
+  onMessageRemove,
   onCheckReminders,
 }: Props) {
   const [text, setText] = useState("")
+  const [showChecklist, setShowChecklist] = useState(false)
+  const [checklistLoading, setChecklistLoading] = useState(false)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const router = useRouter()
 
@@ -36,9 +42,10 @@ export default function ChatInput({
     const trimmed = text.trim()
     const tempId = `temp-${Date.now()}`
 
-    const tempMessage: Message = {
+    const tempMessage: ChatMessage = {
       id: tempId,
       text: trimmed,
+      type: MessageType.TEXT,
       isDone: false,
       isPinned: false,
       isBot: false,
@@ -50,6 +57,7 @@ export default function ChatInput({
       userId,
       createdAt: new Date(),
       updatedAt: new Date(),
+      checklistItems: [],
     }
 
     onMessageAdd(tempMessage)
@@ -71,7 +79,64 @@ export default function ChatInput({
 
       // refresh sidebar room list — update preview pesan terakhir
       setTimeout(() => router.refresh(), 500)
+    } else {
+      onMessageRemove(tempId)
     }
+  }
+
+  async function handleChecklistSubmit(title: string, items: string[]) {
+    const tempId = `temp-${Date.now()}`
+    const now = new Date()
+    const tempMessage: ChatMessage = {
+      id: tempId,
+      text: title,
+      type: MessageType.CHECKLIST,
+      isDone: false,
+      isPinned: false,
+      isBot: false,
+      remindAt: null,
+      remindSnoozeAt: null,
+      isRemindDone: false,
+      sourceMessageId: null,
+      roomId,
+      userId,
+      createdAt: now,
+      updatedAt: now,
+      checklistItems: items.map((item, position) => ({
+        id: `${tempId}-${position}`,
+        text: item,
+        isDone: false,
+        position,
+        messageId: tempId,
+        createdAt: now,
+        updatedAt: now,
+      })),
+    }
+
+    onMessageAdd(tempMessage)
+    setChecklistLoading(true)
+
+    const res = await fetch("/api/messages", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        roomId,
+        text: title,
+        type: MessageType.CHECKLIST,
+        items,
+      }),
+    })
+
+    if (res.ok) {
+      const realMessage: ChatMessage = await res.json()
+      onMessageReplace(tempId, realMessage)
+      setShowChecklist(false)
+      setTimeout(() => router.refresh(), 500)
+    } else {
+      onMessageRemove(tempId)
+    }
+
+    setChecklistLoading(false)
   }
 
   function handleKey(e: React.KeyboardEvent) {
@@ -83,6 +148,15 @@ export default function ChatInput({
 
   return (
     <div className="flex items-end gap-3 px-4 py-3 sm:px-6">
+      <button
+        type="button"
+        onClick={() => setShowChecklist(true)}
+        className="neo-button flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-[var(--sage)] text-[var(--accent-ink)]"
+        aria-label="Buat checklist"
+        title="Buat checklist"
+      >
+        <FiPlus size={18} />
+      </button>
       <textarea
         ref={textareaRef}
         className="neo-input flex-1 max-h-[110px] rounded-xl bg-[var(--surface2)] px-4 py-2.5 text-sm leading-relaxed text-[var(--text)] outline-none resize-none"
@@ -100,6 +174,14 @@ export default function ChatInput({
       >
         <FiSend size={16} />
       </button>
+
+      {showChecklist && (
+        <ChecklistComposer
+          loading={checklistLoading}
+          onClose={() => !checklistLoading && setShowChecklist(false)}
+          onSubmit={handleChecklistSubmit}
+        />
+      )}
     </div>
   )
 }

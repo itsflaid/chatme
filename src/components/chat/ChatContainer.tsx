@@ -1,21 +1,21 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Message } from "@prisma/client"
 import { FiChevronUp, FiChevronDown, FiX } from "react-icons/fi"
 import ChatMessages from "./ChatMessages"
 import ChatHeader from "./ChatHeader"
 import ChatInput from "./ChatInput"
 import SnoozeModal from "./modals/SnoozeModal"
+import type { ChatMessage } from "@/types/chat"
 
 type Props = {
-  messages: Message[]
+  messages: ChatMessage[]
   room: { id: string; name: string; icon: string; description: string | null }
   userId: string
 }
 
 export default function ChatContainer({ messages: initialMessages, room, userId }: Props) {
-  const [messages, setMessages] = useState<Message[]>(initialMessages)
+  const [messages, setMessages] = useState<ChatMessage[]>(initialMessages)
   const [snoozeBotId, setSnoozeBotId] = useState<string | null>(null)
   const [snoozeSourceId, setSnoozeSourceId] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState("")
@@ -30,7 +30,7 @@ export default function ChatContainer({ messages: initialMessages, room, userId 
       )
     : []
 
-  function updateMessage(id: string, patch: Partial<Message>) {
+  function updateMessage(id: string, patch: Partial<ChatMessage>) {
     setMessages(prev => prev.map(m => m.id === id ? { ...m, ...patch } : m))
   }
 
@@ -38,11 +38,11 @@ export default function ChatContainer({ messages: initialMessages, room, userId 
     setMessages(prev => prev.filter(m => m.id !== id))
   }
 
-  function addMessage(message: Message) {
+  function addMessage(message: ChatMessage) {
     setMessages(prev => [...prev, message])
   }
 
-  function replaceMessage(tempId: string, realMessage: Message) {
+  function replaceMessage(tempId: string, realMessage: ChatMessage) {
     setMessages(prev => prev.map(m => m.id === tempId ? realMessage : m))
   }
 
@@ -50,7 +50,7 @@ export default function ChatContainer({ messages: initialMessages, room, userId 
   async function handleCheckReminders() {
     const res = await fetch(`/api/rooms/${room.id}/reminders`)
     if (!res.ok) return
-    const newBotMessages: Message[] = await res.json()
+    const newBotMessages: ChatMessage[] = await res.json()
     if (newBotMessages.length > 0) {
       setMessages(prev => [...prev, ...newBotMessages])
     }
@@ -114,7 +114,7 @@ export default function ChatContainer({ messages: initialMessages, room, userId 
     const res = await fetch(`/api/rooms/${room.id}/reminders`)
     if (!res.ok) return
 
-    const newBotMessages: Message[] = await res.json()
+    const newBotMessages: ChatMessage[] = await res.json()
 
     if (newBotMessages.length > 0) {
       setMessages(prev => {
@@ -198,6 +198,7 @@ export default function ChatContainer({ messages: initialMessages, room, userId 
         userId={userId}
         onMessageAdd={addMessage}
         onMessageReplace={replaceMessage}
+        onMessageRemove={removeMessage}
         onCheckReminders={handleCheckReminders}
       />
 
