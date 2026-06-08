@@ -54,7 +54,7 @@ export default function ChatHeader({
         <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-3">
           <button
             onClick={() => router.push("/")}
-            className="neo-button w-8 h-8 flex items-center justify-center rounded-lg bg-[var(--surface2)] transition text-[var(--accent)]"
+            className="neo-button w-8 h-8 flex items-center justify-center rounded-lg bg-[var(--paper)] transition text-[var(--accent-ink)]"
           >
             <FiArrowLeft size={20} />
           </button>

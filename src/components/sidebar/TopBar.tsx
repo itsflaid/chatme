@@ -30,7 +30,7 @@ export default function Topbar({ userName }: Props) {
       className="m-3 mb-2 flex items-center justify-between rounded-xl bg-[var(--surface)] px-4 py-3 neo-panel"
     >
       <h1 className="text-lg font-bold font-sora text-[var(--text)]">
-        Chat<span className="text-[var(--accent)]">me</span>
+        Chat<span className="text-[var(--coral)]">me</span>
       </h1>
       <div ref={menuRef} className="relative flex items-center gap-2">
         <button

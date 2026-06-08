@@ -60,7 +60,7 @@ export default function MessageBubble({
     >
       <div
         className="neo-card max-w-[82%] rotate-[0.4deg] rounded-xl rounded-br-sm px-4 py-2.5 relative bg-[var(--accent)]"
-        // style={{ opacity: message.isDone ? 0.5 : 1 }}
+        style={{ opacity: message.isDone ? 0.78 : 1 }}
       >
         {message.isPinned && (
             <div className="absolute -top-2 -right-2 w-6 h-6 rotate-12 rounded-md border-2 border-[var(--neo-line)] bg-[var(--bg)] flex items-center justify-center shadow-[2px_2px_0_var(--neo-shadow)]">
@@ -70,7 +70,6 @@ export default function MessageBubble({
 
         <p
           className="text-sm leading-relaxed break-words text-[var(--accent-ink)]"
-          style={{ textDecoration: message.isDone ? "line-through" : "none" }}
         >
           {highlightText(message.text, searchQuery)}
         </p>
@@ -95,7 +94,7 @@ export default function MessageBubble({
         <IoCheckmarkDone
           size={16}
           className={`transition-all ${
-            message.isDone ? "text-[var(--success)]" : "text-[var(--text3)]"
+            message.isDone ? "text-[var(--coral)]" : "text-[var(--text3)]"
           }`}
         />
       </div>

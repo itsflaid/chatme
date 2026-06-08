@@ -124,7 +124,9 @@ export default function ChecklistBubble({ message, onUpdate }: Props) {
           {message.checklistItems.map((item) => (
             <label
               key={item.id}
-              className="flex cursor-pointer items-start gap-3 rounded-lg border-2 border-[var(--neo-line)] bg-[var(--surface)] px-3 py-2.5"
+              className={`flex cursor-pointer items-start gap-3 rounded-lg border-2 border-[var(--neo-line)] bg-[var(--surface)] px-3 py-2.5 transition-opacity ${
+                item.isDone ? "opacity-70" : ""
+              }`}
             >
               <input
                 type="checkbox"
@@ -140,7 +142,7 @@ export default function ChecklistBubble({ message, onUpdate }: Props) {
               >
                 {item.isDone && <FiCheck size={13} strokeWidth={3} />}
               </span>
-              <span className={`text-sm leading-5 ${item.isDone ? "line-through opacity-55" : ""}`}>
+              <span className="text-sm leading-5">
                 {item.text}
               </span>
             </label>
