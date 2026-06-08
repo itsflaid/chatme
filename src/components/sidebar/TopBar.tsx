@@ -30,7 +30,10 @@ export default function Topbar({ userName }: Props) {
       className="m-3 mb-2 flex items-center justify-between rounded-xl bg-[var(--surface)] px-4 py-3 neo-panel"
     >
       <h1 className="text-lg font-bold font-sora text-[var(--text)]">
-        Chat<span className="text-[var(--coral)]">me</span>
+        Chat
+        <span className="ml-1 inline-block -rotate-2 rounded-md border-2 border-[var(--neo-line)] bg-[var(--accent)] px-1.5 py-0.5 text-xs text-[var(--accent-ink)] shadow-[2px_2px_0_var(--neo-shadow)]">
+          me
+        </span>
       </h1>
       <div ref={menuRef} className="relative flex items-center gap-2">
         <button
@@ -38,7 +41,7 @@ export default function Topbar({ userName }: Props) {
           onClick={() => setOpen(value => !value)}
           aria-label="Buka menu profil"
           aria-expanded={open}
-          className="w-8 h-8 rounded-lg flex items-center justify-center font-bold text-xs font-sora bg-[var(--paper)] text-[var(--accent-ink)] neo-button"
+          className="w-8 h-8 rounded-lg flex items-center justify-center font-bold text-xs font-sora bg-[var(--paper)] text-[var(--text)] neo-button"
         >
           {initial}
         </button>

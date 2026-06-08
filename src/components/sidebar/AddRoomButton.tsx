@@ -88,7 +88,10 @@ export default function AddRoomButton() {
                   key={e}
                   onClick={() => setIcon(e)}
                   className="neo-button w-10 h-10 rounded-lg flex items-center justify-center text-xl transition-colors"
-                  style={{ background: icon === e ? "var(--accent)" : "var(--surface2)", color: "var(--text)" }}
+                  style={{
+                    background: icon === e ? "var(--accent)" : "var(--surface2)",
+                    color: icon === e ? "var(--accent-ink)" : "var(--text)",
+                  }}
                 >
                   {e}
                 </button>

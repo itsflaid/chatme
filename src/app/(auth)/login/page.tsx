@@ -35,7 +35,7 @@ export default function LoginPage() {
 
           <div className="relative z-10 mx-auto flex w-full max-w-xl flex-1 items-center py-10">
             <div className="w-full">
-              <div className="neo-card mb-5 inline-flex items-center gap-2 rounded-lg bg-[var(--paper)] px-3 py-1.5 text-xs font-bold text-[var(--accent-ink)]">
+              <div className="neo-card mb-5 inline-flex items-center gap-2 rounded-lg bg-[var(--paper)] px-3 py-1.5 text-xs font-bold text-[var(--text)]">
                 <FiClock size={13} />
                 <span>Reminder hari ini</span>
               </div>
@@ -67,10 +67,10 @@ export default function LoginPage() {
                   </div>
                   <div className="neo-card flex items-center justify-between rounded-xl bg-[var(--bg)] px-3 py-2">
                     <div className="flex min-w-0 items-center gap-2">
-                      <FiCheckCircle className="flex-shrink-0 text-[var(--coral)]" size={16} />
+                      <FiCheckCircle className="flex-shrink-0 text-[var(--accent)]" size={16} />
                       <span className="truncate text-xs text-[var(--text2)]">Selesai ditandai</span>
                     </div>
-                    <span className="text-xs font-semibold text-[var(--coral)]">0 aktif</span>
+                    <span className="text-xs font-semibold text-[var(--accent)]">0 aktif</span>
                   </div>
                 </div>
               </div>
@@ -118,11 +118,11 @@ export default function LoginPage() {
                   <p className="mt-1 text-[11px] text-[var(--text3)]">cepat</p>
                 </div>
                 <div className="neo-card rounded-xl bg-[var(--bg)] px-3 py-3">
-                  <p className="font-sora text-sm font-bold text-[var(--sage)]">Todo</p>
+                  <p className="font-sora text-sm font-bold text-[var(--accent)]">Todo</p>
                   <p className="mt-1 text-[11px] text-[var(--text3)]">rapi</p>
                 </div>
                 <div className="neo-card rounded-xl bg-[var(--bg)] px-3 py-3">
-                  <p className="font-sora text-sm font-bold text-[var(--coral)]">Ingat</p>
+                  <p className="font-sora text-sm font-bold text-[var(--accent)]">Ingat</p>
                   <p className="mt-1 text-[11px] text-[var(--text3)]">tepat</p>
                 </div>
               </div>

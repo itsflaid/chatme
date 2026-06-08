@@ -34,7 +34,7 @@ export default function ChecklistComposer({ loading, onClose, onSubmit }: Props)
       <div className="neo-panel w-full max-w-md rounded-2xl bg-[var(--surface)] p-5">
         <div className="mb-5 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="neo-button flex h-10 w-10 items-center justify-center rounded-xl bg-[var(--sage)] text-[var(--accent-ink)]">
+            <div className="neo-button flex h-10 w-10 items-center justify-center rounded-xl bg-[var(--sage)] text-[var(--text)]">
               <FiList size={19} />
             </div>
             <div>

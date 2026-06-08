@@ -2,7 +2,7 @@
 import { motion } from "framer-motion"
 import { Message } from "@prisma/client"
 import { IoCheckmarkDone } from "react-icons/io5"
-import { FiBookmark } from "react-icons/fi"
+import { FiBookmark, FiCheck } from "react-icons/fi"
 import { userBubbleAnim } from "@/lib/animation"
 
 type Props = {
@@ -68,6 +68,16 @@ export default function MessageBubble({
           </div>
         )}
 
+        {message.isDone && (
+          <div
+            className={`absolute -top-2 flex h-6 w-6 items-center justify-center rounded-md border-2 border-[var(--neo-line)] bg-[var(--success)] text-[var(--accent-ink)] shadow-[2px_2px_0_var(--neo-shadow)] ${
+              message.isPinned ? "right-5 -rotate-6" : "-right-2 rotate-6"
+            }`}
+          >
+            <FiCheck size={13} strokeWidth={3} />
+          </div>
+        )}
+
         <p
           className="text-sm leading-relaxed break-words text-[var(--accent-ink)]"
         >
@@ -94,7 +104,7 @@ export default function MessageBubble({
         <IoCheckmarkDone
           size={16}
           className={`transition-all ${
-            message.isDone ? "text-[var(--coral)]" : "text-[var(--text3)]"
+            message.isDone ? "text-[var(--success)]" : "text-[var(--text3)]"
           }`}
         />
       </div>

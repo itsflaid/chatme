@@ -151,7 +151,7 @@ export default function ChatInput({
       <button
         type="button"
         onClick={() => setShowChecklist(true)}
-        className="neo-button flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-[var(--sage)] text-[var(--accent-ink)]"
+        className="neo-button flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-[var(--sage)] text-[var(--text)]"
         aria-label="Buat checklist"
         title="Buat checklist"
       >

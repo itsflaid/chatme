@@ -89,7 +89,7 @@ export default function ChecklistBubble({ message, onUpdate }: Props) {
 
   return (
     <div className="flex flex-col items-end">
-      <div className="neo-panel w-full max-w-[390px] rotate-[0.25deg] rounded-2xl bg-[var(--sage)] p-4 text-[var(--accent-ink)]">
+      <div className="neo-panel w-full max-w-[390px] rotate-[0.25deg] rounded-2xl bg-[var(--accent)] p-4 text-[var(--accent-ink)]">
         <div className="mb-4 flex items-start justify-between gap-3">
           <div className="flex min-w-0 items-center gap-3">
             <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg border-2 border-[var(--neo-line)] bg-[var(--paper)]">
@@ -137,7 +137,7 @@ export default function ChecklistBubble({ message, onUpdate }: Props) {
               />
               <span
                 className={`mt-0.5 flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-md border-2 border-[var(--neo-line)] ${
-                  item.isDone ? "bg-[var(--success)] text-white" : "bg-[var(--paper)]"
+                  item.isDone ? "bg-[var(--success)] text-[var(--accent-ink)]" : "bg-[var(--paper)]"
                 }`}
               >
                 {item.isDone && <FiCheck size={13} strokeWidth={3} />}

@@ -56,7 +56,7 @@ export default async function ProfilePage() {
 
             <button
               type="button"
-              className="neo-button flex items-center justify-center gap-2 rounded-xl bg-[var(--paper)] px-4 py-2.5 text-sm font-bold text-[var(--accent-ink)]"
+              className="neo-button flex items-center justify-center gap-2 rounded-xl bg-[var(--paper)] px-4 py-2.5 text-sm font-bold text-[var(--text)]"
             >
               <FiEdit3 size={15} />
               Edit Profile
@@ -67,7 +67,7 @@ export default async function ProfilePage() {
 
           <div className="grid gap-3 sm:grid-cols-2">
             <div className="neo-card rounded-xl bg-[var(--surface2)] p-4">
-              <div className="mb-3 flex h-9 w-9 items-center justify-center rounded-lg border-2 border-[var(--neo-line)] bg-[var(--sage)] text-[var(--accent-ink)]">
+              <div className="mb-3 flex h-9 w-9 items-center justify-center rounded-lg border-2 border-[var(--neo-line)] bg-[var(--sage)] text-[var(--text)]">
                 <FiMail size={17} />
               </div>
               <p className="text-xs font-bold uppercase text-[var(--text3)]">Email</p>
@@ -75,7 +75,7 @@ export default async function ProfilePage() {
             </div>
 
             <div className="neo-card rounded-xl bg-[var(--surface2)] p-4">
-              <div className="mb-3 flex h-9 w-9 items-center justify-center rounded-lg border-2 border-[var(--neo-line)] bg-[var(--coral)] text-[var(--accent-ink)]">
+              <div className="mb-3 flex h-9 w-9 items-center justify-center rounded-lg border-2 border-[var(--neo-line)] bg-[var(--coral)] text-[var(--text)]">
                 <FiShield size={17} />
               </div>
               <p className="text-xs font-bold uppercase text-[var(--text3)]">Login Provider</p>
@@ -92,12 +92,8 @@ export default async function ProfilePage() {
           ].map((item, index) => (
             <div
               key={item.label}
-              className={`neo-card rounded-xl p-4 text-center ${
-                index === 0
-                  ? "bg-[var(--accent)]"
-                  : index === 1
-                    ? "bg-[var(--sage)]"
-                    : "bg-[var(--coral)]"
+              className={`neo-card rounded-xl bg-[var(--accent)] p-4 text-center ${
+                index === 1 ? "-rotate-1" : index === 2 ? "rotate-1" : ""
               }`}
             >
               <p className="font-sora text-xl font-black text-[var(--accent-ink)]">{item.value}</p>
