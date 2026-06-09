@@ -9,6 +9,7 @@ import { FiCopy, FiCheck, FiBell, FiBookmark, FiTrash2, FiCheckCircle } from "re
 type Props = {
   x: number
   y: number
+  isChecklist?: boolean
   isDone: boolean
   isPinned: boolean
   hasActiveReminder: boolean
@@ -22,7 +23,7 @@ type Props = {
 }
 
 export default function ContextMenu({
-  x, y, isDone, isPinned, hasActiveReminder,
+  x, y, isChecklist = false, isDone, isPinned, hasActiveReminder,
   onCopy, onToggleDone, onRemind, onMarkReminded, onTogglePin, onDelete, onClose
 }: Props) {
 
@@ -31,18 +32,18 @@ export default function ContextMenu({
   const safeX = Math.max(8, Math.min(x - 100, window.innerWidth - 210))
 
   const items = [
-    {
+    ...(!isChecklist ? [{
       icon: <FiCopy size={15} />,
       label: "Salin",
       onClick: onCopy,
       danger: false,
-    },
-    {
+    }] : []),
+    ...(!isChecklist ? [{
       icon: <FiCheck size={15} />,
       label: isDone ? "Tandai Belum Selesai" : "Tandai Selesai",
       onClick: onToggleDone,
       danger: false,
-    },
+    }] : []),
     {
       icon: hasActiveReminder ? <FiCheckCircle size={15} /> : <FiBell size={15} />,
       label: hasActiveReminder ? "Tandai sudah diingatkan" : "Ingatkan",
@@ -51,7 +52,7 @@ export default function ContextMenu({
     },
     {
       icon: <FiBookmark size={15} />,
-      label: isPinned ? "Unpin" : "Pin Pesan",
+      label: isPinned ? "Unpin" : isChecklist ? "Pin Checklist" : "Pin Pesan",
       onClick: onTogglePin,
       danger: false,
     },

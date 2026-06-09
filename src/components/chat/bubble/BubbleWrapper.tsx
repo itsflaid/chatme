@@ -123,10 +123,6 @@ export default function BubbleWrapper({
     })
   }, [message.id, onUpdate])
 
-  if (message.type === MessageType.CHECKLIST) {
-    return <ChecklistBubble message={message} onUpdate={onUpdate} />
-  }
-
   return (
     <>
       <div
@@ -135,17 +131,22 @@ export default function BubbleWrapper({
         onTouchEnd={handleTouchEnd}
         onTouchMove={handleTouchEnd}
       >
-        <MessageBubble
-          message={message}
-          isNew={isNew}
-          searchQuery={searchQuery}
-        />
+        {message.type === MessageType.CHECKLIST ? (
+          <ChecklistBubble message={message} onUpdate={onUpdate} />
+        ) : (
+          <MessageBubble
+            message={message}
+            isNew={isNew}
+            searchQuery={searchQuery}
+          />
+        )}
       </div>
 
       {menuPos && (
         <ContextMenu
           x={menuPos.x}
           y={menuPos.y}
+          isChecklist={message.type === MessageType.CHECKLIST}
           isDone={message.isDone}
           isPinned={message.isPinned}
           hasActiveReminder={Boolean(message.remindAt && !message.isRemindDone)}
