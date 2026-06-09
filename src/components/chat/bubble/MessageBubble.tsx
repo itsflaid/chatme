@@ -1,8 +1,10 @@
 "use client"
+
+import { useEffect, useState } from "react"
 import { motion } from "framer-motion"
 import { Message } from "@prisma/client"
 import { IoCheckmarkDone } from "react-icons/io5"
-import { FiBookmark, FiCheck } from "react-icons/fi"
+import { FiBell, FiBookmark, FiCheck } from "react-icons/fi"
 import { userBubbleAnim } from "@/lib/animation"
 
 type Props = {
@@ -14,19 +16,14 @@ type Props = {
 function highlightText(text: string, query: string) {
   if (!query.trim()) return <>{text}</>
   const parts = text.split(new RegExp(`(${query})`, "gi"))
+
   return (
     <>
-      {parts.map((part, i) =>
+      {parts.map((part, index) =>
         part.toLowerCase() === query.toLowerCase() ? (
           <mark
-            key={i}
-            style={{
-              background: "var(--bg)",
-              color: "var(--accent)",
-              borderRadius: "3px",
-              padding: "0 2px",
-              fontWeight: 600,
-            }}
+            key={index}
+            className="rounded-sm bg-[var(--bg)] px-0.5 font-semibold text-[var(--accent)]"
           >
             {part}
           </mark>
@@ -43,7 +40,7 @@ export default function MessageBubble({
   isNew = false,
   searchQuery = "",
 }: Props) {
-  if (!message) return null
+  const [isReminderDue, setIsReminderDue] = useState(false)
 
   const time = new Date(message.createdAt).toLocaleTimeString("id-ID", {
     hour: "2-digit",
@@ -55,6 +52,34 @@ export default function MessageBubble({
         minute: "2-digit",
       })
     : null
+  const hasActiveReminder = Boolean(message.remindAt && !message.isRemindDone)
+
+  useEffect(() => {
+    let timer: number | undefined
+
+    function updateReminderStatus() {
+      if (!message.remindAt || message.isRemindDone) {
+        setIsReminderDue(false)
+        return
+      }
+
+      const delay = new Date(message.remindAt).getTime() - Date.now()
+      if (delay <= 0) {
+        setIsReminderDue(true)
+        return
+      }
+
+      setIsReminderDue(false)
+      timer = window.setTimeout(
+        updateReminderStatus,
+        Math.min(delay, 2_147_483_647)
+      )
+    }
+
+    timer = window.setTimeout(updateReminderStatus, 0)
+
+    return () => window.clearTimeout(timer)
+  }, [message.isRemindDone, message.remindAt])
 
   return (
     <motion.div
@@ -65,34 +90,45 @@ export default function MessageBubble({
       className="flex flex-col items-end"
     >
       <div
-        className="neo-card max-w-[82%] rotate-[0.4deg] rounded-xl rounded-br-sm px-4 py-2.5 relative bg-[var(--accent)]"
+        className="neo-card relative max-w-[82%] rotate-[0.4deg] rounded-xl rounded-br-sm bg-[var(--accent)] px-4 py-2.5"
         style={{ opacity: message.isDone ? 0.78 : 1 }}
       >
-        {message.isPinned && (
-            <div className="absolute -top-2 -right-2 w-6 h-6 rotate-12 rounded-md border-2 border-[var(--neo-line)] bg-[var(--bg)] flex items-center justify-center shadow-[2px_2px_0_var(--neo-shadow)]">
-            <FiBookmark size={11} className="text-[var(--accent)]" />
+        {(message.isPinned || hasActiveReminder || message.isDone) && (
+          <div className="absolute -right-2 -top-2 flex items-center gap-1">
+            {message.isPinned && (
+              <div className="flex h-6 w-6 -rotate-6 items-center justify-center rounded-md border-2 border-[var(--neo-line)] bg-[var(--bg)] shadow-[2px_2px_0_var(--neo-shadow)]">
+                <FiBookmark size={11} className="text-[var(--accent)]" />
+              </div>
+            )}
+
+            {hasActiveReminder && (
+              <div
+                className={`flex h-6 w-6 items-center justify-center rounded-md border-2 border-[var(--neo-line)] shadow-[2px_2px_0_var(--neo-shadow)] ${
+                  isReminderDue
+                    ? "rotate-6 bg-[var(--coral)] text-[var(--text)] opacity-100"
+                    : "bg-[var(--surface)] text-[var(--text)] opacity-60"
+                }`}
+                title={isReminderDue ? "Waktunya mengingatkan" : "Reminder dijadwalkan"}
+              >
+                <FiBell size={12} strokeWidth={2.5} />
+              </div>
+            )}
+
+            {message.isDone && (
+              <div className="flex h-6 w-6 rotate-6 items-center justify-center rounded-md border-2 border-[var(--neo-line)] bg-[var(--success)] text-[var(--text)] shadow-[2px_2px_0_var(--neo-shadow)]">
+                <FiCheck size={13} strokeWidth={3} />
+              </div>
+            )}
           </div>
         )}
 
-        {message.isDone && (
-          <div
-            className={`absolute -top-2 flex h-6 w-6 items-center justify-center rounded-md border-2 border-[var(--neo-line)] bg-[var(--success)] text-[var(--accent-ink)] shadow-[2px_2px_0_var(--neo-shadow)] ${
-              message.isPinned ? "right-5 -rotate-6" : "-right-2 rotate-6"
-            }`}
-          >
-            <FiCheck size={13} strokeWidth={3} />
-          </div>
-        )}
-
-        <p
-          className="text-sm leading-relaxed break-words text-[var(--accent-ink)]"
-        >
+        <p className="break-words text-sm leading-relaxed text-[var(--accent-ink)]">
           {highlightText(message.text, searchQuery)}
         </p>
 
-        {message.remindAt && !message.isRemindDone && (
-          <span className="mt-2 flex w-fit items-center gap-1 rounded-md border-2 border-[var(--neo-line)] bg-[var(--bg)] px-2 py-0.5 text-[10px] text-[var(--accent)]">
-            🔔{" "}
+        {hasActiveReminder && message.remindAt && (
+          <span className="mt-1.5 block text-[10px] font-semibold text-[var(--accent-ink)] opacity-70">
+            Ingatkan{" "}
             {new Date(message.remindAt).toLocaleDateString("id-ID", {
               day: "numeric",
               month: "short",
@@ -103,13 +139,13 @@ export default function MessageBubble({
         )}
       </div>
 
-      <div className="flex items-center gap-1 mt-1 pr-1">
+      <div className="mt-1 flex items-center gap-1 pr-1">
         {editedTime && (
           <span className="text-[10px] text-[var(--text3)]">
-            Diedit · {editedTime}
+            Diedit {editedTime}
           </span>
         )}
-        <span className="text-[10px] text-[var(--text3)] tabular-nums">
+        <span className="text-[10px] tabular-nums text-[var(--text3)]">
           {time}
         </span>
         <IoCheckmarkDone
