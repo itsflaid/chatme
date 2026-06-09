@@ -49,6 +49,12 @@ export default function MessageBubble({
     hour: "2-digit",
     minute: "2-digit",
   })
+  const editedTime = message.editedAt
+    ? new Date(message.editedAt).toLocaleTimeString("id-ID", {
+        hour: "2-digit",
+        minute: "2-digit",
+      })
+    : null
 
   return (
     <motion.div
@@ -98,6 +104,11 @@ export default function MessageBubble({
       </div>
 
       <div className="flex items-center gap-1 mt-1 pr-1">
+        {editedTime && (
+          <span className="text-[10px] text-[var(--text3)]">
+            Diedit · {editedTime}
+          </span>
+        )}
         <span className="text-[10px] text-[var(--text3)] tabular-nums">
           {time}
         </span>

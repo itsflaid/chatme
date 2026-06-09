@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { FiChevronUp, FiChevronDown, FiX } from "react-icons/fi"
 import ChatMessages from "./ChatMessages"
 import ChatHeader from "./ChatHeader"
@@ -14,12 +14,34 @@ type Props = {
   userId: string
 }
 
+function showReminderNotifications(
+  botMessages: ChatMessage[],
+  messages: ChatMessage[],
+  roomName: string
+) {
+  if (!("Notification" in window) || Notification.permission !== "granted") return
+
+  for (const botMessage of botMessages) {
+    const sourceMessage = messages.find((message) => message.id === botMessage.sourceMessageId)
+    const notification = new Notification(`Pengingat dari ${roomName}`, {
+      body: sourceMessage?.text || "Ada pengingat yang perlu kamu cek.",
+      icon: "/favicon.ico",
+      tag: `chatme-reminder-${botMessage.sourceMessageId ?? botMessage.id}`,
+    })
+    notification.onclick = () => {
+      window.focus()
+      notification.close()
+    }
+  }
+}
+
 export default function ChatContainer({ messages: initialMessages, room, userId }: Props) {
   const [messages, setMessages] = useState<ChatMessage[]>(initialMessages)
   const [snoozeBotId, setSnoozeBotId] = useState<string | null>(null)
   const [snoozeSourceId, setSnoozeSourceId] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState("")
   const [activeIndex, setActiveIndex] = useState(0)
+  const messagesRef = useRef(messages)
 
   const reminders = messages.filter(m => !m.isBot && m.remindAt && !m.isRemindDone)
   const pendingCount = messages.filter(m => !m.isDone && !m.isBot).length
@@ -46,12 +68,17 @@ export default function ChatContainer({ messages: initialMessages, room, userId 
     setMessages(prev => prev.map(m => m.id === tempId ? realMessage : m))
   }
 
+  useEffect(() => {
+    messagesRef.current = messages
+  }, [messages])
+
   // cek reminder triggered — dipanggil setelah kirim pesan
   async function handleCheckReminders() {
     const res = await fetch(`/api/rooms/${room.id}/reminders`)
     if (!res.ok) return
     const newBotMessages: ChatMessage[] = await res.json()
     if (newBotMessages.length > 0) {
+      showReminderNotifications(newBotMessages, messages, room.name)
       setMessages(prev => [...prev, ...newBotMessages])
     }
   }
@@ -117,16 +144,16 @@ export default function ChatContainer({ messages: initialMessages, room, userId 
     const newBotMessages: ChatMessage[] = await res.json()
 
     if (newBotMessages.length > 0) {
-      setMessages(prev => {
-        const existingIds = new Set(prev.map(m => m.id))
-        const newOnes = newBotMessages.filter(m => !existingIds.has(m.id))
-        return [...prev, ...newOnes]
-      })
+      const currentMessages = messagesRef.current
+      const existingIds = new Set(currentMessages.map(m => m.id))
+      const newOnes = newBotMessages.filter(m => !existingIds.has(m.id))
+      showReminderNotifications(newOnes, currentMessages, room.name)
+      setMessages(prev => [...prev, ...newOnes])
     }
   }, 5000)
 
   return () => clearInterval(interval)
-}, [room.id])
+}, [room.id, room.name])
 
   return (
     <div className="flex flex-col flex-1 min-h-0">

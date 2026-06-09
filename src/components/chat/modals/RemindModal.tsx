@@ -19,6 +19,10 @@ export default function RemindModal({ messageId, messageText, onClose, onSave }:
     setLoading(true)
     const remindAt = new Date(datetime)
 
+    if ("Notification" in window && Notification.permission === "default") {
+      await Notification.requestPermission()
+    }
+
     // kalau ada onSave callback, pakai optimistic
     if (onSave) {
       onSave(remindAt)

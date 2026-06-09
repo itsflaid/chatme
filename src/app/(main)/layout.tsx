@@ -29,6 +29,12 @@ export default async function MainLayout({ children }: { children: React.ReactNo
     }
   })
 
+  rooms.sort((a, b) => {
+    const aActivity = a.messages[0]?.createdAt ?? a.createdAt
+    const bActivity = b.messages[0]?.createdAt ?? b.createdAt
+    return bActivity.getTime() - aActivity.getTime()
+  })
+
   const sidebar = (
     <>
       <Topbar userName={session.user.name} />

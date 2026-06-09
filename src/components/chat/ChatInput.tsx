@@ -57,6 +57,7 @@ export default function ChatInput({
       userId,
       createdAt: new Date(),
       updatedAt: new Date(),
+      editedAt: null,
       checklistItems: [],
     }
 
@@ -102,6 +103,7 @@ export default function ChatInput({
       userId,
       createdAt: now,
       updatedAt: now,
+      editedAt: null,
       checklistItems: items.map((item, position) => ({
         id: `${tempId}-${position}`,
         text: item,

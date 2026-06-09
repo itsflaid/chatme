@@ -55,6 +55,7 @@ model Message {
   roomId          String
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
+  editedAt        DateTime?
 
   user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   room          Room      @relation(fields: [roomId], references: [id], onDelete: Cascade)

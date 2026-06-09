@@ -4,6 +4,8 @@ import { useState, useRef, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import ContextMenu from "@/components/chat/modals/ContextMenu"
 import RemindModal from "@/components/chat/modals/RemindModal"
+import DeleteMessageModal from "@/components/chat/modals/DeleteMessageModal"
+import EditMessageModal from "@/components/chat/modals/EditMessageModal"
 import MessageBubble from "./MessageBubble"
 import ChecklistBubble from "./ChecklistBubble"
 import { MessageType } from "@prisma/client"
@@ -26,6 +28,8 @@ export default function BubbleWrapper({
 }: Props) {
   const [menuPos, setMenuPos] = useState<{ x: number; y: number } | null>(null)
   const [showRemind, setShowRemind] = useState(false)
+  const [showDelete, setShowDelete] = useState(false)
+  const [showEdit, setShowEdit] = useState(false)
   const touchTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const router = useRouter()
 
@@ -97,10 +101,29 @@ export default function BubbleWrapper({
     })
   }, [message.id, message.isPinned, onUpdate])
 
-  const handleDelete = useCallback(() => {
-    onRemove(message.id)
-    fetch(`/api/messages/${message.id}`, { method: "DELETE" })
-  }, [message.id, onRemove])
+  const handleDelete = useCallback(async () => {
+    const res = await fetch(`/api/messages/${message.id}`, { method: "DELETE" })
+    if (res.ok) {
+      onRemove(message.id)
+      router.refresh()
+    }
+  }, [message.id, onRemove, router])
+
+  const handleEdit = useCallback(async (text: string) => {
+    const res = await fetch(`/api/messages/${message.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text }),
+    })
+    if (res.ok) {
+      const updated: ChatMessage = await res.json()
+      onUpdate(message.id, {
+        text: updated.text,
+        editedAt: updated.editedAt ? new Date(updated.editedAt) : null,
+      })
+      router.refresh()
+    }
+  }, [message.id, onUpdate, router])
 
   const handleRemindSave = useCallback((remindAt: Date) => {
     onUpdate(message.id, { remindAt, isRemindDone: false })
@@ -151,11 +174,12 @@ export default function BubbleWrapper({
           isPinned={message.isPinned}
           hasActiveReminder={Boolean(message.remindAt && !message.isRemindDone)}
           onCopy={handleCopy}
+          onEdit={() => { setMenuPos(null); setShowEdit(true) }}
           onToggleDone={handleToggleDone}
           onRemind={() => { setMenuPos(null); setShowRemind(true) }}
           onMarkReminded={handleMarkReminded}
           onTogglePin={handleTogglePin}
-          onDelete={handleDelete}
+          onDelete={() => { setMenuPos(null); setShowDelete(true) }}
           onClose={() => setMenuPos(null)}
         />
       )}
@@ -166,6 +190,22 @@ export default function BubbleWrapper({
           messageText={message.text}
           onClose={() => setShowRemind(false)}
           onSave={handleRemindSave}
+        />
+      )}
+
+      {showEdit && message.type === MessageType.TEXT && (
+        <EditMessageModal
+          initialText={message.text}
+          onSave={handleEdit}
+          onClose={() => setShowEdit(false)}
+        />
+      )}
+
+      {showDelete && (
+        <DeleteMessageModal
+          label={message.type === MessageType.CHECKLIST ? "checklist" : "pesan"}
+          onConfirm={handleDelete}
+          onClose={() => setShowDelete(false)}
         />
       )}
     </>
