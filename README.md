@@ -1,36 +1,154 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Chatme
 
-## Getting Started
+> I used WhatsApp as my notes app.
+>
+> So I built a notes app that feels like WhatsApp.
 
-First, run the development server:
+Chatme is a chat-based note-taking and reminder application inspired by a simple habit many people already have: sending messages to themselves.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+Instead of forcing users into complex folders, pages, and databases, Chatme keeps things familiar. Just type a message and save your thoughts as naturally as having a conversation.
+
+---
+
+## Why Chatme?
+
+For years, I used WhatsApp as a personal note-taking tool.
+
+Whenever I had an idea, task, reminder, or something important to remember, I would simply send a message to myself.
+
+```text
+Pay electricity bill tomorrow
+
+Finish networking assignment
+
+Project idea:
+- Add reminder feature
+- Improve landing page
+
+Okowi owes me Rp19.000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+The workflow was fast and familiar.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+The problem?
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+WhatsApp was never designed to be a second brain.
 
-## Learn More
+Notes get buried, reminders are easy to miss, and personal information becomes difficult to organize.
 
-To learn more about Next.js, take a look at the following resources:
+Chatme was created to solve that problem.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+It keeps the simplicity of messaging while providing tools specifically built for personal knowledge, reminders, and daily organization.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+---
 
-## Deploy on Vercel
+## Features
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### 💬 Chat-Based Notes
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Create notes by simply sending messages.
+
+No documents. No pages. No complicated structure.
+
+Just write.
+
+### 📂 Rooms
+
+Organize messages into separate rooms.
+
+Examples:
+
+- Personal
+- Ideas
+- College
+- Work
+- Finance
+- Projects
+
+### ✅ Checklist Support
+
+Turn messages into actionable checklists and track completed tasks.
+
+### ⏰ Reminders
+
+Schedule reminders directly from messages.
+
+Never forget important tasks again.
+
+### 🔍 Search Messages
+
+Quickly find old ideas, notes, and reminders.
+
+
+---
+
+## Preview
+
+### Landing Page
+
+<p align="center">
+  <img src="public/preview/landing1.jpg" width="280" alt="Landing Page 1" />
+  <img src="public/preview/landing2.jpg" width="280" alt="Landing Page 2" />
+</p>
+
+### Chat Room
+
+<p align="center">
+  <img src="public/preview/chatroom.jpg" width="280" alt="Chat Room" />
+</p>
+
+### Room List
+
+<p align="center">
+  <img src="public/preview/listroom.jpg" width="280" alt="Room List" />
+</p>
+
+### Checklist
+
+<p align="center">
+  <img src="public/preview/ceklis.jpg" width="280" alt="Checklist" />
+</p>
+
+### Reminder
+
+<p align="center">
+  <img src="public/preview/reminder.jpg" width="280" alt="Reminder" />
+</p>
+
+---
+
+## Philosophy
+
+Chatme is not trying to replace tools like Notion, Obsidian, or Evernote.
+
+It is built for people who already think through chat.
+
+Sometimes all you need is a place to quickly type:
+
+```text
+Don't forget this.
+```
+
+and move on with your day.
+
+---
+
+## Tech Stack
+
+- React
+- TypeScript
+- Tailwind CSS
+- Vite
+- PWA
+
+---
+
+## Status
+
+🚧 Currently in Development
+
+Chatme is actively being built and improved.
+
+---
+
+Built with ☕ and countless messages sent to myself.
