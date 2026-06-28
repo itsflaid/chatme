@@ -17,7 +17,7 @@ export default function MobileLayout({ sidebar, children }: Props) {
       style={{ height: "100dvh" }}
     >
 
-      <div className="hidden md:flex w-80 flex-col flex-shrink-0 border-r-2 border-[var(--neo-line)]">
+      <div className="hidden md:flex w-80 flex-col flex-shrink-0 border-r-2 border-[var(--neo-line)] relative">
         {sidebar}
       </div>
       <div className="hidden md:flex flex-1 flex-col overflow-hidden">

@@ -40,15 +40,19 @@ export default function AddRoomButton() {
 
   return (
     <>
-      {/* wrapper — ini yang jadi anchor FAB, bukan seluruh halaman */}
-      <div className="relative h-20 flex-shrink-0">
-        <button
-          onClick={() => setOpen(true)}
-          className="neo-button absolute bottom-10 right-5 z-10 flex h-12 w-12 rotate-3 items-center justify-center rounded-xl bg-[var(--accent)] text-[var(--accent-ink)] transition-all duration-200 hover:rotate-12"
-        >
-          <FiPlus size={22} />
-        </button>
-      </div>
+      {/* Gradient fade biar list terkesan fade ke bawah, bukan ke-cut */}
+      <div
+        className="pointer-events-none absolute bottom-0 left-0 right-0 h-24 z-10"
+        style={{ background: "linear-gradient(to top, var(--bg) 15%, transparent)" }}
+      />
+
+      {/* FAB absolute — tidak makan space layout, list room full */}
+      <button
+        onClick={() => setOpen(true)}
+        className="neo-button absolute bottom-6 right-5 z-20 flex h-12 w-12 rotate-3 items-center justify-center rounded-xl bg-[var(--accent)] text-[var(--accent-ink)] transition-all duration-200 hover:rotate-12"
+      >
+        <FiPlus size={22} />
+      </button>
 
       {open && (
         <div
@@ -68,7 +72,7 @@ export default function AddRoomButton() {
 
             <label className="text-xs text-[var(--text3)] mb-1.5 block">Nama room *</label>
             <input
-                className="neo-input w-full rounded-xl px-4 py-3 text-sm outline-none mb-4 bg-[var(--surface2)] text-[var(--text)] placeholder:text-[var(--text3)] focus:border-[var(--accent)] transition-colors"
+              className="neo-input w-full rounded-xl px-4 py-3 text-sm outline-none mb-4 bg-[var(--surface2)] text-[var(--text)] placeholder:text-[var(--text3)] focus:border-[var(--accent)] transition-colors"
               placeholder="Contoh: Tugas, Catatan, Random..."
               value={name}
               onChange={(e) => setName(e.target.value)}
