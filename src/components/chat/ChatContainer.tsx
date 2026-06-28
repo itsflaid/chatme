@@ -1,96 +1,61 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
+import { useState, useRef, useEffect } from "react"
 import { FiChevronUp, FiChevronDown, FiX } from "react-icons/fi"
 import ChatMessages from "./ChatMessages"
 import ChatHeader from "./ChatHeader"
 import ChatInput from "./ChatInput"
 import SnoozeModal from "./modals/SnoozeModal"
 import type { ChatMessage } from "@/types/chat"
+import type useMessages from "@/hooks/useMessages"
+
+type MessageAPI = ReturnType<typeof useMessages>
 
 type Props = {
-  messages: ChatMessage[]
   room: { id: string; name: string; icon: string; description: string | null }
   userId: string
+  messageAPI: MessageAPI
 }
 
-function showReminderNotifications(
-  botMessages: ChatMessage[],
-  messages: ChatMessage[],
-  roomName: string
-) {
-  if (!("Notification" in window) || Notification.permission !== "granted") return
+export default function ChatContainer({ room, userId, messageAPI }: Props) {
+  const {
+    messages,
+    patchMessage,
+    removeMessage: apiRemoveMessage,
+    addMessage,
+    replaceMessage,
+    mergeMessages,
+  } = messageAPI
 
-  for (const botMessage of botMessages) {
-    const sourceMessage = messages.find((message) => message.id === botMessage.sourceMessageId)
-    const notification = new Notification(`Pengingat dari ${roomName}`, {
-      body: sourceMessage?.text || "Ada pengingat yang perlu kamu cek.",
-      icon: "/favicon.ico",
-      tag: `chatme-reminder-${botMessage.sourceMessageId ?? botMessage.id}`,
-    })
-    notification.onclick = () => {
-      window.focus()
-      notification.close()
-    }
-  }
-}
-
-export default function ChatContainer({ messages: initialMessages, room, userId }: Props) {
-  const [messages, setMessages] = useState<ChatMessage[]>(initialMessages)
   const [snoozeBotId, setSnoozeBotId] = useState<string | null>(null)
   const [snoozeSourceId, setSnoozeSourceId] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState("")
   const [activeIndex, setActiveIndex] = useState(0)
-  const messagesRef = useRef(messages)
 
-  const reminders = messages.filter(m => !m.isBot && m.remindAt && !m.isRemindDone)
-  const pendingCount = messages.filter(m => !m.isDone && !m.isBot).length
+  const reminders = messages.filter((m) => !m.isBot && m.remindAt && !m.isRemindDone)
+  const pendingCount = messages.filter((m) => !m.isDone && !m.isBot).length
 
   const matchedMessages = searchQuery.trim()
-    ? messages.filter(m =>
-        !m.isBot && m.text.toLowerCase().includes(searchQuery.toLowerCase())
-      )
+    ? messages.filter((m) => !m.isBot && m.text.toLowerCase().includes(searchQuery.toLowerCase()))
     : []
-
-  function updateMessage(id: string, patch: Partial<ChatMessage>) {
-    setMessages(prev => prev.map(m => m.id === id ? { ...m, ...patch } : m))
-  }
-
-  function removeMessage(id: string) {
-    setMessages(prev => prev.filter(m => m.id !== id))
-  }
-
-  function addMessage(message: ChatMessage) {
-    setMessages(prev => [...prev, message])
-  }
-
-  function replaceMessage(tempId: string, realMessage: ChatMessage) {
-    setMessages(prev => prev.map(m => m.id === tempId ? realMessage : m))
-  }
-
-  useEffect(() => {
-    messagesRef.current = messages
-  }, [messages])
-
-  // cek reminder triggered — dipanggil setelah kirim pesan
-  async function handleCheckReminders() {
-    const res = await fetch(`/api/rooms/${room.id}/reminders`)
-    if (!res.ok) return
-    const newBotMessages: ChatMessage[] = await res.json()
-    if (newBotMessages.length > 0) {
-      showReminderNotifications(newBotMessages, messages, room.name)
-      setMessages(prev => [...prev, ...newBotMessages])
-    }
-  }
 
   function handleSearch(query: string) {
     setSearchQuery(query)
     setActiveIndex(0)
   }
 
+  async function handleCheckReminders() {
+    const res = await fetch(`/api/rooms/${room.id}/reminders`)
+    if (!res.ok) return
+    const newBotMessages: ChatMessage[] = await res.json()
+    if (newBotMessages.length > 0) {
+      mergeMessages(newBotMessages)
+    }
+  }
+
   async function handleBotDone(botMessageId: string, sourceMessageId: string) {
-    updateMessage(sourceMessageId, { isDone: true, isRemindDone: true })
-    updateMessage(botMessageId, { isRemindDone: true })
+    patchMessage(sourceMessageId, { isDone: true, isRemindDone: true })
+    patchMessage(botMessageId, { isRemindDone: true })
     fetch(`/api/messages/${sourceMessageId}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
@@ -111,8 +76,8 @@ export default function ChatContainer({ messages: initialMessages, room, userId 
   async function handleSnoozeSelect(minutes: number) {
     if (!snoozeBotId || !snoozeSourceId) return
     const newRemindAt = new Date(Date.now() + minutes * 60 * 1000)
-    updateMessage(snoozeSourceId, { remindAt: newRemindAt })
-    updateMessage(snoozeBotId, { isRemindDone: true })
+    patchMessage(snoozeSourceId, { remindAt: newRemindAt })
+    patchMessage(snoozeBotId, { isRemindDone: true })
     fetch(`/api/messages/${snoozeSourceId}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
@@ -128,32 +93,13 @@ export default function ChatContainer({ messages: initialMessages, room, userId 
   }
 
   async function handleReminderDone(messageId: string) {
-    updateMessage(messageId, { isRemindDone: true, isDone: true })
+    patchMessage(messageId, { isRemindDone: true, isDone: true })
     fetch(`/api/messages/${messageId}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ isRemindDone: true, isDone: true }),
     })
   }
-
-  useEffect(() => {
-  const interval = setInterval(async () => {
-    const res = await fetch(`/api/rooms/${room.id}/reminders`)
-    if (!res.ok) return
-
-    const newBotMessages: ChatMessage[] = await res.json()
-
-    if (newBotMessages.length > 0) {
-      const currentMessages = messagesRef.current
-      const existingIds = new Set(currentMessages.map(m => m.id))
-      const newOnes = newBotMessages.filter(m => !existingIds.has(m.id))
-      showReminderNotifications(newOnes, currentMessages, room.name)
-      setMessages(prev => [...prev, ...newOnes])
-    }
-  }, 5000)
-
-  return () => clearInterval(interval)
-}, [room.id, room.name])
 
   return (
     <div className="flex flex-col flex-1 min-h-0">
@@ -162,7 +108,7 @@ export default function ChatContainer({ messages: initialMessages, room, userId 
         name={room.name}
         icon={room.icon}
         description={room.description}
-        messageCount={messages.filter(m => !m.isBot).length}
+        messageCount={messages.filter((m) => !m.isBot).length}
         pendingCount={pendingCount}
         reminders={reminders}
         messages={messages}
@@ -179,12 +125,11 @@ export default function ChatContainer({ messages: initialMessages, room, userId 
           <span style={{ color: "var(--text3)" }}>
             {matchedMessages.length > 0
               ? `${activeIndex + 1} dari ${matchedMessages.length} hasil`
-              : "Tidak ada hasil"
-            }
+              : "Tidak ada hasil"}
           </span>
           <div className="flex items-center gap-1">
             <button
-              onClick={() => setActiveIndex(i => Math.max(0, i - 1))}
+              onClick={() => setActiveIndex((i) => Math.max(0, i - 1))}
               disabled={activeIndex === 0 || matchedMessages.length === 0}
               className="p-1 rounded-lg transition-opacity disabled:opacity-30 hover:bg-[var(--surface2)]"
               style={{ color: "var(--text2)" }}
@@ -192,7 +137,7 @@ export default function ChatContainer({ messages: initialMessages, room, userId 
               <FiChevronUp size={16} />
             </button>
             <button
-              onClick={() => setActiveIndex(i => Math.min(matchedMessages.length - 1, i + 1))}
+              onClick={() => setActiveIndex((i) => Math.min(matchedMessages.length - 1, i + 1))}
               disabled={activeIndex === matchedMessages.length - 1 || matchedMessages.length === 0}
               className="p-1 rounded-lg transition-opacity disabled:opacity-30 hover:bg-[var(--surface2)]"
               style={{ color: "var(--text2)" }}
@@ -200,7 +145,10 @@ export default function ChatContainer({ messages: initialMessages, room, userId 
               <FiChevronDown size={16} />
             </button>
             <button
-              onClick={() => { setSearchQuery(""); setActiveIndex(0) }}
+              onClick={() => {
+                setSearchQuery("")
+                setActiveIndex(0)
+              }}
               className="p-1 rounded-lg hover:bg-[var(--surface2)] ml-1"
               style={{ color: "var(--text3)" }}
             >
@@ -214,8 +162,8 @@ export default function ChatContainer({ messages: initialMessages, room, userId 
         messages={messages}
         onBotDone={handleBotDone}
         onBotSnooze={handleBotSnooze}
-        onMessageUpdate={updateMessage}
-        onMessageRemove={removeMessage}
+        onMessageUpdate={patchMessage}
+        onMessageRemove={apiRemoveMessage}
         searchQuery={searchQuery}
         activeMatchId={matchedMessages[activeIndex]?.id ?? null}
       />
@@ -225,14 +173,17 @@ export default function ChatContainer({ messages: initialMessages, room, userId 
         userId={userId}
         onMessageAdd={addMessage}
         onMessageReplace={replaceMessage}
-        onMessageRemove={removeMessage}
+        onMessageRemove={apiRemoveMessage}
         onCheckReminders={handleCheckReminders}
       />
 
       {snoozeBotId && (
         <SnoozeModal
           onSelect={handleSnoozeSelect}
-          onClose={() => { setSnoozeBotId(null); setSnoozeSourceId(null) }}
+          onClose={() => {
+            setSnoozeBotId(null)
+            setSnoozeSourceId(null)
+          }}
         />
       )}
     </div>

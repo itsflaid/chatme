@@ -19,8 +19,8 @@ export default function DeleteRoomModal({ roomId, roomName, onClose }: Props) {
     await fetch(`/api/rooms/${roomId}`, { method: "DELETE" })
     setLoading(false)
     onClose()
+    window.dispatchEvent(new Event("rooms:refresh"))
     router.push("/")
-    router.refresh()
   }
 
   return (

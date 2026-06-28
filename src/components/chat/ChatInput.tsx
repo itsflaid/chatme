@@ -1,7 +1,6 @@
 "use client"
 
 import { useState, useRef } from "react"
-import { useRouter } from "next/navigation"
 import { FiPlus, FiSend } from "react-icons/fi"
 import { MessageType } from "@prisma/client"
 import ChecklistComposer from "./modals/ChecklistComposer"
@@ -28,7 +27,6 @@ export default function ChatInput({
   const [showChecklist, setShowChecklist] = useState(false)
   const [checklistLoading, setChecklistLoading] = useState(false)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
-  const router = useRouter()
 
   function autoResize() {
     const el = textareaRef.current
@@ -77,9 +75,6 @@ export default function ChatInput({
 
       // cek reminder yang triggered
       onCheckReminders()
-
-      // refresh sidebar room list — update preview pesan terakhir
-      setTimeout(() => router.refresh(), 500)
     } else {
       onMessageRemove(tempId)
     }
@@ -133,7 +128,6 @@ export default function ChatInput({
       const realMessage: ChatMessage = await res.json()
       onMessageReplace(tempId, realMessage)
       setShowChecklist(false)
-      setTimeout(() => router.refresh(), 500)
     } else {
       onMessageRemove(tempId)
     }

@@ -33,7 +33,7 @@ export default function EditRoomModal({
     })
     setLoading(false)
     onClose()
-    router.refresh()
+    window.dispatchEvent(new Event("rooms:refresh"))
   }
 
   return (

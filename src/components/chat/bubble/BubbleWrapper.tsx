@@ -1,7 +1,6 @@
 "use client"
 
 import { useState, useRef, useCallback } from "react"
-import { useRouter } from "next/navigation"
 import ContextMenu from "@/components/chat/modals/ContextMenu"
 import RemindModal from "@/components/chat/modals/RemindModal"
 import DeleteMessageModal from "@/components/chat/modals/DeleteMessageModal"
@@ -31,7 +30,6 @@ export default function BubbleWrapper({
   const [showDelete, setShowDelete] = useState(false)
   const [showEdit, setShowEdit] = useState(false)
   const touchTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const router = useRouter()
 
   function openMenu(x: number, y: number) { setMenuPos({ x, y }) }
 
@@ -77,7 +75,6 @@ export default function BubbleWrapper({
       if (res.ok) {
         const updated: ChatMessage = await res.json()
         onUpdate(message.id, updated)
-        router.refresh()
       }
       return
     }
@@ -89,8 +86,7 @@ export default function BubbleWrapper({
       body: JSON.stringify({ isDone: nextIsDone }),
     })
 
-    if (res.ok) router.refresh()
-  }, [message, onUpdate, router])
+  }, [message, onUpdate])
 
   const handleTogglePin = useCallback(() => {
     onUpdate(message.id, { isPinned: !message.isPinned })
@@ -105,9 +101,8 @@ export default function BubbleWrapper({
     const res = await fetch(`/api/messages/${message.id}`, { method: "DELETE" })
     if (res.ok) {
       onRemove(message.id)
-      router.refresh()
     }
-  }, [message.id, onRemove, router])
+  }, [message.id, onRemove])
 
   const handleEdit = useCallback(async (text: string) => {
     const res = await fetch(`/api/messages/${message.id}`, {
@@ -121,9 +116,8 @@ export default function BubbleWrapper({
         text: updated.text,
         editedAt: updated.editedAt ? new Date(updated.editedAt) : null,
       })
-      router.refresh()
     }
-  }, [message.id, onUpdate, router])
+  }, [message.id, onUpdate])
 
   const handleRemindSave = useCallback((remindAt: Date) => {
     onUpdate(message.id, { remindAt, isRemindDone: false })

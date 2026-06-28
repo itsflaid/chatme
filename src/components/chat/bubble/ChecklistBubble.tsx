@@ -1,7 +1,6 @@
 "use client"
 
 import { useState } from "react"
-import { useRouter } from "next/navigation"
 import { FiCheck, FiEdit2, FiList, FiPlus, FiTrash2, FiX } from "react-icons/fi"
 import type { ChatMessage } from "@/types/chat"
 
@@ -11,7 +10,6 @@ type Props = {
 }
 
 export default function ChecklistBubble({ message, onUpdate }: Props) {
-  const router = useRouter()
   const [editing, setEditing] = useState(false)
   const [saving, setSaving] = useState(false)
   const [title, setTitle] = useState(message.text)
@@ -43,11 +41,6 @@ export default function ChecklistBubble({ message, onUpdate }: Props) {
         checklistItems: message.checklistItems,
         isDone: message.isDone,
       })
-    } else {
-      const result: { messageIsDone: boolean } = await res.json()
-      if (result.messageIsDone !== message.isDone) {
-        router.refresh()
-      }
     }
   }
 
@@ -77,7 +70,6 @@ export default function ChecklistBubble({ message, onUpdate }: Props) {
       const updated: ChatMessage = await res.json()
       onUpdate(message.id, updated)
       setEditing(false)
-      router.refresh()
     }
     setSaving(false)
   }

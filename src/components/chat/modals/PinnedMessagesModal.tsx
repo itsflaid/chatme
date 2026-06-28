@@ -1,6 +1,5 @@
 "use client"
 
-import { useRouter } from "next/navigation"
 import { FiX, FiBookmark, FiCheck } from "react-icons/fi"
 import { Message } from "@prisma/client"
 
@@ -10,7 +9,6 @@ type Props = {
 }
 
 export default function PinnedMessagesModal({ messages, onClose }: Props) {
-  const router = useRouter()
   const pinned = messages.filter(m => m.isPinned && !m.isBot)
 
   async function handleUnpin(messageId: string) {
@@ -19,7 +17,7 @@ export default function PinnedMessagesModal({ messages, onClose }: Props) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ isPinned: false }),
     })
-    router.refresh()
+    window.dispatchEvent(new Event("rooms:refresh"))
   }
 
   async function handleDone(messageId: string) {
@@ -28,7 +26,7 @@ export default function PinnedMessagesModal({ messages, onClose }: Props) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ isDone: true, isPinned: false }),
     })
-    router.refresh()
+    window.dispatchEvent(new Event("rooms:refresh"))
   }
 
   return (

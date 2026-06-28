@@ -24,14 +24,18 @@ export default function AddRoomButton() {
   async function handleCreate() {
     if (!name.trim()) return
     setLoading(true)
-    await fetch("/api/rooms", {
+    const res = await fetch("/api/rooms", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ name: name.trim(), icon, description: description.trim() || null }),
     })
     setLoading(false)
     handleClose()
-    router.refresh()
+    if (res.ok) {
+      const room = await res.json()
+      window.dispatchEvent(new Event("rooms:refresh"))
+      router.push(`/room/${room.id}`)
+    }
   }
 
   return (
