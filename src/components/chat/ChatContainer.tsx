@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useRef, useEffect } from "react"
+import { useState } from "react"
 import { FiChevronUp, FiChevronDown, FiX } from "react-icons/fi"
 import ChatMessages from "./ChatMessages"
 import ChatHeader from "./ChatHeader"
@@ -20,6 +20,7 @@ type Props = {
 export default function ChatContainer({ room, userId, messageAPI }: Props) {
   const {
     messages,
+    loading,
     patchMessage,
     removeMessage: apiRemoveMessage,
     addMessage,
@@ -160,6 +161,7 @@ export default function ChatContainer({ room, userId, messageAPI }: Props) {
 
       <ChatMessages
         messages={messages}
+        isLoading={loading}
         onBotDone={handleBotDone}
         onBotSnooze={handleBotSnooze}
         onMessageUpdate={patchMessage}

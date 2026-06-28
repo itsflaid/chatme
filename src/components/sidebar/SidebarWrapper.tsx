@@ -2,10 +2,31 @@
 
 import useRooms from "@/hooks/useRooms"
 import RoomList from "./RoomList"
-import EmptyRooms from "./EmptyRooms"
 
-export default function SidebarWrapper() {
-  const { rooms, loading } = useRooms()
+type ServerRoom = {
+  id: string
+  name: string
+  icon: string
+  _count: { messages: number }
+  messages: { text: string; createdAt: string }[]
+}
+
+type Props = {
+  serverRooms?: ServerRoom[]
+}
+
+export default function SidebarWrapper({ serverRooms }: Props) {
+  // Kalau serverRooms ada → rooms langsung tersedia, loading = false
+  // Kalau tidak ada → hook fetch sendiri dari client (fallback)
+  const initialRooms = serverRooms?.map((r) => ({
+    ...r,
+    messages: r.messages.map((m) => ({
+      ...m,
+      createdAt: new Date(m.createdAt),
+    })),
+  }))
+
+  const { rooms, loading } = useRooms(initialRooms)
 
   if (loading && rooms.length === 0) {
     return <SidebarSkeleton />

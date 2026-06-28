@@ -4,6 +4,10 @@ import { useState, useEffect, useCallback, useRef } from "react"
 import { getCache, setCache, updateCache, CacheKeys, CACHE_INITIAL } from "@/lib/cache"
 import type { ChatMessage } from "@/types/chat"
 
+// L1 in-memory cache — sync, zero latency
+// Hidup selama tab terbuka, tidak perlu await
+const memoryCache = new Map<string, ChatMessage[]>()
+
 type MessageAPI = {
   messages: ChatMessage[]
   loading: boolean
@@ -19,8 +23,13 @@ type MessageAPI = {
 }
 
 export default function useMessages(roomId: string): MessageAPI {
-  const [messages, setMessages] = useState<ChatMessage[]>([])
-  const [loading, setLoading] = useState(true)
+  const cacheKey = CacheKeys.messages(roomId)
+
+  // Cek memory cache dulu — sync, langsung ada
+  const memHit = memoryCache.get(cacheKey)
+
+  const [messages, setMessages] = useState<ChatMessage[]>(memHit ?? [])
+  const [loading, setLoading] = useState(!memHit) // kalau ada di memory, skip loading
   const [hasMore, setHasMore] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const mountedRef = useRef(true)
@@ -28,7 +37,11 @@ export default function useMessages(roomId: string): MessageAPI {
 
   useEffect(() => {
     messagesRef.current = messages
-  }, [messages])
+    // Sync ke memory cache setiap update
+    if (messages.length > 0) {
+      memoryCache.set(cacheKey, messages)
+    }
+  }, [messages, cacheKey])
 
   useEffect(() => {
     return () => {
@@ -36,20 +49,25 @@ export default function useMessages(roomId: string): MessageAPI {
     }
   }, [])
 
-  const cacheKey = CacheKeys.messages(roomId)
-
   useEffect(() => {
     let cancelled = false
 
     async function init() {
-      setLoading(true)
+      // Kalau memory cache sudah ada, langsung fetch fresh di background
+      // tanpa set loading true (sudah ada konten yang ditampilkan)
+      if (!memHit) {
+        setLoading(true)
 
-      const cached = await getCache<ChatMessage[]>(cacheKey)
-      if (cached && !cancelled) {
-        setMessages(cached.data)
-        setLoading(false)
+        // L2: cek IndexedDB
+        const cached = await getCache<ChatMessage[]>(cacheKey)
+        if (cached && !cancelled) {
+          setMessages(cached.data)
+          memoryCache.set(cacheKey, cached.data)
+          setLoading(false)
+        }
       }
 
+      // L3: fetch fresh dari server (selalu jalan, sebagai background revalidate)
       try {
         const res = await fetch(`/api/rooms/${roomId}/messages?limit=${CACHE_INITIAL}`)
         if (!res.ok || cancelled) return
@@ -58,11 +76,12 @@ export default function useMessages(roomId: string): MessageAPI {
 
         const fresh = data.messages as ChatMessage[]
         setMessages(fresh)
+        memoryCache.set(cacheKey, fresh)
         await setCache(cacheKey, fresh)
         setHasMore(data.hasMore)
         setError(null)
       } catch {
-        if (!cancelled && messages.length === 0) {
+        if (!cancelled && messagesRef.current.length === 0) {
           setError("Gagal memuat pesan")
         }
       } finally {
@@ -75,7 +94,7 @@ export default function useMessages(roomId: string): MessageAPI {
     return () => {
       cancelled = true
     }
-  }, [roomId, cacheKey])
+  }, [roomId, cacheKey, memHit])
 
   const loadMore = useCallback(async () => {
     if (!hasMore || loading) return
@@ -90,8 +109,16 @@ export default function useMessages(roomId: string): MessageAPI {
 
       const older = data.messages as ChatMessage[]
       const merged = await updateCache(cacheKey, older)
-      if (merged) setMessages(merged)
-      else setMessages((prev) => [...older, ...prev])
+      if (merged) {
+        setMessages(merged)
+        memoryCache.set(cacheKey, merged)
+      } else {
+        setMessages((prev) => {
+          const next = [...older, ...prev]
+          memoryCache.set(cacheKey, next)
+          return next
+        })
+      }
 
       setHasMore(data.hasMore)
     } catch {
@@ -103,7 +130,11 @@ export default function useMessages(roomId: string): MessageAPI {
 
   const addMessage = useCallback(
     (msg: ChatMessage) => {
-      setMessages((prev) => [...prev, msg])
+      setMessages((prev) => {
+        const next = [...prev, msg]
+        memoryCache.set(cacheKey, next)
+        return next
+      })
       updateCache(cacheKey, [msg])
     },
     [cacheKey]
@@ -111,7 +142,11 @@ export default function useMessages(roomId: string): MessageAPI {
 
   const replaceMessage = useCallback(
     (tempId: string, real: ChatMessage) => {
-      setMessages((prev) => prev.map((m) => (m.id === tempId ? real : m)))
+      setMessages((prev) => {
+        const next = prev.map((m) => (m.id === tempId ? real : m))
+        memoryCache.set(cacheKey, next)
+        return next
+      })
       updateCache(cacheKey, [real])
     },
     [cacheKey]
@@ -119,16 +154,24 @@ export default function useMessages(roomId: string): MessageAPI {
 
   const removeMessage = useCallback(
     (id: string) => {
-      setMessages((prev) => prev.filter((m) => m.id !== id))
+      setMessages((prev) => {
+        const next = prev.filter((m) => m.id !== id)
+        memoryCache.set(cacheKey, next)
+        return next
+      })
     },
-    []
+    [cacheKey]
   )
 
   const patchMessage = useCallback(
     (id: string, patch: Partial<ChatMessage>) => {
-      setMessages((prev) => prev.map((m) => (m.id === id ? { ...m, ...patch } : m)))
+      setMessages((prev) => {
+        const next = prev.map((m) => (m.id === id ? { ...m, ...patch } : m))
+        memoryCache.set(cacheKey, next)
+        return next
+      })
     },
-    []
+    [cacheKey]
   )
 
   const mergeMessages = useCallback(
@@ -139,6 +182,7 @@ export default function useMessages(roomId: string): MessageAPI {
         const fresh = newMsgs.filter((m) => !existingIds.has(m.id))
         if (fresh.length === 0) return prev
         const merged = [...prev, ...fresh]
+        memoryCache.set(cacheKey, merged)
         updateCache(cacheKey, fresh)
         return merged
       })
@@ -155,6 +199,7 @@ export default function useMessages(roomId: string): MessageAPI {
       const data = await res.json()
       const fresh = data.messages as ChatMessage[]
       setMessages(fresh)
+      memoryCache.set(cacheKey, fresh)
       await setCache(cacheKey, fresh)
       setHasMore(data.hasMore)
     } catch {

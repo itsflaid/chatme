@@ -1,7 +1,8 @@
 "use client"
 
 import Link from "next/link"
-import { usePathname } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
+import { useCallback, useRef } from "react"
 
 type Props = {
   id: string
@@ -25,7 +26,32 @@ function formatTime(date: Date): string {
 
 export default function RoomItem({ id, name, icon, pendingCount, lastMessage }: Props) {
   const pathname = usePathname()
+  const router = useRouter()
   const isActive = pathname === `/room/${id}`
+  const prefetchedRef = useRef(false)
+
+  // Prefetch page JS saat hover (Next.js router)
+  // Prefetch API data saat hover — masuk ke browser HTTP cache
+  const handleMouseEnter = useCallback(
+    (e: React.MouseEvent<HTMLAnchorElement>) => {
+      if (!isActive) e.currentTarget.style.background = "var(--surface3)"
+
+      if (!prefetchedRef.current) {
+        prefetchedRef.current = true
+        // Prefetch Next.js page bundle
+        router.prefetch(`/room/${id}`)
+        // Prefetch API data — browser cache-kan response ini
+        fetch(`/api/rooms/${id}/messages?limit=30`, {
+          method: "GET",
+          // next: { revalidate: 0 } — tidak perlu, ini client fetch
+        }).catch(() => {
+          // silent — prefetch gagal tidak masalah
+          prefetchedRef.current = false
+        })
+      }
+    },
+    [id, isActive, router]
+  )
 
   return (
     <Link
@@ -34,10 +60,8 @@ export default function RoomItem({ id, name, icon, pendingCount, lastMessage }: 
       style={{
         background: isActive ? "var(--accent)" : "var(--surface)",
       }}
-      onMouseEnter={e => {
-        if (!isActive) e.currentTarget.style.background = "var(--surface3)"
-      }}
-      onMouseLeave={e => {
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={(e) => {
         if (!isActive) e.currentTarget.style.background = "var(--surface)"
       }}
     >
@@ -73,7 +97,7 @@ export default function RoomItem({ id, name, icon, pendingCount, lastMessage }: 
           className="text-xs truncate"
           style={{ color: isActive ? "var(--accent-ink)" : "var(--text3)" }}
         >
-          {lastMessage ? lastMessage.text : "Belum ada pesan"}
+          {lastMessage ? lastMessage.text : "Belum ada catatan"}
         </p>
       </div>
 

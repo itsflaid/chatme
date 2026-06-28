@@ -7,6 +7,7 @@ import type { ChatMessage } from "@/types/chat"
 
 type Props = {
   messages: ChatMessage[]
+  isLoading?: boolean
   onBotDone: (botMessageId: string, sourceMessageId: string) => void
   onBotSnooze: (botMessageId: string, sourceMessageId: string) => void
   onMessageUpdate: (id: string, patch: Partial<ChatMessage>) => void
@@ -41,8 +42,57 @@ function groupByDate(messages: ChatMessage[]): GroupedMessages {
   }, [])
 }
 
+function MessagesSkeleton() {
+  return (
+    <div className="flex-1 min-h-0 overflow-hidden px-3 sm:px-10 py-5 flex flex-col gap-3">
+      {/* date label skeleton */}
+      <div className="flex justify-center my-1">
+        <div className="w-24 h-5 rounded-full bg-[var(--surface2)] animate-pulse" />
+      </div>
+
+      {/* bubble kanan */}
+      <div className="flex justify-end">
+        <div className="flex flex-col items-end gap-1">
+          <div className="h-10 w-48 rounded-[18px_18px_4px_18px] bg-[var(--accent)] opacity-20 animate-pulse" />
+          <div className="w-12 h-2 rounded-full bg-[var(--surface2)] animate-pulse" />
+        </div>
+      </div>
+
+      {/* bubble kanan lebih panjang */}
+      <div className="flex justify-end">
+        <div className="flex flex-col items-end gap-1">
+          <div className="h-16 w-64 rounded-[18px_18px_4px_18px] bg-[var(--accent)] opacity-20 animate-pulse" />
+          <div className="w-12 h-2 rounded-full bg-[var(--surface2)] animate-pulse" />
+        </div>
+      </div>
+
+      {/* date label skeleton kedua */}
+      <div className="flex justify-center my-1">
+        <div className="w-16 h-5 rounded-full bg-[var(--surface2)] animate-pulse" />
+      </div>
+
+      {/* bubble kanan */}
+      <div className="flex justify-end">
+        <div className="flex flex-col items-end gap-1">
+          <div className="h-10 w-56 rounded-[18px_18px_4px_18px] bg-[var(--accent)] opacity-20 animate-pulse" />
+          <div className="w-12 h-2 rounded-full bg-[var(--surface2)] animate-pulse" />
+        </div>
+      </div>
+
+      {/* bubble kanan pendek */}
+      <div className="flex justify-end">
+        <div className="flex flex-col items-end gap-1">
+          <div className="h-10 w-36 rounded-[18px_18px_4px_18px] bg-[var(--accent)] opacity-20 animate-pulse" />
+          <div className="w-12 h-2 rounded-full bg-[var(--surface2)] animate-pulse" />
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function ChatMessages({
   messages,
+  isLoading = false,
   onBotDone,
   onBotSnooze,
   onMessageUpdate,
@@ -67,13 +117,19 @@ export default function ChatMessages({
     }
   }, [activeMatchId])
 
+  if (isLoading && messages.length === 0) {
+    return <MessagesSkeleton />
+  }
+
   if (messages.length === 0) {
-  return (
-    <div className="flex-1 flex items-center justify-center">
-      <div className="w-4 h-4 rounded-full border-2 border-[var(--accent)] border-t-transparent animate-spin" />
-    </div>
-  )
-}
+    return (
+      <div className="flex-1 flex items-center justify-center">
+        <p className="text-sm text-[var(--text3)]">
+          Belum ada catatan. Mulai dari mana saja.
+        </p>
+      </div>
+    )
+  }
 
   const grouped = groupByDate(messages)
 

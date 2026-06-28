@@ -11,9 +11,16 @@ export type RoomData = {
   messages: { text: string; createdAt: Date }[]
 }
 
+// L1 memory cache — sync, zero latency
+let memoryRooms: RoomData[] | null = null
+
 export default function useRooms(serverRooms?: RoomData[] | null) {
-  const [rooms, setRooms] = useState<RoomData[]>(serverRooms ?? [])
-  const [loading, setLoading] = useState(false)
+  // Priority: serverRooms → memory cache → []
+  const initial = serverRooms ?? memoryRooms ?? []
+
+  const [rooms, setRooms] = useState<RoomData[]>(initial)
+  // Kalau sudah ada data (server atau memory), skip loading state
+  const [loading, setLoading] = useState(initial.length === 0)
   const [error, setError] = useState<string | null>(null)
   const mountedRef = useRef(true)
 
@@ -50,36 +57,47 @@ export default function useRooms(serverRooms?: RoomData[] | null) {
       setLoading(false)
       return
     }
+    memoryRooms = fresh
     setRooms(fresh)
     setCache(CacheKeys.rooms, fresh)
     setLoading(false)
   }, [fetchRooms])
 
   useEffect(() => {
-    function handleRefresh() {
-      refresh()
-    }
-    window.addEventListener("rooms:refresh", handleRefresh)
-    return () => window.removeEventListener("rooms:refresh", handleRefresh)
+    window.addEventListener("rooms:refresh", refresh as EventListener)
+    return () => window.removeEventListener("rooms:refresh", refresh as EventListener)
   }, [refresh])
 
   useEffect(() => {
     let cancelled = false
 
     async function init() {
-      setLoading(true)
+      // Kalau serverRooms atau memory cache sudah ada, langsung background revalidate
+      // tanpa set loading true — konten sudah ada di layar
+      const hasInitialData = (serverRooms?.length ?? 0) > 0 || (memoryRooms?.length ?? 0) > 0
 
-      const cached = await getCache<RoomData[]>(CacheKeys.rooms)
-      if (cached && !cancelled) {
-        setRooms(cached.data)
-        setLoading(false)
-      } else if (!serverRooms && !cancelled) {
-        setLoading(true)
+      if (!hasInitialData) {
+        // L2: cek IndexedDB kalau tidak ada sama sekali
+        const cached = await getCache<RoomData[]>(CacheKeys.rooms)
+        if (cached && !cancelled) {
+          const parsed = cached.data.map((r) => ({
+            ...r,
+            messages: r.messages.map((m) => ({
+              ...m,
+              createdAt: new Date(m.createdAt),
+            })),
+          }))
+          memoryRooms = parsed
+          setRooms(parsed)
+          setLoading(false)
+        }
       }
 
+      // L3: background revalidate dari server (selalu jalan)
       const fresh = await fetchRooms()
       if (cancelled || !fresh) return
 
+      memoryRooms = fresh
       setRooms(fresh)
       setCache(CacheKeys.rooms, fresh)
       setError(null)
