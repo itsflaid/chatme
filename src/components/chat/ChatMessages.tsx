@@ -68,14 +68,12 @@ export default function ChatMessages({
   }, [activeMatchId])
 
   if (messages.length === 0) {
-    return (
-      <div className="flex-1 flex items-center justify-center">
-        <p className="text-sm text-[var(--text3)]">
-          Belum ada pesan. Mulai ketik sesuatu!
-        </p>
-      </div>
-    )
-  }
+  return (
+    <div className="flex-1 flex items-center justify-center">
+      <div className="w-4 h-4 rounded-full border-2 border-[var(--accent)] border-t-transparent animate-spin" />
+    </div>
+  )
+}
 
   const grouped = groupByDate(messages)
 
