@@ -101,12 +101,15 @@ export default function ChatMessages({
   activeMatchId = null,
 }: Props) {
   const bottomRef = useRef<HTMLDivElement>(null)
+  const isFirstRender = useRef(true)
   const activeRef = useRef<HTMLDivElement>(null)
 
-  // scroll ke bawah saat pesan baru — hanya kalau tidak sedang search
+  // scroll ke bawah: instant di render pertama, smooth untuk pesan baru
   useEffect(() => {
     if (!searchQuery) {
-      bottomRef.current?.scrollIntoView({ behavior: "smooth" })
+      const behavior = isFirstRender.current ? "instant" : "smooth"
+      isFirstRender.current = false
+      bottomRef.current?.scrollIntoView({ behavior })
     }
   }, [messages, searchQuery])
 
