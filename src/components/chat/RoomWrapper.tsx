@@ -35,10 +35,17 @@ export default function RoomWrapper({ roomId, userId, room }: Props) {
   const messageAPI = useMessages(roomId)
   const { messages, mergeMessages } = messageAPI
   const messagesRef = useRef(messages)
+  // Simpan mergeMessages di ref supaya interval tidak perlu di-reset
+  // setiap kali mergeMessages berubah referensinya
+  const mergeMessagesRef = useRef(mergeMessages)
 
   useEffect(() => {
     messagesRef.current = messages
   }, [messages])
+
+  useEffect(() => {
+    mergeMessagesRef.current = mergeMessages
+  }, [mergeMessages])
 
   useEffect(() => {
     let interval: ReturnType<typeof setInterval> | null = null
@@ -55,7 +62,7 @@ export default function RoomWrapper({ roomId, userId, room }: Props) {
           const newOnes = newBotMessages.filter((m) => !existingIds.has(m.id))
           if (newOnes.length > 0) {
             showReminderNotifications(newOnes, currentMessages, room.name)
-            mergeMessages(newOnes)
+            mergeMessagesRef.current(newOnes)
           }
         }
       } catch {
@@ -67,7 +74,9 @@ export default function RoomWrapper({ roomId, userId, room }: Props) {
     return () => {
       if (interval) clearInterval(interval)
     }
-  }, [roomId, room.name, mergeMessages])
+  // Hanya bergantung pada roomId dan room.name — bukan mergeMessages
+  // supaya interval tidak di-reset setiap render
+  }, [roomId, room.name])
 
   return (
     <ChatContainer

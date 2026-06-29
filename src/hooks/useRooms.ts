@@ -24,6 +24,10 @@ export default function useRooms(serverRooms?: RoomData[] | null) {
   const [error, setError] = useState<string | null>(null)
   const mountedRef = useRef(true)
 
+  // Bekukan serverRooms di ref — nilainya sudah dipakai untuk useState initial,
+  // tidak perlu masuk dependency useEffect (mencegah loop karena referensi array baru tiap render)
+  const serverRoomsRef = useRef(serverRooms)
+
   useEffect(() => {
     return () => {
       mountedRef.current = false
@@ -72,9 +76,9 @@ export default function useRooms(serverRooms?: RoomData[] | null) {
     let cancelled = false
 
     async function init() {
-      // Kalau serverRooms atau memory cache sudah ada, langsung background revalidate
-      // tanpa set loading true — konten sudah ada di layar
-      const hasInitialData = (serverRooms?.length ?? 0) > 0 || (memoryRooms?.length ?? 0) > 0
+      const initialServerRooms = serverRoomsRef.current
+      const hasInitialData =
+        (initialServerRooms?.length ?? 0) > 0 || (memoryRooms?.length ?? 0) > 0
 
       if (!hasInitialData) {
         // L2: cek IndexedDB kalau tidak ada sama sekali
@@ -93,7 +97,7 @@ export default function useRooms(serverRooms?: RoomData[] | null) {
         }
       }
 
-      // L3: background revalidate dari server (selalu jalan)
+      // L3: background revalidate dari server (hanya jalan sekali saat mount)
       const fresh = await fetchRooms()
       if (cancelled || !fresh) return
 
@@ -109,7 +113,7 @@ export default function useRooms(serverRooms?: RoomData[] | null) {
     return () => {
       cancelled = true
     }
-  }, [serverRooms, fetchRooms])
+  }, [fetchRooms])
 
   return { rooms, loading, error, refresh }
 }

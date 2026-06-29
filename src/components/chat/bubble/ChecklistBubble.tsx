@@ -88,7 +88,7 @@ export default function ChecklistBubble({ message, onUpdate }: Props) {
               <FiList size={17} />
             </div>
             <div className="min-w-0">
-              <p className="break-words font-sora text-sm font-black">{message.text}</p>
+              <p className="break-words font-sora text-sm font-black select-none">{message.text}</p>
               <p className="mt-0.5 text-[11px] font-semibold opacity-65">
                 {completed} dari {total} selesai
               </p>
@@ -134,7 +134,7 @@ export default function ChecklistBubble({ message, onUpdate }: Props) {
               >
                 {item.isDone && <FiCheck size={13} strokeWidth={3} />}
               </span>
-              <span className="text-sm leading-5">
+              <span className="text-sm leading-5 select-none">
                 {item.text}
               </span>
             </label>

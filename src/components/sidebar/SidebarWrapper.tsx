@@ -1,5 +1,6 @@
 "use client"
 
+import { useMemo } from "react"
 import useRooms from "@/hooks/useRooms"
 import RoomList from "./RoomList"
 
@@ -16,15 +17,20 @@ type Props = {
 }
 
 export default function SidebarWrapper({ serverRooms }: Props) {
-  // Kalau serverRooms ada → rooms langsung tersedia, loading = false
-  // Kalau tidak ada → hook fetch sendiri dari client (fallback)
-  const initialRooms = serverRooms?.map((r) => ({
-    ...r,
-    messages: r.messages.map((m) => ({
-      ...m,
-      createdAt: new Date(m.createdAt),
-    })),
-  }))
+  // useMemo supaya initialRooms tidak dibuat ulang setiap render
+  // (referensi array baru tiap render = useEffect di useRooms jalan terus = loop)
+  const initialRooms = useMemo(
+    () =>
+      serverRooms?.map((r) => ({
+        ...r,
+        messages: r.messages.map((m) => ({
+          ...m,
+          createdAt: new Date(m.createdAt),
+        })),
+      })),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [] // cukup sekali saat mount — serverRooms dari server tidak berubah
+  )
 
   const { rooms, loading } = useRooms(initialRooms)
 

@@ -25,15 +25,22 @@ type MessageAPI = {
 export default function useMessages(roomId: string): MessageAPI {
   const cacheKey = CacheKeys.messages(roomId)
 
-  // Cek memory cache dulu — sync, langsung ada
-  const memHit = memoryCache.get(cacheKey)
-
-  const [messages, setMessages] = useState<ChatMessage[]>(memHit ?? [])
-  const [loading, setLoading] = useState(!memHit) // kalau ada di memory, skip loading
+  // Baca sekali saat inisialisasi — aman karena ini bukan ref.current,
+  // melainkan nilai yang di-capture saat pertama kali hook dipanggil
+  // dan disimpan di useState/useRef agar tidak berubah antar render
+  const [messages, setMessages] = useState<ChatMessage[]>(
+    () => memoryCache.get(cacheKey) ?? []
+  )
+  const [loading, setLoading] = useState(
+    () => !memoryCache.has(cacheKey)
+  )
   const [hasMore, setHasMore] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const mountedRef = useRef(true)
   const messagesRef = useRef<ChatMessage[]>(messages)
+
+  // Flag apakah sudah ada cache saat mount — dibekukan agar tidak masuk dependency
+  const hadCacheOnMount = useRef(memoryCache.has(cacheKey))
 
   useEffect(() => {
     messagesRef.current = messages
@@ -53,9 +60,7 @@ export default function useMessages(roomId: string): MessageAPI {
     let cancelled = false
 
     async function init() {
-      // Kalau memory cache sudah ada, langsung fetch fresh di background
-      // tanpa set loading true (sudah ada konten yang ditampilkan)
-      if (!memHit) {
+      if (!hadCacheOnMount.current) {
         setLoading(true)
 
         // L2: cek IndexedDB
@@ -94,7 +99,7 @@ export default function useMessages(roomId: string): MessageAPI {
     return () => {
       cancelled = true
     }
-  }, [roomId, cacheKey, memHit])
+  }, [roomId, cacheKey])
 
   const loadMore = useCallback(async () => {
     if (!hasMore || loading) return

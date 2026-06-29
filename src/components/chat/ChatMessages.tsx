@@ -103,13 +103,34 @@ export default function ChatMessages({
   const bottomRef = useRef<HTMLDivElement>(null)
   const isFirstRender = useRef(true)
   const activeRef = useRef<HTMLDivElement>(null)
+  const prevMessageCountRef = useRef(messages.length)
+  const prevLastIdRef = useRef(messages[messages.length - 1]?.id ?? null)
 
-  // scroll ke bawah: instant di render pertama, smooth untuk pesan baru
+  // scroll ke bawah: instant di render pertama, smooth hanya ketika ada pesan BARU
+  // (bukan saat toggle checklist / edit yang cuma mutasi messages yang sudah ada)
   useEffect(() => {
-    if (!searchQuery) {
-      const behavior = isFirstRender.current ? "instant" : "smooth"
+    if (searchQuery) return
+
+    const currentCount = messages.length
+    const currentLastId = messages[messages.length - 1]?.id ?? null
+    const isNewMessage =
+      currentCount > prevMessageCountRef.current ||
+      currentLastId !== prevLastIdRef.current
+
+    if (isFirstRender.current) {
       isFirstRender.current = false
-      bottomRef.current?.scrollIntoView({ behavior })
+      prevMessageCountRef.current = currentCount
+      prevLastIdRef.current = currentLastId
+      bottomRef.current?.scrollIntoView({ behavior: "instant" })
+      return
+    }
+
+    prevMessageCountRef.current = currentCount
+    prevLastIdRef.current = currentLastId
+
+    // hanya scroll kalau memang ada pesan baru
+    if (isNewMessage) {
+      bottomRef.current?.scrollIntoView({ behavior: "smooth" })
     }
   }, [messages, searchQuery])
 

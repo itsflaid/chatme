@@ -80,7 +80,7 @@ export default function BubbleWrapper({
     }
 
     onUpdate(message.id, { isDone: nextIsDone })
-    const res = await fetch(`/api/messages/${message.id}`, {
+    await fetch(`/api/messages/${message.id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ isDone: nextIsDone }),
@@ -147,6 +147,7 @@ export default function BubbleWrapper({
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
         onTouchMove={handleTouchEnd}
+        className="select-none"
       >
         {message.type === MessageType.CHECKLIST ? (
           <ChecklistBubble message={message} onUpdate={onUpdate} />

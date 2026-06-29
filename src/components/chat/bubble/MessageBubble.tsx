@@ -122,7 +122,7 @@ export default function MessageBubble({
           </div>
         )}
 
-        <p className="break-words text-sm leading-relaxed text-[var(--accent-ink)]">
+        <p className="break-words text-sm leading-relaxed text-[var(--accent-ink)] select-none">
           {highlightText(message.text, searchQuery)}
         </p>
 
