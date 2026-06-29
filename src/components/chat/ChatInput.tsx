@@ -13,6 +13,7 @@ type Props = {
   onMessageReplace: (tempId: string, realMessage: ChatMessage) => void
   onMessageRemove: (id: string) => void
   onCheckReminders: () => void
+  onMessageSent?: (text: string) => void
 }
 
 export default function ChatInput({
@@ -22,6 +23,7 @@ export default function ChatInput({
   onMessageReplace,
   onMessageRemove,
   onCheckReminders,
+  onMessageSent,
 }: Props) {
   const [text, setText] = useState("")
   const [showChecklist, setShowChecklist] = useState(false)
@@ -72,8 +74,7 @@ export default function ChatInput({
     if (res.ok) {
       const realMessage = await res.json()
       onMessageReplace(tempId, realMessage)
-
-      // cek reminder yang triggered
+      onMessageSent?.(trimmed)
       onCheckReminders()
     } else {
       onMessageRemove(tempId)
@@ -127,6 +128,7 @@ export default function ChatInput({
     if (res.ok) {
       const realMessage: ChatMessage = await res.json()
       onMessageReplace(tempId, realMessage)
+      onMessageSent?.(title)
       setShowChecklist(false)
     } else {
       onMessageRemove(tempId)

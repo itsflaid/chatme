@@ -33,7 +33,7 @@ export async function GET(req: Request, { params }: Props) {
 
   const messages = await prisma.message.findMany({
     where,
-    orderBy: { createdAt: "asc" },
+    orderBy: { createdAt: "desc" },
     take: limit + 1,
     include: {
       checklistItems: { orderBy: { position: "asc" } },
@@ -42,6 +42,8 @@ export async function GET(req: Request, { params }: Props) {
 
   const hasMore = messages.length > limit
   if (hasMore) messages.pop()
+
+  messages.reverse()
 
   return NextResponse.json({ messages, hasMore })
 }

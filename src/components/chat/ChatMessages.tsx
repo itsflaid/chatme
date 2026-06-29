@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useRef } from "react"
+import { useEffect, useRef, useMemo } from "react"
 import BubbleWrapper from "./bubble/BubbleWrapper"
 import BotBubble from "./bubble/BotBubble"
 import type { ChatMessage } from "@/types/chat"
@@ -113,6 +113,7 @@ export default function ChatMessages({
 
     const currentCount = messages.length
     const currentLastId = messages[messages.length - 1]?.id ?? null
+    if (currentCount === 0) return
     const isNewMessage =
       currentCount > prevMessageCountRef.current ||
       currentLastId !== prevLastIdRef.current
@@ -141,6 +142,8 @@ export default function ChatMessages({
     }
   }, [activeMatchId])
 
+  const grouped = useMemo(() => groupByDate(messages), [messages])
+
   if (isLoading && messages.length === 0) {
     return <MessagesSkeleton />
   }
@@ -154,8 +157,6 @@ export default function ChatMessages({
       </div>
     )
   }
-
-  const grouped = groupByDate(messages)
 
   return (
     <div className="flex-1 min-h-0 overflow-y-auto px-3 sm:px-10 py-5 flex flex-col gap-2">

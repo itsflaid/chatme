@@ -1,3 +1,4 @@
+import { useEffect } from "react"
 import RoomItem from "./RoomItem"
 import EmptyRooms from "./EmptyRooms"
 
@@ -14,6 +15,18 @@ type Props = {
 }
 
 export default function RoomList({ rooms }: Props) {
+  useEffect(() => {
+    if (rooms.length === 0) return
+    const handle = requestIdleCallback(() => {
+      rooms.forEach((room) => {
+        fetch(`/api/rooms/${room.id}/messages?limit=30`, {
+          method: "GET",
+        }).catch(() => {})
+      })
+    }, { timeout: 2000 })
+    return () => cancelIdleCallback(handle)
+  }, [rooms])
+
   if (rooms.length === 0) return <EmptyRooms />
 
   return (

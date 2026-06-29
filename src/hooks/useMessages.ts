@@ -140,7 +140,7 @@ export default function useMessages(roomId: string): MessageAPI {
         memoryCache.set(cacheKey, next)
         return next
       })
-      updateCache(cacheKey, [msg])
+      updateCache(cacheKey, [msg], CACHE_INITIAL)
     },
     [cacheKey]
   )
@@ -152,7 +152,7 @@ export default function useMessages(roomId: string): MessageAPI {
         memoryCache.set(cacheKey, next)
         return next
       })
-      updateCache(cacheKey, [real])
+      updateCache(cacheKey, [real], CACHE_INITIAL)
     },
     [cacheKey]
   )
@@ -188,7 +188,7 @@ export default function useMessages(roomId: string): MessageAPI {
         if (fresh.length === 0) return prev
         const merged = [...prev, ...fresh]
         memoryCache.set(cacheKey, merged)
-        updateCache(cacheKey, fresh)
+        updateCache(cacheKey, fresh, CACHE_INITIAL)
         return merged
       })
     },

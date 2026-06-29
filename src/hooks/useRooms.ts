@@ -115,5 +115,29 @@ export default function useRooms(serverRooms?: RoomData[] | null) {
     }
   }, [fetchRooms])
 
-  return { rooms, loading, error, refresh }
+  const updateLastMessage = useCallback((roomId: string, text: string) => {
+    const now = new Date()
+    setRooms((prev) => {
+      const updated = prev.map((r) =>
+        r.id === roomId
+          ? { ...r, messages: [{ text, createdAt: now }] }
+          : r
+      )
+      updated.sort((a, b) => {
+        const aTime = a.messages[0]?.createdAt?.getTime() ?? 0
+        const bTime = b.messages[0]?.createdAt?.getTime() ?? 0
+        return bTime - aTime
+      })
+      memoryRooms = updated
+      return updated
+    })
+    fetchRooms().then((fresh) => {
+      if (!fresh) return
+      memoryRooms = fresh
+      setRooms(fresh)
+      setCache(CacheKeys.rooms, fresh)
+    })
+  }, [fetchRooms])
+
+  return { rooms, loading, error, refresh, updateLastMessage }
 }

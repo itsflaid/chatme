@@ -15,9 +15,10 @@ type Props = {
   room: { id: string; name: string; icon: string; description: string | null }
   userId: string
   messageAPI: MessageAPI
+  onMessageSent?: (text: string) => void
 }
 
-export default function ChatContainer({ room, userId, messageAPI }: Props) {
+export default function ChatContainer({ room, userId, messageAPI, onMessageSent }: Props) {
   const {
     messages,
     loading,
@@ -177,6 +178,7 @@ export default function ChatContainer({ room, userId, messageAPI }: Props) {
         onMessageReplace={replaceMessage}
         onMessageRemove={apiRemoveMessage}
         onCheckReminders={handleCheckReminders}
+        onMessageSent={onMessageSent}
       />
 
       {snoozeBotId && (

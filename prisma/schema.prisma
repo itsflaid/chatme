@@ -63,6 +63,7 @@ model Message {
   reminders     Message[] @relation("ReminderSource")
   checklistItems ChecklistItem[]
 
+  @@index([roomId, createdAt(sort: Desc)])
   @@map("messages")
 }
 
