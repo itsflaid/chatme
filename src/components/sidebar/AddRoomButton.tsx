@@ -2,7 +2,6 @@
 
 import { useState } from "react"
 import { FiPlus, FiX } from "react-icons/fi"
-import { useRouter } from "next/navigation"
 
 const EMOJIS = ['💬','📚','🏪','💸','💭','🎯','📝','🛒','💡','🏋️','🎮','🎵','✈️','🍜','💊','📦','🔧','🌙','⚡','🎨']
 
@@ -12,7 +11,6 @@ export default function AddRoomButton() {
   const [icon, setIcon] = useState("💬")
   const [description, setDescription] = useState("")
   const [loading, setLoading] = useState(false)
-  const router = useRouter()
 
   function handleClose() {
     setOpen(false)
@@ -32,20 +30,13 @@ export default function AddRoomButton() {
     setLoading(false)
     handleClose()
     if (res.ok) {
-      const room = await res.json()
+      // Refresh list room — user tetap di halaman list, masuk room sendiri
       window.dispatchEvent(new Event("rooms:refresh"))
-      router.push(`/room/${room.id}`)
     }
   }
 
   return (
     <>
-      {/* Gradient fade biar list terkesan fade ke bawah, bukan ke-cut */}
-      <div
-        className="pointer-events-none absolute bottom-0 left-0 right-0 h-24 z-10"
-        style={{ background: "linear-gradient(to top, var(--bg) 15%, transparent)" }}
-      />
-
       {/* FAB absolute — tidak makan space layout, list room full */}
       <button
         onClick={() => setOpen(true)}
