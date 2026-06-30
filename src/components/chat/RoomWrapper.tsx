@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from "react"
 import useMessages from "@/hooks/useMessages"
-import useRooms from "@/hooks/useRooms"
+import { updateRoomLastMessage } from "@/hooks/useRooms"
 import ChatContainer from "./ChatContainer"
 import type { ChatMessage } from "@/types/chat"
 
@@ -35,7 +35,7 @@ function showReminderNotifications(
 export default function RoomWrapper({ roomId, userId, room }: Props) {
   const messageAPI = useMessages(roomId)
   const { messages, mergeMessages } = messageAPI
-  const { updateLastMessage } = useRooms()
+
   const messagesRef = useRef(messages)
   // Simpan mergeMessages di ref supaya interval tidak perlu di-reset
   // setiap kali mergeMessages berubah referensinya
@@ -85,7 +85,7 @@ export default function RoomWrapper({ roomId, userId, room }: Props) {
       room={room}
       userId={userId}
       messageAPI={messageAPI}
-      onMessageSent={(text) => updateLastMessage(roomId, text)}
+      onMessageSent={(text) => updateRoomLastMessage(roomId, text)}
     />
   )
 }

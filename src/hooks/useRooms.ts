@@ -14,6 +14,27 @@ export type RoomData = {
 // L1 memory cache — sync, zero latency
 let memoryRooms: RoomData[] | null = null
 
+// Standalone function — bisa dipanggil dari mana saja tanpa instance hook
+// Dipakai oleh RoomWrapper supaya tidak perlu buat instance useRooms baru
+export function updateRoomLastMessage(roomId: string, text: string): void {
+  const now = new Date()
+  const prev = memoryRooms ?? []
+  const updated = prev.map((r) =>
+    r.id === roomId
+      ? { ...r, messages: [{ text, createdAt: now }] }
+      : r
+  )
+  updated.sort((a, b) => {
+    const aTime = a.messages[0]?.createdAt?.getTime() ?? 0
+    const bTime = b.messages[0]?.createdAt?.getTime() ?? 0
+    return bTime - aTime
+  })
+  memoryRooms = updated
+  // Import setCache tidak tersedia di sini karena ini di luar hook,
+  // jadi dispatch event saja — instance useRooms aktif yang akan handle cache
+  window.dispatchEvent(new CustomEvent("rooms:updated", { detail: updated }))
+}
+
 export default function useRooms(serverRooms?: RoomData[] | null) {
   // Priority: serverRooms → memory cache → []
   const initial = serverRooms ?? memoryRooms ?? []
@@ -74,8 +95,13 @@ export default function useRooms(serverRooms?: RoomData[] | null) {
 
   // Sync antar instance useRooms via custom event
   useEffect(() => {
-    const handler = () => {
-      if (memoryRooms) {
+    const handler = (e: Event) => {
+      const customEvent = e as CustomEvent<RoomData[]>
+      if (customEvent.detail && customEvent.detail.length > 0) {
+        // Pakai data dari event langsung — guaranteed sudah up-to-date
+        setRooms(customEvent.detail)
+      } else if (memoryRooms) {
+        // Fallback ke memoryRooms kalau tidak ada detail (backward compat)
         setRooms(memoryRooms)
       }
     }
@@ -128,22 +154,32 @@ export default function useRooms(serverRooms?: RoomData[] | null) {
 
   const updateLastMessage = useCallback((roomId: string, text: string) => {
     const now = new Date()
-    setRooms((prev) => {
-      const updated = prev.map((r) =>
-        r.id === roomId
-          ? { ...r, messages: [{ text, createdAt: now }] }
-          : r
-      )
-      updated.sort((a, b) => {
-        const aTime = a.messages[0]?.createdAt?.getTime() ?? 0
-        const bTime = b.messages[0]?.createdAt?.getTime() ?? 0
-        return bTime - aTime
-      })
-      memoryRooms = updated
-      setCache(CacheKeys.rooms, updated)
-      return updated
+
+    // Ambil state terkini dari memoryRooms (module-level, selalu up-to-date)
+    // lakukan komputasi di luar setState agar memoryRooms bisa di-set
+    // sebelum dispatchEvent, bukan di dalam callback yang di-defer React
+    const prev = memoryRooms ?? []
+    const updated = prev.map((r) =>
+      r.id === roomId
+        ? { ...r, messages: [{ text, createdAt: now }] }
+        : r
+    )
+    updated.sort((a, b) => {
+      const aTime = a.messages[0]?.createdAt?.getTime() ?? 0
+      const bTime = b.messages[0]?.createdAt?.getTime() ?? 0
+      return bTime - aTime
     })
-    window.dispatchEvent(new Event("rooms:updated"))
+
+    // Set memoryRooms DULU sebelum dispatch event
+    // supaya handler rooms:updated di instance lain baca nilai yang sudah benar
+    memoryRooms = updated
+    setCache(CacheKeys.rooms, updated)
+
+    // Update state instance ini
+    setRooms(updated)
+
+    // Dispatch dengan data langsung via CustomEvent — tidak bergantung timing memoryRooms
+    window.dispatchEvent(new CustomEvent("rooms:updated", { detail: updated }))
   }, [])
 
   return { rooms, loading, error, refresh, updateLastMessage }
