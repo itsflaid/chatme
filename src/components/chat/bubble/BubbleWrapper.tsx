@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useRef, useCallback } from "react"
+import { useState, useRef, useCallback, memo } from "react"
 import ContextMenu from "@/components/chat/modals/ContextMenu"
 import RemindModal from "@/components/chat/modals/RemindModal"
 import DeleteMessageModal from "@/components/chat/modals/DeleteMessageModal"
@@ -18,7 +18,7 @@ type Props = {
   searchQuery?: string
 }
 
-export default function BubbleWrapper({
+const BubbleWrapper = memo(function BubbleWrapper({
   message,
   onUpdate,
   onRemove,
@@ -205,4 +205,6 @@ export default function BubbleWrapper({
       )}
     </>
   )
-}
+})
+
+export default BubbleWrapper

@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useRef, useMemo } from "react"
+import { useEffect, useRef, useMemo, useCallback } from "react"
 import BubbleWrapper from "./bubble/BubbleWrapper"
 import BotBubble from "./bubble/BotBubble"
 import type { ChatMessage } from "@/types/chat"
@@ -8,6 +8,9 @@ import type { ChatMessage } from "@/types/chat"
 type Props = {
   messages: ChatMessage[]
   isLoading?: boolean
+  loadingMore?: boolean
+  hasMore?: boolean
+  onLoadMore?: () => void
   onBotDone: (botMessageId: string, sourceMessageId: string) => void
   onBotSnooze: (botMessageId: string, sourceMessageId: string) => void
   onMessageUpdate: (id: string, patch: Partial<ChatMessage>) => void
@@ -45,12 +48,10 @@ function groupByDate(messages: ChatMessage[]): GroupedMessages {
 function MessagesSkeleton() {
   return (
     <div className="flex-1 min-h-0 overflow-hidden px-3 sm:px-10 py-5 flex flex-col gap-3">
-      {/* date label skeleton */}
       <div className="flex justify-center my-1">
         <div className="w-24 h-5 rounded-full bg-[var(--surface2)] animate-pulse" />
       </div>
 
-      {/* bubble kanan */}
       <div className="flex justify-end">
         <div className="flex flex-col items-end gap-1">
           <div className="h-10 w-48 rounded-[18px_18px_4px_18px] bg-[var(--accent)] opacity-20 animate-pulse" />
@@ -58,7 +59,6 @@ function MessagesSkeleton() {
         </div>
       </div>
 
-      {/* bubble kanan lebih panjang */}
       <div className="flex justify-end">
         <div className="flex flex-col items-end gap-1">
           <div className="h-16 w-64 rounded-[18px_18px_4px_18px] bg-[var(--accent)] opacity-20 animate-pulse" />
@@ -66,12 +66,10 @@ function MessagesSkeleton() {
         </div>
       </div>
 
-      {/* date label skeleton kedua */}
       <div className="flex justify-center my-1">
         <div className="w-16 h-5 rounded-full bg-[var(--surface2)] animate-pulse" />
       </div>
 
-      {/* bubble kanan */}
       <div className="flex justify-end">
         <div className="flex flex-col items-end gap-1">
           <div className="h-10 w-56 rounded-[18px_18px_4px_18px] bg-[var(--accent)] opacity-20 animate-pulse" />
@@ -79,7 +77,6 @@ function MessagesSkeleton() {
         </div>
       </div>
 
-      {/* bubble kanan pendek */}
       <div className="flex justify-end">
         <div className="flex flex-col items-end gap-1">
           <div className="h-10 w-36 rounded-[18px_18px_4px_18px] bg-[var(--accent)] opacity-20 animate-pulse" />
@@ -93,6 +90,9 @@ function MessagesSkeleton() {
 export default function ChatMessages({
   messages,
   isLoading = false,
+  loadingMore = false,
+  hasMore = false,
+  onLoadMore,
   onBotDone,
   onBotSnooze,
   onMessageUpdate,
@@ -100,14 +100,50 @@ export default function ChatMessages({
   searchQuery = "",
   activeMatchId = null,
 }: Props) {
+  const containerRef = useRef<HTMLDivElement>(null)
+  const sentinelRef = useRef<HTMLDivElement>(null)
   const bottomRef = useRef<HTMLDivElement>(null)
   const isFirstRender = useRef(true)
   const activeRef = useRef<HTMLDivElement>(null)
   const prevMessageCountRef = useRef(messages.length)
   const prevLastIdRef = useRef(messages[messages.length - 1]?.id ?? null)
+  const prevScrollRef = useRef<{ scrollHeight: number; scrollTop: number } | null>(null)
+
+  // IntersectionObserver untuk infinite scroll ke atas
+  useEffect(() => {
+    if (!sentinelRef.current || !hasMore || !onLoadMore) return
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          const container = containerRef.current
+          if (container) {
+            prevScrollRef.current = {
+              scrollHeight: container.scrollHeight,
+              scrollTop: container.scrollTop,
+            }
+          }
+          onLoadMore()
+        }
+      },
+      { rootMargin: "200px 0px 0px 0px" }
+    )
+
+    observer.observe(sentinelRef.current)
+    return () => observer.disconnect()
+  }, [hasMore, onLoadMore, messages.length])
+
+  // Maintain scroll position after prepending older messages
+  useEffect(() => {
+    if (prevScrollRef.current && containerRef.current) {
+      const { scrollHeight: oldHeight, scrollTop: oldTop } = prevScrollRef.current
+      const newHeight = containerRef.current.scrollHeight
+      containerRef.current.scrollTop = newHeight - (oldHeight - oldTop)
+      prevScrollRef.current = null
+    }
+  }, [messages.length])
 
   // scroll ke bawah: instant di render pertama, smooth hanya ketika ada pesan BARU
-  // (bukan saat toggle checklist / edit yang cuma mutasi messages yang sudah ada)
   useEffect(() => {
     if (searchQuery) return
 
@@ -129,7 +165,6 @@ export default function ChatMessages({
     prevMessageCountRef.current = currentCount
     prevLastIdRef.current = currentLastId
 
-    // hanya scroll kalau memang ada pesan baru
     if (isNewMessage) {
       bottomRef.current?.scrollIntoView({ behavior: "smooth" })
     }
@@ -141,6 +176,13 @@ export default function ChatMessages({
       activeRef.current?.scrollIntoView({ behavior: "smooth", block: "center" })
     }
   }, [activeMatchId])
+
+  // Map lookup untuk sourceMessage O(1) bukan O(n)
+  const messageMap = useMemo(() => {
+    const map = new Map<string, ChatMessage>()
+    messages.forEach((m) => map.set(m.id, m))
+    return map
+  }, [messages])
 
   const grouped = useMemo(() => groupByDate(messages), [messages])
 
@@ -159,7 +201,19 @@ export default function ChatMessages({
   }
 
   return (
-    <div className="flex-1 min-h-0 overflow-y-auto px-3 sm:px-10 py-5 flex flex-col gap-2">
+    <div
+      ref={containerRef}
+      className="flex-1 min-h-0 overflow-y-auto px-3 sm:px-10 py-5 flex flex-col gap-2"
+    >
+      {/* Sentinel untuk infinite scroll ke atas */}
+      <div ref={sentinelRef} className="h-1 w-full" />
+
+      {loadingMore && (
+        <div className="flex justify-center py-2">
+          <div className="h-5 w-5 rounded-full border-2 border-[var(--accent)] border-t-transparent animate-spin" />
+        </div>
+      )}
+
       {grouped.map((group) => (
         <div key={group.dateLabel}>
           <div className="flex justify-center my-3">
@@ -177,7 +231,7 @@ export default function ChatMessages({
 
               if (message.isBot) {
                 const sourceMessage = message.sourceMessageId
-                  ? messages.find(m => m.id === message.sourceMessageId) ?? null
+                  ? messageMap.get(message.sourceMessageId) ?? null
                   : null
                 return (
                   <BotBubble

@@ -18,7 +18,7 @@ export async function GET(req: Request, { params }: Props) {
 
   const url = new URL(req.url)
   const before = url.searchParams.get("before")
-  const limit = Math.min(parseInt(url.searchParams.get("limit") || "30", 10), 100)
+  const limitParam = url.searchParams.get("limit")
 
   const where: Record<string, unknown> = { roomId: id }
   if (before) {
@@ -31,10 +31,13 @@ export async function GET(req: Request, { params }: Props) {
     }
   }
 
+  const limit = limitParam ? parseInt(limitParam, 10) : 50
+  const take = limit + 1
+
   const messages = await prisma.message.findMany({
     where,
     orderBy: { createdAt: "desc" },
-    take: limit + 1,
+    ...(take ? { take } : {}),
     include: {
       checklistItems: { orderBy: { position: "asc" } },
     },

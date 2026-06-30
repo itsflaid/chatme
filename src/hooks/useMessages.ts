@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useCallback, useRef } from "react"
-import { getCache, setCache, updateCache, CacheKeys, CACHE_INITIAL } from "@/lib/cache"
+import { getCache, setCache, updateCache, CacheKeys } from "@/lib/cache"
 import type { ChatMessage } from "@/types/chat"
 
 // L1 in-memory cache — sync, zero latency
@@ -74,7 +74,7 @@ export default function useMessages(roomId: string): MessageAPI {
 
       // L3: fetch fresh dari server (selalu jalan, sebagai background revalidate)
       try {
-        const res = await fetch(`/api/rooms/${roomId}/messages?limit=${CACHE_INITIAL}`)
+        const res = await fetch(`/api/rooms/${roomId}/messages?limit=50`)
         if (!res.ok || cancelled) return
         const data = await res.json()
         if (cancelled) return
@@ -140,7 +140,7 @@ export default function useMessages(roomId: string): MessageAPI {
         memoryCache.set(cacheKey, next)
         return next
       })
-      updateCache(cacheKey, [msg], CACHE_INITIAL)
+      updateCache(cacheKey, [msg])
     },
     [cacheKey]
   )
@@ -152,7 +152,7 @@ export default function useMessages(roomId: string): MessageAPI {
         memoryCache.set(cacheKey, next)
         return next
       })
-      updateCache(cacheKey, [real], CACHE_INITIAL)
+      updateCache(cacheKey, [real])
     },
     [cacheKey]
   )
@@ -188,7 +188,7 @@ export default function useMessages(roomId: string): MessageAPI {
         if (fresh.length === 0) return prev
         const merged = [...prev, ...fresh]
         memoryCache.set(cacheKey, merged)
-        updateCache(cacheKey, fresh, CACHE_INITIAL)
+        updateCache(cacheKey, fresh)
         return merged
       })
     },
@@ -199,7 +199,7 @@ export default function useMessages(roomId: string): MessageAPI {
     setLoading(true)
     setError(null)
     try {
-      const res = await fetch(`/api/rooms/${roomId}/messages?limit=${CACHE_INITIAL}`)
+      const res = await fetch(`/api/rooms/${roomId}/messages?limit=50`)
       if (!res.ok) throw new Error("Gagal refresh")
       const data = await res.json()
       const fresh = data.messages as ChatMessage[]

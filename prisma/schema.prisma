@@ -37,6 +37,7 @@ model Room {
   user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   messages Message[]
 
+  @@index([userId])
   @@map("rooms")
 }
 
@@ -64,6 +65,7 @@ model Message {
   checklistItems ChecklistItem[]
 
   @@index([roomId, createdAt(sort: Desc)])
+  @@index([remindAt])
   @@map("messages")
 }
 

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useMemo } from "react"
 import { FiChevronUp, FiChevronDown, FiX } from "react-icons/fi"
 import ChatMessages from "./ChatMessages"
 import ChatHeader from "./ChatHeader"
@@ -22,6 +22,8 @@ export default function ChatContainer({ room, userId, messageAPI, onMessageSent 
   const {
     messages,
     loading,
+    hasMore,
+    loadMore,
     patchMessage,
     removeMessage: apiRemoveMessage,
     addMessage,
@@ -34,8 +36,14 @@ export default function ChatContainer({ room, userId, messageAPI, onMessageSent 
   const [searchQuery, setSearchQuery] = useState("")
   const [activeIndex, setActiveIndex] = useState(0)
 
-  const reminders = messages.filter((m) => !m.isBot && m.remindAt && !m.isRemindDone)
-  const pendingCount = messages.filter((m) => !m.isDone && !m.isBot).length
+  const reminders = useMemo(
+    () => messages.filter((m) => !m.isBot && m.remindAt && !m.isRemindDone),
+    [messages]
+  )
+  const pendingCount = useMemo(
+    () => messages.filter((m) => !m.isDone && !m.isBot).length,
+    [messages]
+  )
 
   const matchedMessages = searchQuery.trim()
     ? messages.filter((m) => !m.isBot && m.text.toLowerCase().includes(searchQuery.toLowerCase()))
@@ -163,6 +171,9 @@ export default function ChatContainer({ room, userId, messageAPI, onMessageSent 
       <ChatMessages
         messages={messages}
         isLoading={loading}
+        loadingMore={loading && messages.length > 0}
+        hasMore={hasMore}
+        onLoadMore={loadMore}
         onBotDone={handleBotDone}
         onBotSnooze={handleBotSnooze}
         onMessageUpdate={patchMessage}

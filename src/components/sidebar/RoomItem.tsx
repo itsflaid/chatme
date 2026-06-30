@@ -41,7 +41,7 @@ export default function RoomItem({ id, name, icon, pendingCount, lastMessage }: 
         // Prefetch Next.js page bundle
         router.prefetch(`/room/${id}`)
         // Prefetch API data — browser cache-kan response ini
-        fetch(`/api/rooms/${id}/messages?limit=30`, {
+        fetch(`/api/rooms/${id}/messages`, {
           method: "GET",
           // next: { revalidate: 0 } — tidak perlu, ini client fetch
         }).catch(() => {

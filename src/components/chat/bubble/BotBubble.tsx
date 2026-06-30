@@ -1,7 +1,7 @@
 "use client"
 
 import { motion, AnimatePresence } from "framer-motion"
-import { useState, useEffect } from "react"
+import { useState, useEffect, memo } from "react"
 import { Message } from "@prisma/client"
 import { FiBell } from "react-icons/fi"
 import { botBubbleAnim } from "@/lib/animation"
@@ -19,7 +19,7 @@ function truncate(text: string, max = 32) {
   return text.length > max ? text.slice(0, max) + "…" : text
 }
 
-export default function BotBubble({
+const BotBubble = memo(function BotBubble({
   message,
   sourceMessage,
   onDone,
@@ -68,7 +68,6 @@ export default function BotBubble({
 
   return (
     <motion.div
-      layout
       initial={isNew ? botBubbleAnim.initial : false}
       animate={botBubbleAnim.animate}
       transition={botBubbleAnim.transition}
@@ -157,4 +156,6 @@ export default function BotBubble({
       </AnimatePresence>
     </motion.div>
   )
-}
+})
+
+export default BotBubble

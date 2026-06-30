@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, memo } from "react"
 import { motion } from "framer-motion"
 import { Message } from "@prisma/client"
 import { IoCheckmarkDone } from "react-icons/io5"
@@ -35,7 +35,7 @@ function highlightText(text: string, query: string) {
   )
 }
 
-export default function MessageBubble({
+const MessageBubble = memo(function MessageBubble({
   message,
   isNew = false,
   searchQuery = "",
@@ -83,7 +83,6 @@ export default function MessageBubble({
 
   return (
     <motion.div
-      layout
       initial={isNew ? userBubbleAnim.initial : false}
       animate={userBubbleAnim.animate}
       transition={userBubbleAnim.transition}
@@ -157,4 +156,6 @@ export default function MessageBubble({
       </div>
     </motion.div>
   )
-}
+})
+
+export default MessageBubble

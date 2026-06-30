@@ -72,6 +72,17 @@ export default function useRooms(serverRooms?: RoomData[] | null) {
     return () => window.removeEventListener("rooms:refresh", refresh as EventListener)
   }, [refresh])
 
+  // Sync antar instance useRooms via custom event
+  useEffect(() => {
+    const handler = () => {
+      if (memoryRooms) {
+        setRooms(memoryRooms)
+      }
+    }
+    window.addEventListener("rooms:updated", handler)
+    return () => window.removeEventListener("rooms:updated", handler)
+  }, [])
+
   useEffect(() => {
     let cancelled = false
 
@@ -129,15 +140,11 @@ export default function useRooms(serverRooms?: RoomData[] | null) {
         return bTime - aTime
       })
       memoryRooms = updated
+      setCache(CacheKeys.rooms, updated)
       return updated
     })
-    fetchRooms().then((fresh) => {
-      if (!fresh) return
-      memoryRooms = fresh
-      setRooms(fresh)
-      setCache(CacheKeys.rooms, fresh)
-    })
-  }, [fetchRooms])
+    window.dispatchEvent(new Event("rooms:updated"))
+  }, [])
 
   return { rooms, loading, error, refresh, updateLastMessage }
 }

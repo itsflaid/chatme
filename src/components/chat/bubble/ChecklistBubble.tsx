@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, memo } from "react"
 import { FiCheck, FiEdit2, FiList, FiPlus, FiTrash2, FiX } from "react-icons/fi"
 import type { ChatMessage } from "@/types/chat"
 
@@ -9,7 +9,7 @@ type Props = {
   onUpdate: (id: string, patch: Partial<ChatMessage>) => void
 }
 
-export default function ChecklistBubble({ message, onUpdate }: Props) {
+const ChecklistBubble = memo(function ChecklistBubble({ message, onUpdate }: Props) {
   const [editing, setEditing] = useState(false)
   const [saving, setSaving] = useState(false)
   const [title, setTitle] = useState(message.text)
@@ -219,4 +219,6 @@ export default function ChecklistBubble({ message, onUpdate }: Props) {
       )}
     </div>
   )
-}
+})
+
+export default ChecklistBubble

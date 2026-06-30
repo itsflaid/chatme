@@ -2,8 +2,6 @@ import { get, set, del, clear } from "idb-keyval"
 
 export const CACHE_VERSION = 1
 export const CACHE_TTL = 5 * 60 * 1000
-export const CACHE_INITIAL = 30
-export const CACHE_MAX = 100
 
 export type CacheEntry<T> = {
   data: T
@@ -73,23 +71,19 @@ export async function invalidateAll(): Promise<void> {
 
 export async function updateCache<T extends { id: string }>(
   key: string,
-  newItems: T[],
-  maxItems: number = CACHE_MAX
+  newItems: T[]
 ): Promise<T[] | null> {
   try {
     const existing = await get<CacheEntry<T[]> | undefined>(key)
     if (!existing || existing.version !== CACHE_VERSION) {
-      const limited = newItems.slice(-maxItems)
-      await setCache(key, limited)
-      return limited
+      await setCache(key, newItems)
+      return newItems
     }
-    const merged = [...existing.data, ...newItems]
-    const unique = merged.filter(
-      (item, index, self) => self.findIndex((i) => i.id === item.id) === index
-    )
-    const limited = unique.slice(-maxItems)
-    await set(key, { ...existing, data: limited })
-    return limited
+    const map = new Map(existing.data.map((i) => [i.id, i]))
+    newItems.forEach((i) => map.set(i.id, i))
+    const unique = [...map.values()]
+    await set(key, { ...existing, data: unique })
+    return unique
   } catch {
     return null
   }
