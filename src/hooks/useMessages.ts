@@ -11,6 +11,7 @@ const memoryCache = new Map<string, ChatMessage[]>()
 type MessageAPI = {
   messages: ChatMessage[]
   loading: boolean
+  loadingMore: boolean
   hasMore: boolean
   error: string | null
   loadMore: () => Promise<void>
@@ -36,6 +37,7 @@ export default function useMessages(roomId: string): MessageAPI {
   )
   const [hasMore, setHasMore] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [loadingMore, setLoadingMore] = useState(false)
   const mountedRef = useRef(true)
   const messagesRef = useRef<ChatMessage[]>(messages)
 
@@ -66,8 +68,13 @@ export default function useMessages(roomId: string): MessageAPI {
         // L2: cek IndexedDB
         const cached = await getCache<ChatMessage[]>(cacheKey)
         if (cached && !cancelled) {
+          // Tetap tampilkan data expired sebagai fallback visual,
+          // tapi jangan set ke memoryCache kalau sudah expired
+          // (biar L3 fetch yang update memoryCache dengan data fresh)
+          if (!cached.isExpired) {
+            memoryCache.set(cacheKey, cached.data)
+          }
           setMessages(cached.data)
-          memoryCache.set(cacheKey, cached.data)
           setLoading(false)
         }
       }
@@ -80,7 +87,21 @@ export default function useMessages(roomId: string): MessageAPI {
         if (cancelled) return
 
         const fresh = data.messages as ChatMessage[]
-        setMessages(fresh)
+        const freshIds = new Set(fresh.map((m) => m.id))
+
+        setMessages((prev) => {
+          // Ambil semua optimistic messages yang masih pending (belum dikonfirmasi server)
+          const pendingTemps = prev.filter((m) => m.id.startsWith("temp-") && !freshIds.has(m.id))
+
+          // Kalau tidak ada yang pending, aman untuk overwrite langsung
+          if (pendingTemps.length === 0) {
+            return fresh
+          }
+
+          // Ada optimistic messages — merge: server data + pending temps di akhir
+          return [...fresh, ...pendingTemps]
+        })
+
         memoryCache.set(cacheKey, fresh)
         await setCache(cacheKey, fresh)
         setHasMore(data.hasMore)
@@ -102,11 +123,11 @@ export default function useMessages(roomId: string): MessageAPI {
   }, [roomId, cacheKey])
 
   const loadMore = useCallback(async () => {
-    if (!hasMore || loading) return
+    if (!hasMore || loadingMore) return
     const oldest = messagesRef.current[0]
     if (!oldest) return
 
-    setLoading(true)
+    setLoadingMore(true)
     try {
       const res = await fetch(`/api/rooms/${roomId}/messages?before=${oldest.id}&limit=30`)
       if (!res.ok) return
@@ -129,9 +150,9 @@ export default function useMessages(roomId: string): MessageAPI {
     } catch {
       /* silent */
     } finally {
-      setLoading(false)
+      setLoadingMore(false)
     }
-  }, [roomId, cacheKey, hasMore, loading])
+  }, [roomId, cacheKey, hasMore, loadingMore])
 
   const addMessage = useCallback(
     (msg: ChatMessage) => {
@@ -148,7 +169,25 @@ export default function useMessages(roomId: string): MessageAPI {
   const replaceMessage = useCallback(
     (tempId: string, real: ChatMessage) => {
       setMessages((prev) => {
-        const next = prev.map((m) => (m.id === tempId ? real : m))
+        const found = prev.some((m) => m.id === tempId)
+        let next: ChatMessage[]
+
+        if (found) {
+          // Normal case: replace temp dengan real
+          next = prev.map((m) => (m.id === tempId ? real : m))
+        } else {
+          // Fallback: tempId sudah di-overwrite oleh background fetch,
+          // cek apakah real message sudah ada di state (mungkin sudah masuk via server fetch)
+          const alreadyExists = prev.some((m) => m.id === real.id)
+          if (alreadyExists) {
+            // Sudah ada, tidak perlu tambah lagi
+            next = prev
+          } else {
+            // Belum ada, append ke akhir
+            next = [...prev, real]
+          }
+        }
+
         memoryCache.set(cacheKey, next)
         return next
       })
@@ -217,6 +256,7 @@ export default function useMessages(roomId: string): MessageAPI {
   return {
     messages,
     loading,
+    loadingMore,
     hasMore,
     error,
     loadMore,

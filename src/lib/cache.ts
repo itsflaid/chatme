@@ -69,7 +69,7 @@ export async function invalidateAll(): Promise<void> {
   }
 }
 
-export async function updateCache<T extends { id: string }>(
+export async function updateCache<T extends { id: string; createdAt: Date | string }>(
   key: string,
   newItems: T[]
 ): Promise<T[] | null> {
@@ -81,7 +81,11 @@ export async function updateCache<T extends { id: string }>(
     }
     const map = new Map(existing.data.map((i) => [i.id, i]))
     newItems.forEach((i) => map.set(i.id, i))
-    const unique = [...map.values()]
+    const unique = [...map.values()].sort((a, b) => {
+      const aTime = new Date(a.createdAt).getTime()
+      const bTime = new Date(b.createdAt).getTime()
+      return aTime - bTime
+    })
     await set(key, { ...existing, data: unique })
     return unique
   } catch {

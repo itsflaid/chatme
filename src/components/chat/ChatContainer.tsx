@@ -22,6 +22,7 @@ export default function ChatContainer({ room, userId, messageAPI, onMessageSent 
   const {
     messages,
     loading,
+    loadingMore,
     hasMore,
     loadMore,
     patchMessage,
@@ -171,7 +172,7 @@ export default function ChatContainer({ room, userId, messageAPI, onMessageSent 
       <ChatMessages
         messages={messages}
         isLoading={loading}
-        loadingMore={loading && messages.length > 0}
+        loadingMore={loadingMore}
         hasMore={hasMore}
         onLoadMore={loadMore}
         onBotDone={handleBotDone}
