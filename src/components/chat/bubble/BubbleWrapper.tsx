@@ -8,20 +8,21 @@ import EditMessageModal from "@/components/chat/modals/EditMessageModal"
 import MessageBubble from "./MessageBubble"
 import ChecklistBubble from "./ChecklistBubble"
 import { MessageType } from "@prisma/client"
+import { useQueryClient } from "@tanstack/react-query"
+import { useEditMessage, useDeleteMessage, useTogglePin, useToggleDone, useSetReminder, useMarkReminded, useChecklistToggle } from "@/hooks/useMessages"
+import { queryKeys } from "@/lib/queryKeys"
 import type { ChatMessage } from "@/types/chat"
 
 type Props = {
   message: ChatMessage
-  onUpdate: (id: string, patch: Partial<ChatMessage>) => void
-  onRemove: (id: string) => void
+  roomId: string
   isNew?: boolean
   searchQuery?: string
 }
 
 const BubbleWrapper = memo(function BubbleWrapper({
   message,
-  onUpdate,
-  onRemove,
+  roomId,
   isNew = false,
   searchQuery = "",
 }: Props) {
@@ -30,6 +31,15 @@ const BubbleWrapper = memo(function BubbleWrapper({
   const [showDelete, setShowDelete] = useState(false)
   const [showEdit, setShowEdit] = useState(false)
   const touchTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const queryClient = useQueryClient()
+  const editMessage = useEditMessage(roomId)
+  const deleteMessage = useDeleteMessage(roomId)
+  const togglePin = useTogglePin(roomId)
+  const toggleDone = useToggleDone(roomId)
+  const setReminder = useSetReminder(roomId)
+  const markReminded = useMarkReminded(roomId)
+  const checklistToggle = useChecklistToggle(roomId)
 
   function openMenu(x: number, y: number) { setMenuPos({ x, y }) }
 
@@ -51,94 +61,41 @@ const BubbleWrapper = memo(function BubbleWrapper({
     navigator.clipboard?.writeText(message.text)
   }, [message.text])
 
-  const handleToggleDone = useCallback(async () => {
-    const nextIsDone = !message.isDone
+  const handleToggleDone = useCallback(() => {
     if (message.type === MessageType.CHECKLIST) {
       const nextItems = message.checklistItems.map((item) => ({
-        ...item,
-        isDone: nextIsDone,
+        text: item.text,
+        isDone: !message.isDone,
       }))
-      onUpdate(message.id, { isDone: nextIsDone, checklistItems: nextItems })
-
-      const res = await fetch(`/api/messages/${message.id}/checklist`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          title: message.text,
-          items: nextItems.map((item) => ({
-            text: item.text,
-            isDone: item.isDone,
-          })),
-        }),
+      checklistToggle.mutate({
+        messageId: message.id,
+        title: message.text,
+        items: nextItems,
       })
-
-      if (res.ok) {
-        const updated: ChatMessage = await res.json()
-        onUpdate(message.id, updated)
-      }
       return
     }
-
-    onUpdate(message.id, { isDone: nextIsDone })
-    await fetch(`/api/messages/${message.id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ isDone: nextIsDone }),
-    })
-
-  }, [message, onUpdate])
+    toggleDone.mutate({ messageId: message.id, isDone: !message.isDone })
+  }, [message, toggleDone, checklistToggle])
 
   const handleTogglePin = useCallback(() => {
-    onUpdate(message.id, { isPinned: !message.isPinned })
-    fetch(`/api/messages/${message.id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ isPinned: !message.isPinned }),
-    })
-  }, [message.id, message.isPinned, onUpdate])
+    togglePin.mutate({ messageId: message.id, isPinned: !message.isPinned })
+  }, [message.id, message.isPinned, togglePin])
 
   const handleDelete = useCallback(async () => {
-    const res = await fetch(`/api/messages/${message.id}`, { method: "DELETE" })
-    if (res.ok) {
-      onRemove(message.id)
-    }
-  }, [message.id, onRemove])
+    await deleteMessage.mutateAsync(message.id)
+  }, [message.id, deleteMessage])
 
   const handleEdit = useCallback(async (text: string) => {
-    const res = await fetch(`/api/messages/${message.id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ text }),
-    })
-    if (res.ok) {
-      const updated: ChatMessage = await res.json()
-      onUpdate(message.id, {
-        text: updated.text,
-        editedAt: updated.editedAt ? new Date(updated.editedAt) : null,
-      })
-    }
-  }, [message.id, onUpdate])
+    await editMessage.mutateAsync({ messageId: message.id, text })
+  }, [message.id, editMessage])
 
   const handleRemindSave = useCallback((remindAt: Date) => {
-    onUpdate(message.id, { remindAt, isRemindDone: false })
-    fetch(`/api/messages/${message.id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        remindAt: remindAt.toISOString(),
-        isRemindDone: false,
-      }),
-    })
-  }, [message.id, onUpdate])
+    setReminder.mutate({ messageId: message.id, remindAt: remindAt.toISOString() })
+  }, [message.id, setReminder])
 
   const handleMarkReminded = useCallback(() => {
-    onUpdate(message.id, { isRemindDone: true })
-    fetch(`/api/messages/${message.id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ isRemindDone: true }),
-    })
-  }, [message.id, onUpdate])
+    markReminded.mutate({ messageId: message.id })
+  }, [message.id, markReminded])
 
   return (
     <>
@@ -150,7 +107,18 @@ const BubbleWrapper = memo(function BubbleWrapper({
         className="select-none"
       >
         {message.type === MessageType.CHECKLIST ? (
-          <ChecklistBubble message={message} onUpdate={onUpdate} />
+          <ChecklistBubble message={message} onUpdate={(id, patch) => {
+            queryClient.setQueryData(queryKeys.messages(roomId), (old: any) => {
+              if (!old) return old
+              const pages = old.pages.map((page: any) => ({
+                ...page,
+                messages: page.messages.map((m: any) =>
+                  m.id === id ? { ...m, ...patch } : m
+                ),
+              }))
+              return { ...old, pages }
+            })
+          }} />
         ) : (
           <MessageBubble
             message={message}

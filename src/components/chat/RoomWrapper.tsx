@@ -1,8 +1,9 @@
 "use client"
 
 import { useEffect, useRef } from "react"
-import useMessages from "@/hooks/useMessages"
-import { updateRoomLastMessage } from "@/hooks/useRooms"
+import { useQueryClient } from "@tanstack/react-query"
+import { useMessagesQuery } from "@/hooks/useMessages"
+import { queryKeys } from "@/lib/queryKeys"
 import ChatContainer from "./ChatContainer"
 import type { ChatMessage } from "@/types/chat"
 
@@ -33,21 +34,13 @@ function showReminderNotifications(
 }
 
 export default function RoomWrapper({ roomId, userId, room }: Props) {
-  const messageAPI = useMessages(roomId)
-  const { messages, mergeMessages } = messageAPI
-
+  const queryClient = useQueryClient()
+  const { data: messages = [], fetchNextPage, hasNextPage, isFetchingNextPage, isLoading } = useMessagesQuery(roomId)
   const messagesRef = useRef(messages)
-  // Simpan mergeMessages di ref supaya interval tidak perlu di-reset
-  // setiap kali mergeMessages berubah referensinya
-  const mergeMessagesRef = useRef(mergeMessages)
 
   useEffect(() => {
     messagesRef.current = messages
   }, [messages])
-
-  useEffect(() => {
-    mergeMessagesRef.current = mergeMessages
-  }, [mergeMessages])
 
   useEffect(() => {
     let interval: ReturnType<typeof setInterval> | null = null
@@ -64,7 +57,16 @@ export default function RoomWrapper({ roomId, userId, room }: Props) {
           const newOnes = newBotMessages.filter((m) => !existingIds.has(m.id))
           if (newOnes.length > 0) {
             showReminderNotifications(newOnes, currentMessages, room.name)
-            mergeMessagesRef.current(newOnes)
+            queryClient.setQueryData(queryKeys.messages(roomId), (old: any) => {
+              if (!old) return old
+              const pages = [...old.pages]
+              const lastIndex = pages.length - 1
+              pages[lastIndex] = {
+                ...pages[lastIndex],
+                messages: [...pages[lastIndex].messages, ...newOnes],
+              }
+              return { ...old, pages }
+            })
           }
         }
       } catch {
@@ -76,16 +78,17 @@ export default function RoomWrapper({ roomId, userId, room }: Props) {
     return () => {
       if (interval) clearInterval(interval)
     }
-  // Hanya bergantung pada roomId dan room.name — bukan mergeMessages
-  // supaya interval tidak di-reset setiap render
-  }, [roomId, room.name])
+  }, [roomId, room.name, queryClient])
 
   return (
     <ChatContainer
       room={room}
       userId={userId}
-      messageAPI={messageAPI}
-      onMessageSent={(text) => updateRoomLastMessage(roomId, text)}
+      messages={messages}
+      loading={isLoading}
+      loadingMore={isFetchingNextPage}
+      hasMore={hasNextPage ?? false}
+      onLoadMore={() => fetchNextPage()}
     />
   )
 }

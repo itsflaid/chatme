@@ -2,6 +2,8 @@
 
 import { FiX, FiBookmark, FiCheck } from "react-icons/fi"
 import { Message } from "@prisma/client"
+import { useQueryClient } from "@tanstack/react-query"
+import { queryKeys } from "@/lib/queryKeys"
 
 type Props = {
   messages: Message[]
@@ -9,6 +11,7 @@ type Props = {
 }
 
 export default function PinnedMessagesModal({ messages, onClose }: Props) {
+  const queryClient = useQueryClient()
   const pinned = messages.filter(m => m.isPinned && !m.isBot)
 
   async function handleUnpin(messageId: string) {
@@ -17,7 +20,7 @@ export default function PinnedMessagesModal({ messages, onClose }: Props) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ isPinned: false }),
     })
-    window.dispatchEvent(new Event("rooms:refresh"))
+    queryClient.invalidateQueries({ queryKey: queryKeys.rooms })
   }
 
   async function handleDone(messageId: string) {
@@ -26,7 +29,7 @@ export default function PinnedMessagesModal({ messages, onClose }: Props) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ isDone: true, isPinned: false }),
     })
-    window.dispatchEvent(new Event("rooms:refresh"))
+    queryClient.invalidateQueries({ queryKey: queryKeys.rooms })
   }
 
   return (

@@ -1,270 +1,392 @@
 "use client"
 
-import { useState, useEffect, useCallback, useRef } from "react"
-import { getCache, setCache, updateCache, CacheKeys } from "@/lib/cache"
+import { useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query"
+import { queryKeys } from "@/lib/queryKeys"
+import { broadcastInvalidate } from "@/lib/broadcastSync"
+import { MessageType } from "@prisma/client"
 import type { ChatMessage } from "@/types/chat"
+import type { RoomData } from "./useRooms"
 
-// L1 in-memory cache — sync, zero latency
-// Hidup selama tab terbuka, tidak perlu await
-const memoryCache = new Map<string, ChatMessage[]>()
+// ── Read query ──────────────────────────────────────────────────────────
 
-type MessageAPI = {
-  messages: ChatMessage[]
-  loading: boolean
-  loadingMore: boolean
-  hasMore: boolean
-  error: string | null
-  loadMore: () => Promise<void>
-  addMessage: (msg: ChatMessage) => void
-  replaceMessage: (tempId: string, real: ChatMessage) => void
-  removeMessage: (id: string) => void
-  patchMessage: (id: string, patch: Partial<ChatMessage>) => void
-  mergeMessages: (newMsgs: ChatMessage[]) => void
-  refresh: () => Promise<void>
+type MessagesPage = { messages: ChatMessage[]; hasMore: boolean }
+
+async function fetchMessagesPage(roomId: string, cursor?: string): Promise<MessagesPage> {
+  const url = cursor
+    ? `/api/rooms/${roomId}/messages?before=${cursor}&limit=30`
+    : `/api/rooms/${roomId}/messages?limit=50`
+  const res = await fetch(url)
+  if (!res.ok) throw new Error("Gagal memuat pesan")
+  return res.json()
 }
 
-export default function useMessages(roomId: string): MessageAPI {
-  const cacheKey = CacheKeys.messages(roomId)
+export function useMessagesQuery(roomId: string) {
+  return useInfiniteQuery({
+    queryKey: queryKeys.messages(roomId),
+    queryFn: ({ pageParam }) => fetchMessagesPage(roomId, pageParam),
+    initialPageParam: undefined as string | undefined,
+    getNextPageParam: (lastPage) =>
+      lastPage.hasMore ? lastPage.messages[0]?.id : undefined,
+    select: (data) => {
+      const all = data.pages.flatMap((p) => p.messages)
+      const unique = new Map(all.map((m) => [m.id, m]))
+      return [...unique.values()].sort(
+        (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+      )
+    },
+  })
+}
 
-  // Baca sekali saat inisialisasi — aman karena ini bukan ref.current,
-  // melainkan nilai yang di-capture saat pertama kali hook dipanggil
-  // dan disimpan di useState/useRef agar tidak berubah antar render
-  const [messages, setMessages] = useState<ChatMessage[]>(
-    () => memoryCache.get(cacheKey) ?? []
-  )
-  const [loading, setLoading] = useState(
-    () => !memoryCache.has(cacheKey)
-  )
-  const [hasMore, setHasMore] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [loadingMore, setLoadingMore] = useState(false)
-  const mountedRef = useRef(true)
-  const messagesRef = useRef<ChatMessage[]>(messages)
+// ── Mutation helpers ────────────────────────────────────────────────────
 
-  // Flag apakah sudah ada cache saat mount — dibekukan agar tidak masuk dependency
-  const hadCacheOnMount = useRef(memoryCache.has(cacheKey))
+type MessagesPageData = {
+  pageParams: unknown[]
+  pages: MessagesPage[]
+}
 
-  useEffect(() => {
-    messagesRef.current = messages
-    // Sync ke memory cache setiap update
-    if (messages.length > 0) {
-      memoryCache.set(cacheKey, messages)
+function updateMessagesCache(
+  queryClient: ReturnType<typeof useQueryClient>,
+  roomId: string,
+  updater: (messages: ChatMessage[]) => ChatMessage[]
+) {
+  queryClient.setQueryData(queryKeys.messages(roomId), (old: MessagesPageData | undefined) => {
+    if (!old) return old
+    const all = old.pages.flatMap((p) => p.messages)
+    const updated = updater(all)
+    const pageSize = old.pages[old.pages.length - 1]?.messages.length ?? 50
+    const pages: MessagesPage[] = []
+    for (let i = 0; i < updated.length; i += pageSize) {
+      pages.push({ messages: updated.slice(i, i + pageSize), hasMore: true })
     }
-  }, [messages, cacheKey])
+    if (pages.length > 0) pages[pages.length - 1].hasMore = old.pages[old.pages.length - 1]?.hasMore ?? false
+    return { ...old, pages }
+  })
+}
 
-  useEffect(() => {
-    return () => {
-      mountedRef.current = false
-    }
-  }, [])
+function updateSidebarPreview(
+  queryClient: ReturnType<typeof useQueryClient>,
+  roomId: string,
+  text: string,
+  createdAt: Date
+) {
+  queryClient.setQueryData(queryKeys.rooms, (old: RoomData[] | undefined) => {
+    if (!old) return old
+    const updated = old.map((r) =>
+      r.id === roomId
+        ? { ...r, messages: [{ text, createdAt }] }
+        : r
+    )
+    updated.sort((a, b) => {
+      const aTime = a.messages[0]?.createdAt?.getTime() ?? 0
+      const bTime = b.messages[0]?.createdAt?.getTime() ?? 0
+      return bTime - aTime
+    })
+    return updated
+  })
+}
 
-  useEffect(() => {
-    let cancelled = false
+function getMessagesFromCache(
+  queryClient: ReturnType<typeof useQueryClient>,
+  roomId: string
+): ChatMessage[] {
+  const data = queryClient.getQueryData<MessagesPageData>(queryKeys.messages(roomId))
+  return data?.pages.flatMap((p) => p.messages) ?? []
+}
 
-    async function init() {
-      if (!hadCacheOnMount.current) {
-        setLoading(true)
+// ── Send message ────────────────────────────────────────────────────────
 
-        // L2: cek IndexedDB
-        const cached = await getCache<ChatMessage[]>(cacheKey)
-        if (cached && !cancelled) {
-          // Tetap tampilkan data expired sebagai fallback visual,
-          // tapi jangan set ke memoryCache kalau sudah expired
-          // (biar L3 fetch yang update memoryCache dengan data fresh)
-          if (!cached.isExpired) {
-            memoryCache.set(cacheKey, cached.data)
-          }
-          setMessages(cached.data)
-          setLoading(false)
-        }
+type SendMessageInput = {
+  roomId: string
+  userId: string
+  text: string
+  type?: MessageType
+  items?: string[]
+}
+
+export function useSendMessage(roomId: string) {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationKey: ["send-message", roomId],
+    mutationFn: async (input: SendMessageInput) => {
+      const body: Record<string, unknown> = { roomId: input.roomId, text: input.text }
+      if (input.type) body.type = input.type
+      if (input.items) body.items = input.items
+      const res = await fetch("/api/messages", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      })
+      if (!res.ok) throw new Error("Gagal mengirim pesan")
+      return res.json() as Promise<ChatMessage>
+    },
+    onMutate: async (input) => {
+      await queryClient.cancelQueries({ queryKey: queryKeys.messages(roomId) })
+      const tempId = `temp-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+      const now = new Date()
+      const tempMessage: ChatMessage = {
+        id: tempId,
+        text: input.text,
+        type: input.type ?? MessageType.TEXT,
+        isDone: false,
+        isPinned: false,
+        isBot: false,
+        remindAt: null,
+        remindSnoozeAt: null,
+        isRemindDone: false,
+        sourceMessageId: null,
+        roomId: input.roomId,
+        userId: input.userId,
+        createdAt: now,
+        updatedAt: now,
+        editedAt: null,
+        checklistItems: input.items?.map((item, position) => ({
+          id: `${tempId}-${position}`,
+          text: item,
+          isDone: false,
+          position,
+          messageId: tempId,
+          createdAt: now,
+          updatedAt: now,
+        })) ?? [],
       }
 
-      // L3: fetch fresh dari server (selalu jalan, sebagai background revalidate)
-      try {
-        const res = await fetch(`/api/rooms/${roomId}/messages?limit=50`)
-        if (!res.ok || cancelled) return
-        const data = await res.json()
-        if (cancelled) return
+      updateMessagesCache(queryClient, roomId, (msgs) => [...msgs, tempMessage])
+      return { tempId }
+    },
+    onSuccess: (realMessage, _input, context) => {
+      updateMessagesCache(queryClient, roomId, (msgs) =>
+        msgs.map((m) => (m.id === context?.tempId ? realMessage : m))
+      )
+      updateSidebarPreview(queryClient, roomId, realMessage.text, new Date(realMessage.createdAt))
+      broadcastInvalidate(queryKeys.rooms)
+    },
+    onError: (_err, _input, context) => {
+      updateMessagesCache(queryClient, roomId, (msgs) =>
+        msgs.filter((m) => m.id !== context?.tempId)
+      )
+    },
+  })
+}
 
-        const fresh = data.messages as ChatMessage[]
-        const freshIds = new Set(fresh.map((m) => m.id))
+// ── Edit message ────────────────────────────────────────────────────────
 
-        setMessages((prev) => {
-          // Ambil semua optimistic messages yang masih pending (belum dikonfirmasi server)
-          const pendingTemps = prev.filter((m) => m.id.startsWith("temp-") && !freshIds.has(m.id))
+export function useEditMessage(roomId: string) {
+  const queryClient = useQueryClient()
 
-          // Kalau tidak ada yang pending, aman untuk overwrite langsung
-          if (pendingTemps.length === 0) {
-            return fresh
-          }
+  return useMutation({
+    mutationFn: async ({ messageId, text }: { messageId: string; text: string }) => {
+      const res = await fetch(`/api/messages/${messageId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text }),
+      })
+      if (!res.ok) throw new Error("Gagal edit pesan")
+      return res.json() as Promise<ChatMessage>
+    },
+    onSuccess: (updated) => {
+      updateMessagesCache(queryClient, roomId, (msgs) =>
+        msgs.map((m) =>
+          m.id === updated.id ? { ...m, text: updated.text, editedAt: updated.editedAt } : m
+        )
+      )
 
-          // Ada optimistic messages — merge: server data + pending temps di akhir
-          return [...fresh, ...pendingTemps]
-        })
+      const allMsgs = getMessagesFromCache(queryClient, roomId)
+      const latest = allMsgs.reduce((a, b) =>
+        new Date(a.createdAt) > new Date(b.createdAt) ? a : b
+      , allMsgs[0])
 
-        memoryCache.set(cacheKey, fresh)
-        await setCache(cacheKey, fresh)
-        setHasMore(data.hasMore)
-        setError(null)
-      } catch {
-        if (!cancelled && messagesRef.current.length === 0) {
-          setError("Gagal memuat pesan")
-        }
-      } finally {
-        if (!cancelled) setLoading(false)
+      if (latest?.id === updated.id) {
+        updateSidebarPreview(queryClient, roomId, updated.text, new Date(updated.createdAt))
+        broadcastInvalidate(queryKeys.rooms)
       }
-    }
+    },
+  })
+}
 
-    init()
+// ── Delete message ──────────────────────────────────────────────────────
 
-    return () => {
-      cancelled = true
-    }
-  }, [roomId, cacheKey])
+export function useDeleteMessage(roomId: string) {
+  const queryClient = useQueryClient()
 
-  const loadMore = useCallback(async () => {
-    if (!hasMore || loadingMore) return
-    const oldest = messagesRef.current[0]
-    if (!oldest) return
+  return useMutation({
+    mutationFn: async (messageId: string) => {
+      const res = await fetch(`/api/messages/${messageId}`, { method: "DELETE" })
+      if (!res.ok) throw new Error("Gagal hapus pesan")
+    },
+    onSuccess: (_data, messageId) => {
+      updateMessagesCache(queryClient, roomId, (msgs) =>
+        msgs.filter((m) => m.id !== messageId)
+      )
 
-    setLoadingMore(true)
-    try {
-      const res = await fetch(`/api/rooms/${roomId}/messages?before=${oldest.id}&limit=30`)
-      if (!res.ok) return
-      const data = await res.json()
+      const allMsgs = getMessagesFromCache(queryClient, roomId)
+      const latest = allMsgs.reduce((a, b) =>
+        new Date(a.createdAt) > new Date(b.createdAt) ? a : b
+      , allMsgs[0])
 
-      const older = data.messages as ChatMessage[]
-      const merged = await updateCache(cacheKey, older)
-      if (merged) {
-        setMessages(merged)
-        memoryCache.set(cacheKey, merged)
-      } else {
-        setMessages((prev) => {
-          const next = [...older, ...prev]
-          memoryCache.set(cacheKey, next)
-          return next
-        })
+      if (!latest || !allMsgs.some((m) => m.id === messageId)) {
+        queryClient.invalidateQueries({ queryKey: queryKeys.rooms })
       }
-
-      setHasMore(data.hasMore)
-    } catch {
-      /* silent */
-    } finally {
-      setLoadingMore(false)
-    }
-  }, [roomId, cacheKey, hasMore, loadingMore])
-
-  const addMessage = useCallback(
-    (msg: ChatMessage) => {
-      setMessages((prev) => {
-        const next = [...prev, msg]
-        memoryCache.set(cacheKey, next)
-        return next
-      })
-      updateCache(cacheKey, [msg])
     },
-    [cacheKey]
-  )
+  })
+}
 
-  const replaceMessage = useCallback(
-    (tempId: string, real: ChatMessage) => {
-      setMessages((prev) => {
-        const found = prev.some((m) => m.id === tempId)
-        let next: ChatMessage[]
+// ── Toggle done ─────────────────────────────────────────────────────────
 
-        if (found) {
-          // Normal case: replace temp dengan real
-          next = prev.map((m) => (m.id === tempId ? real : m))
-        } else {
-          // Fallback: tempId sudah di-overwrite oleh background fetch,
-          // cek apakah real message sudah ada di state (mungkin sudah masuk via server fetch)
-          const alreadyExists = prev.some((m) => m.id === real.id)
-          if (alreadyExists) {
-            // Sudah ada, tidak perlu tambah lagi
-            next = prev
-          } else {
-            // Belum ada, append ke akhir
-            next = [...prev, real]
-          }
-        }
+export function useToggleDone(roomId: string) {
+  const queryClient = useQueryClient()
 
-        memoryCache.set(cacheKey, next)
-        return next
+  return useMutation({
+    mutationFn: async ({ messageId, isDone }: { messageId: string; isDone: boolean }) => {
+      const res = await fetch(`/api/messages/${messageId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ isDone }),
       })
-      updateCache(cacheKey, [real])
+      if (!res.ok) throw new Error("Gagal update status")
+      return res.json() as Promise<ChatMessage>
     },
-    [cacheKey]
-  )
+    onMutate: async ({ messageId, isDone }) => {
+      await queryClient.cancelQueries({ queryKey: queryKeys.messages(roomId) })
+      updateMessagesCache(queryClient, roomId, (msgs) =>
+        msgs.map((m) => (m.id === messageId ? { ...m, isDone } : m))
+      )
+    },
+    onSuccess: (updated) => {
+      updateMessagesCache(queryClient, roomId, (msgs) =>
+        msgs.map((m) => (m.id === updated.id ? updated : m))
+      )
+    },
+    onError: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.messages(roomId) })
+    },
+  })
+}
 
-  const removeMessage = useCallback(
-    (id: string) => {
-      setMessages((prev) => {
-        const next = prev.filter((m) => m.id !== id)
-        memoryCache.set(cacheKey, next)
-        return next
+// ── Toggle pin ──────────────────────────────────────────────────────────
+
+export function useTogglePin(roomId: string) {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async ({ messageId, isPinned }: { messageId: string; isPinned: boolean }) => {
+      const res = await fetch(`/api/messages/${messageId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ isPinned }),
       })
+      if (!res.ok) throw new Error("Gagal update pin")
     },
-    [cacheKey]
-  )
+    onMutate: async ({ messageId, isPinned }) => {
+      await queryClient.cancelQueries({ queryKey: queryKeys.messages(roomId) })
+      updateMessagesCache(queryClient, roomId, (msgs) =>
+        msgs.map((m) => (m.id === messageId ? { ...m, isPinned } : m))
+      )
+    },
+    onError: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.messages(roomId) })
+    },
+  })
+}
 
-  const patchMessage = useCallback(
-    (id: string, patch: Partial<ChatMessage>) => {
-      setMessages((prev) => {
-        const next = prev.map((m) => (m.id === id ? { ...m, ...patch } : m))
-        memoryCache.set(cacheKey, next)
-        return next
+// ── Set reminder ────────────────────────────────────────────────────────
+
+export function useSetReminder(roomId: string) {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async ({ messageId, remindAt }: { messageId: string; remindAt: string }) => {
+      const res = await fetch(`/api/messages/${messageId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ remindAt, isRemindDone: false }),
       })
+      if (!res.ok) throw new Error("Gagal set reminder")
     },
-    [cacheKey]
-  )
+    onMutate: async ({ messageId, remindAt }) => {
+      await queryClient.cancelQueries({ queryKey: queryKeys.messages(roomId) })
+      updateMessagesCache(queryClient, roomId, (msgs) =>
+        msgs.map((m) =>
+          m.id === messageId ? { ...m, remindAt: new Date(remindAt), isRemindDone: false } : m
+        )
+      )
+    },
+    onError: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.messages(roomId) })
+    },
+  })
+}
 
-  const mergeMessages = useCallback(
-    (newMsgs: ChatMessage[]) => {
-      if (newMsgs.length === 0) return
-      setMessages((prev) => {
-        const existingIds = new Set(prev.map((m) => m.id))
-        const fresh = newMsgs.filter((m) => !existingIds.has(m.id))
-        if (fresh.length === 0) return prev
-        const merged = [...prev, ...fresh]
-        memoryCache.set(cacheKey, merged)
-        updateCache(cacheKey, fresh)
-        return merged
+// ── Mark reminded ───────────────────────────────────────────────────────
+
+export function useMarkReminded(roomId: string) {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async ({ messageId }: { messageId: string }) => {
+      const res = await fetch(`/api/messages/${messageId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ isRemindDone: true }),
       })
+      if (!res.ok) throw new Error("Gagal update reminder")
     },
-    [cacheKey]
-  )
+    onMutate: async ({ messageId }) => {
+      await queryClient.cancelQueries({ queryKey: queryKeys.messages(roomId) })
+      updateMessagesCache(queryClient, roomId, (msgs) =>
+        msgs.map((m) => (m.id === messageId ? { ...m, isRemindDone: true } : m))
+      )
+    },
+    onError: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.messages(roomId) })
+    },
+  })
+}
 
-  const refresh = useCallback(async () => {
-    setLoading(true)
-    setError(null)
-    try {
-      const res = await fetch(`/api/rooms/${roomId}/messages?limit=50`)
-      if (!res.ok) throw new Error("Gagal refresh")
-      const data = await res.json()
-      const fresh = data.messages as ChatMessage[]
-      setMessages(fresh)
-      memoryCache.set(cacheKey, fresh)
-      await setCache(cacheKey, fresh)
-      setHasMore(data.hasMore)
-    } catch {
-      setError("Gagal refresh data")
-    } finally {
-      setLoading(false)
-    }
-  }, [roomId, cacheKey])
+// ── Checklist toggle item ───────────────────────────────────────────────
 
-  return {
-    messages,
-    loading,
-    loadingMore,
-    hasMore,
-    error,
-    loadMore,
-    addMessage,
-    replaceMessage,
-    removeMessage,
-    patchMessage,
-    mergeMessages,
-    refresh,
-  }
+export function useChecklistToggle(roomId: string) {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async ({
+      messageId,
+      title,
+      items,
+    }: {
+      messageId: string
+      title: string
+      items: { text: string; isDone: boolean }[]
+    }) => {
+      const res = await fetch(`/api/messages/${messageId}/checklist`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title, items }),
+      })
+      if (!res.ok) throw new Error("Gagal update checklist")
+      return res.json() as Promise<ChatMessage>
+    },
+    onMutate: async ({ messageId, items }) => {
+      await queryClient.cancelQueries({ queryKey: queryKeys.messages(roomId) })
+      const allDone = items.every((i) => i.isDone)
+      updateMessagesCache(queryClient, roomId, (msgs) =>
+        msgs.map((m) =>
+          m.id === messageId
+            ? { ...m, checklistItems: m.checklistItems.map((ci) => {
+                const updated = items.find((i) => i.text === ci.text)
+                return updated ? { ...ci, isDone: updated.isDone } : ci
+              }), isDone: allDone }
+            : m
+        )
+      )
+    },
+    onSuccess: (updated) => {
+      updateMessagesCache(queryClient, roomId, (msgs) =>
+        msgs.map((m) => (m.id === updated.id ? updated : m))
+      )
+    },
+    onError: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.messages(roomId) })
+    },
+  })
 }

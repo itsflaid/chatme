@@ -2,35 +2,30 @@
 
 import { useState, useMemo } from "react"
 import { FiChevronUp, FiChevronDown, FiX } from "react-icons/fi"
+import { useQueryClient } from "@tanstack/react-query"
 import ChatMessages from "./ChatMessages"
 import ChatHeader from "./ChatHeader"
 import ChatInput from "./ChatInput"
 import SnoozeModal from "./modals/SnoozeModal"
+import { useToggleDone, useMarkReminded, useSetReminder } from "@/hooks/useMessages"
+import { queryKeys } from "@/lib/queryKeys"
 import type { ChatMessage } from "@/types/chat"
-import type useMessages from "@/hooks/useMessages"
-
-type MessageAPI = ReturnType<typeof useMessages>
 
 type Props = {
   room: { id: string; name: string; icon: string; description: string | null }
   userId: string
-  messageAPI: MessageAPI
-  onMessageSent?: (text: string) => void
+  messages: ChatMessage[]
+  loading: boolean
+  loadingMore: boolean
+  hasMore: boolean
+  onLoadMore: () => void
 }
 
-export default function ChatContainer({ room, userId, messageAPI, onMessageSent }: Props) {
-  const {
-    messages,
-    loading,
-    loadingMore,
-    hasMore,
-    loadMore,
-    patchMessage,
-    removeMessage: apiRemoveMessage,
-    addMessage,
-    replaceMessage,
-    mergeMessages,
-  } = messageAPI
+export default function ChatContainer({ room, userId, messages, loading, loadingMore, hasMore, onLoadMore }: Props) {
+  const roomId = room.id
+  const toggleDone = useToggleDone(roomId)
+  const markReminded = useMarkReminded(roomId)
+  const setReminder = useSetReminder(roomId)
 
   const [snoozeBotId, setSnoozeBotId] = useState<string | null>(null)
   const [snoozeSourceId, setSnoozeSourceId] = useState<string | null>(null)
@@ -55,28 +50,37 @@ export default function ChatContainer({ room, userId, messageAPI, onMessageSent 
     setActiveIndex(0)
   }
 
+  const queryClient = useQueryClient()
+
   async function handleCheckReminders() {
-    const res = await fetch(`/api/rooms/${room.id}/reminders`)
-    if (!res.ok) return
-    const newBotMessages: ChatMessage[] = await res.json()
-    if (newBotMessages.length > 0) {
-      mergeMessages(newBotMessages)
+    try {
+      const res = await fetch(`/api/rooms/${roomId}/reminders`)
+      if (!res.ok) return
+      const newBotMessages: ChatMessage[] = await res.json()
+      if (newBotMessages.length > 0) {
+        const existingIds = new Set(messages.map((m) => m.id))
+        const newOnes = newBotMessages.filter((m) => !existingIds.has(m.id))
+        if (newOnes.length > 0) {
+          queryClient.setQueryData(queryKeys.messages(roomId), (old: any) => {
+            if (!old) return old
+            const pages = [...old.pages]
+            const lastIndex = pages.length - 1
+            pages[lastIndex] = {
+              ...pages[lastIndex],
+              messages: [...pages[lastIndex].messages, ...newOnes],
+            }
+            return { ...old, pages }
+          })
+        }
+      }
+    } catch {
+      /* silent */
     }
   }
 
-  async function handleBotDone(botMessageId: string, sourceMessageId: string) {
-    patchMessage(sourceMessageId, { isDone: true, isRemindDone: true })
-    patchMessage(botMessageId, { isRemindDone: true })
-    fetch(`/api/messages/${sourceMessageId}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ isDone: true, isRemindDone: true }),
-    })
-    fetch(`/api/messages/${botMessageId}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ isRemindDone: true }),
-    })
+  function handleBotDone(botMessageId: string, sourceMessageId: string) {
+    toggleDone.mutate({ messageId: sourceMessageId, isDone: true })
+    markReminded.mutate({ messageId: botMessageId })
   }
 
   function handleBotSnooze(botMessageId: string, sourceMessageId: string) {
@@ -87,35 +91,21 @@ export default function ChatContainer({ room, userId, messageAPI, onMessageSent 
   async function handleSnoozeSelect(minutes: number) {
     if (!snoozeBotId || !snoozeSourceId) return
     const newRemindAt = new Date(Date.now() + minutes * 60 * 1000)
-    patchMessage(snoozeSourceId, { remindAt: newRemindAt })
-    patchMessage(snoozeBotId, { isRemindDone: true })
-    fetch(`/api/messages/${snoozeSourceId}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ remindAt: newRemindAt.toISOString() }),
-    })
-    fetch(`/api/messages/${snoozeBotId}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ isRemindDone: true }),
-    })
+    setReminder.mutate({ messageId: snoozeSourceId, remindAt: newRemindAt.toISOString() })
+    markReminded.mutate({ messageId: snoozeBotId })
     setSnoozeBotId(null)
     setSnoozeSourceId(null)
   }
 
-  async function handleReminderDone(messageId: string) {
-    patchMessage(messageId, { isRemindDone: true, isDone: true })
-    fetch(`/api/messages/${messageId}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ isRemindDone: true, isDone: true }),
-    })
+  function handleReminderDone(messageId: string) {
+    markReminded.mutate({ messageId })
+    toggleDone.mutate({ messageId, isDone: true })
   }
 
   return (
     <div className="flex flex-col flex-1 min-h-0">
       <ChatHeader
-        roomId={room.id}
+        roomId={roomId}
         name={room.name}
         icon={room.icon}
         description={room.description}
@@ -174,23 +164,18 @@ export default function ChatContainer({ room, userId, messageAPI, onMessageSent 
         isLoading={loading}
         loadingMore={loadingMore}
         hasMore={hasMore}
-        onLoadMore={loadMore}
+        onLoadMore={onLoadMore}
         onBotDone={handleBotDone}
         onBotSnooze={handleBotSnooze}
-        onMessageUpdate={patchMessage}
-        onMessageRemove={apiRemoveMessage}
+        roomId={roomId}
         searchQuery={searchQuery}
         activeMatchId={matchedMessages[activeIndex]?.id ?? null}
       />
 
       <ChatInput
-        roomId={room.id}
+        roomId={roomId}
         userId={userId}
-        onMessageAdd={addMessage}
-        onMessageReplace={replaceMessage}
-        onMessageRemove={apiRemoveMessage}
         onCheckReminders={handleCheckReminders}
-        onMessageSent={onMessageSent}
       />
 
       {snoozeBotId && (

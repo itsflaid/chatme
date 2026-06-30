@@ -13,8 +13,7 @@ type Props = {
   onLoadMore?: () => void
   onBotDone: (botMessageId: string, sourceMessageId: string) => void
   onBotSnooze: (botMessageId: string, sourceMessageId: string) => void
-  onMessageUpdate: (id: string, patch: Partial<ChatMessage>) => void
-  onMessageRemove: (id: string) => void
+  roomId: string
   searchQuery?: string
   activeMatchId?: string | null
 }
@@ -95,8 +94,7 @@ export default function ChatMessages({
   onLoadMore,
   onBotDone,
   onBotSnooze,
-  onMessageUpdate,
-  onMessageRemove,
+  roomId,
   searchQuery = "",
   activeMatchId = null,
 }: Props) {
@@ -109,7 +107,6 @@ export default function ChatMessages({
   const prevLastIdRef = useRef(messages[messages.length - 1]?.id ?? null)
   const prevScrollRef = useRef<{ scrollHeight: number; scrollTop: number } | null>(null)
 
-  // IntersectionObserver untuk infinite scroll ke atas
   useEffect(() => {
     if (!sentinelRef.current || !hasMore || !onLoadMore) return
 
@@ -133,7 +130,6 @@ export default function ChatMessages({
     return () => observer.disconnect()
   }, [hasMore, onLoadMore, messages.length])
 
-  // Maintain scroll position after prepending older messages
   useEffect(() => {
     if (prevScrollRef.current && containerRef.current) {
       const { scrollHeight: oldHeight, scrollTop: oldTop } = prevScrollRef.current
@@ -143,7 +139,6 @@ export default function ChatMessages({
     }
   }, [messages.length])
 
-  // scroll ke bawah: instant di render pertama, smooth hanya ketika ada pesan BARU
   useEffect(() => {
     if (searchQuery) return
 
@@ -170,14 +165,12 @@ export default function ChatMessages({
     }
   }, [messages, searchQuery])
 
-  // scroll ke hasil search aktif
   useEffect(() => {
     if (activeMatchId) {
       activeRef.current?.scrollIntoView({ behavior: "smooth", block: "center" })
     }
   }, [activeMatchId])
 
-  // Map lookup untuk sourceMessage O(1) bukan O(n)
   const messageMap = useMemo(() => {
     const map = new Map<string, ChatMessage>()
     messages.forEach((m) => map.set(m.id, m))
@@ -205,14 +198,7 @@ export default function ChatMessages({
       ref={containerRef}
       className="flex-1 min-h-0 overflow-y-auto px-3 sm:px-10 py-5 flex flex-col gap-2"
     >
-      {/* Sentinel untuk infinite scroll ke atas */}
       <div ref={sentinelRef} className="h-1 w-full" />
-
-      {loadingMore && (
-        <div className="flex justify-center py-2">
-          <div className="h-5 w-5 rounded-full border-2 border-[var(--accent)] border-t-transparent animate-spin" />
-        </div>
-      )}
 
       {grouped.map((group) => (
         <div key={group.dateLabel}>
@@ -259,8 +245,7 @@ export default function ChatMessages({
                 >
                   <BubbleWrapper
                     message={message}
-                    onUpdate={onMessageUpdate}
-                    onRemove={onMessageRemove}
+                    roomId={roomId}
                     isNew={isTemp}
                     searchQuery={searchQuery}
                   />

@@ -3,6 +3,8 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { FiAlertTriangle, FiX } from "react-icons/fi"
+import { useQueryClient } from "@tanstack/react-query"
+import { queryKeys } from "@/lib/queryKeys"
 
 type Props = {
   roomId: string
@@ -11,6 +13,7 @@ type Props = {
 }
 
 export default function DeleteRoomModal({ roomId, roomName, onClose }: Props) {
+  const queryClient = useQueryClient()
   const [loading, setLoading] = useState(false)
   const router = useRouter()
 
@@ -19,7 +22,7 @@ export default function DeleteRoomModal({ roomId, roomName, onClose }: Props) {
     await fetch(`/api/rooms/${roomId}`, { method: "DELETE" })
     setLoading(false)
     onClose()
-    window.dispatchEvent(new Event("rooms:refresh"))
+    queryClient.invalidateQueries({ queryKey: queryKeys.rooms })
     router.push("/")
   }
 

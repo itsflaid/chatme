@@ -2,10 +2,13 @@
 
 import { useState } from "react"
 import { FiPlus, FiX } from "react-icons/fi"
+import { useQueryClient } from "@tanstack/react-query"
+import { queryKeys } from "@/lib/queryKeys"
 
 const EMOJIS = ['💬','📚','🏪','💸','💭','🎯','📝','🛒','💡','🏋️','🎮','🎵','✈️','🍜','💊','📦','🔧','🌙','⚡','🎨']
 
 export default function AddRoomButton() {
+  const queryClient = useQueryClient()
   const [open, setOpen] = useState(false)
   const [name, setName] = useState("")
   const [icon, setIcon] = useState("💬")
@@ -30,8 +33,7 @@ export default function AddRoomButton() {
     setLoading(false)
     handleClose()
     if (res.ok) {
-      // Refresh list room — user tetap di halaman list, masuk room sendiri
-      window.dispatchEvent(new Event("rooms:refresh"))
+      queryClient.invalidateQueries({ queryKey: queryKeys.rooms })
     }
   }
 

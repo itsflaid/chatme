@@ -4,31 +4,24 @@ import { useState, useRef } from "react"
 import { FiPlus, FiSend } from "react-icons/fi"
 import { MessageType } from "@prisma/client"
 import ChecklistComposer from "./modals/ChecklistComposer"
-import type { ChatMessage } from "@/types/chat"
+import { useSendMessage } from "@/hooks/useMessages"
 
 type Props = {
   roomId: string
   userId: string
-  onMessageAdd: (message: ChatMessage) => void
-  onMessageReplace: (tempId: string, realMessage: ChatMessage) => void
-  onMessageRemove: (id: string) => void
   onCheckReminders: () => void
-  onMessageSent?: (text: string) => void
 }
 
 export default function ChatInput({
   roomId,
   userId,
-  onMessageAdd,
-  onMessageReplace,
-  onMessageRemove,
   onCheckReminders,
-  onMessageSent,
 }: Props) {
   const [text, setText] = useState("")
   const [showChecklist, setShowChecklist] = useState(false)
   const [checklistLoading, setChecklistLoading] = useState(false)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
+  const sendMessage = useSendMessage(roomId)
 
   function autoResize() {
     const el = textareaRef.current
@@ -39,106 +32,34 @@ export default function ChatInput({
 
   async function handleSend() {
     if (!text.trim()) return
+    if (sendMessage.isPending) return
     const trimmed = text.trim()
-    const tempId = `temp-${Date.now()}`
-
-    const tempMessage: ChatMessage = {
-      id: tempId,
-      text: trimmed,
-      type: MessageType.TEXT,
-      isDone: false,
-      isPinned: false,
-      isBot: false,
-      remindAt: null,
-      remindSnoozeAt: null,
-      isRemindDone: false,
-      sourceMessageId: null,
-      roomId,
-      userId,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      editedAt: null,
-      checklistItems: [],
-    }
-
-    onMessageAdd(tempMessage)
     setText("")
     if (textareaRef.current) textareaRef.current.style.height = "auto"
-
-    const res = await fetch("/api/messages", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ roomId, text: trimmed }),
-    })
-
-    if (res.ok) {
-      const realMessage = await res.json()
-      onMessageReplace(tempId, realMessage)
-      onMessageSent?.(trimmed)
-      onCheckReminders()
-    } else {
-      onMessageRemove(tempId)
-    }
+    sendMessage.mutate(
+      { roomId, userId, text: trimmed },
+      { onSuccess: () => onCheckReminders() }
+    )
   }
 
   async function handleChecklistSubmit(title: string, items: string[]) {
-    const tempId = `temp-${Date.now()}`
-    const now = new Date()
-    const tempMessage: ChatMessage = {
-      id: tempId,
-      text: title,
-      type: MessageType.CHECKLIST,
-      isDone: false,
-      isPinned: false,
-      isBot: false,
-      remindAt: null,
-      remindSnoozeAt: null,
-      isRemindDone: false,
-      sourceMessageId: null,
-      roomId,
-      userId,
-      createdAt: now,
-      updatedAt: now,
-      editedAt: null,
-      checklistItems: items.map((item, position) => ({
-        id: `${tempId}-${position}`,
-        text: item,
-        isDone: false,
-        position,
-        messageId: tempId,
-        createdAt: now,
-        updatedAt: now,
-      })),
-    }
-
-    onMessageAdd(tempMessage)
     setChecklistLoading(true)
-
-    const res = await fetch("/api/messages", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        roomId,
-        text: title,
-        type: MessageType.CHECKLIST,
-        items,
-      }),
-    })
-
-    if (res.ok) {
-      const realMessage: ChatMessage = await res.json()
-      onMessageReplace(tempId, realMessage)
-      onMessageSent?.(title)
-      setShowChecklist(false)
-    } else {
-      onMessageRemove(tempId)
-    }
-
-    setChecklistLoading(false)
+    setShowChecklist(false)
+    sendMessage.mutate(
+      { roomId, userId, text: title, type: MessageType.CHECKLIST, items },
+      {
+        onSuccess: () => {
+          onCheckReminders()
+        },
+        onSettled: () => {
+          setChecklistLoading(false)
+        },
+      }
+    )
   }
 
   function handleKey(e: React.KeyboardEvent) {
-    if (e.key === "Enter" && !e.shiftKey) {
+    if (e.key === "Enter" && !e.shiftKey && !(e.nativeEvent as KeyboardEvent).isComposing) {
       e.preventDefault()
       handleSend()
     }

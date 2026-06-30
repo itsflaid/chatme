@@ -12,6 +12,9 @@
   "dependencies": {
     "@auth/prisma-adapter": "^2.11.2",
     "@prisma/client": "^6.19.3",
+    "@tanstack/query-async-storage-persister": "^5.101.2",
+    "@tanstack/react-query": "^5.101.2",
+    "@tanstack/react-query-persist-client": "^5.101.2",
     "autoprefixer": "^10.5.0",
     "framer-motion": "^12.38.0",
     "idb-keyval": "^6.2.5",

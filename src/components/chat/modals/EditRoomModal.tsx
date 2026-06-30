@@ -3,6 +3,8 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { FiX } from "react-icons/fi"
+import { useQueryClient } from "@tanstack/react-query"
+import { queryKeys } from "@/lib/queryKeys"
 
 const EMOJIS = ['💬','📚','🏪','💸','💭','🎯','📝','🛒','💡','🏋️','🎮','🎵','✈️','🍜','💊','📦','🔧','🌙','⚡','🎨']
 
@@ -20,6 +22,7 @@ export default function EditRoomModal({
   const [name, setName] = useState(initialName)
   const [icon, setIcon] = useState(initialIcon)
   const [description, setDescription] = useState(initialDescription ?? "")
+  const queryClient = useQueryClient()
   const [loading, setLoading] = useState(false)
   const router = useRouter()
 
@@ -33,7 +36,7 @@ export default function EditRoomModal({
     })
     setLoading(false)
     onClose()
-    window.dispatchEvent(new Event("rooms:refresh"))
+    queryClient.invalidateQueries({ queryKey: queryKeys.rooms })
   }
 
   return (
