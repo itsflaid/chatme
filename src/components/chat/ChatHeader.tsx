@@ -40,6 +40,15 @@ export default function ChatHeader({
   onSearch,
 }: Props) {
   const router = useRouter()
+
+  const handleBack = () => {
+    if (typeof window !== "undefined" && window.history.length > 1) {
+      router.back()
+    } else {
+      router.push("/")
+    }
+  }
+
   const [showMenu, setShowMenu] = useState(false)
   const [showEdit, setShowEdit] = useState(false)
   const [showDelete, setShowDelete] = useState(false)
@@ -53,7 +62,7 @@ export default function ChatHeader({
 
         <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-3">
           <button
-            onClick={() => router.push("/")}
+            onClick={handleBack}
             className="neo-button w-8 h-8 flex items-center justify-center rounded-lg bg-[var(--paper)] transition text-[var(--text)]"
           >
             <FiArrowLeft size={20} />
