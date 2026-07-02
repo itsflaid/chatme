@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useRef, useMemo, useCallback } from "react"
+import { useEffect, useRef, useMemo } from "react"
 import BubbleWrapper from "./bubble/BubbleWrapper"
 import BotBubble from "./bubble/BotBubble"
 import type { ChatMessage } from "@/types/chat"
@@ -89,7 +89,6 @@ function MessagesSkeleton() {
 export default function ChatMessages({
   messages,
   isLoading = false,
-  loadingMore = false,
   hasMore = false,
   onLoadMore,
   onBotDone,

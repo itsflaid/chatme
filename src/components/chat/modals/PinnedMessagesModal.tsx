@@ -3,7 +3,8 @@
 import { FiX, FiBookmark, FiCheck } from "react-icons/fi"
 import { Message } from "@prisma/client"
 import { useQueryClient } from "@tanstack/react-query"
-import { queryKeys } from "@/lib/queryKeys"
+import { getQueryKey } from "@trpc/react-query"
+import { trpc } from "@/lib/trpc"
 
 type Props = {
   messages: Message[]
@@ -14,22 +15,17 @@ export default function PinnedMessagesModal({ messages, onClose }: Props) {
   const queryClient = useQueryClient()
   const pinned = messages.filter(m => m.isPinned && !m.isBot)
 
+  const utils = trpc.useUtils()
+  const roomsKey = getQueryKey(trpc.room.list)
+
   async function handleUnpin(messageId: string) {
-    await fetch(`/api/messages/${messageId}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ isPinned: false }),
-    })
-    queryClient.invalidateQueries({ queryKey: queryKeys.rooms })
+    await utils.message.update.mutate({ id: messageId, isPinned: false })
+    queryClient.invalidateQueries({ queryKey: roomsKey })
   }
 
   async function handleDone(messageId: string) {
-    await fetch(`/api/messages/${messageId}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ isDone: true, isPinned: false }),
-    })
-    queryClient.invalidateQueries({ queryKey: queryKeys.rooms })
+    await utils.message.update.mutate({ id: messageId, isDone: true, isPinned: false })
+    queryClient.invalidateQueries({ queryKey: roomsKey })
   }
 
   return (

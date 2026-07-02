@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { FiBell, FiX } from "react-icons/fi"
+import { trpc } from "@/lib/trpc"
 
 type Props = {
   messageId: string
@@ -11,6 +12,7 @@ type Props = {
 }
 
 export default function RemindModal({ messageId, messageText, onClose, onSave }: Props) {
+  const utils = trpc.useUtils()
   const [datetime, setDatetime] = useState("")
   const [loading, setLoading] = useState(false)
 
@@ -23,26 +25,14 @@ export default function RemindModal({ messageId, messageText, onClose, onSave }:
       await Notification.requestPermission()
     }
 
-    // kalau ada onSave callback, pakai optimistic
     if (onSave) {
       onSave(remindAt)
-      // sync background
-      fetch(`/api/messages/${messageId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ remindAt: remindAt.toISOString() }),
-      })
       setLoading(false)
       onClose()
       return
     }
 
-    // fallback kalau tidak ada onSave
-    await fetch(`/api/messages/${messageId}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ remindAt: remindAt.toISOString() }),
-    })
+    await utils.message.update.mutate({ id: messageId, remindAt: remindAt.toISOString() })
     setLoading(false)
     onClose()
   }

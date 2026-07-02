@@ -1,8 +1,10 @@
 "use client"
 
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
+import { httpBatchLink } from "@trpc/client"
 import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client"
 import { queryClient, idbPersister } from "@/lib/queryClient"
+import { trpc } from "@/lib/trpc"
 import { initBroadcastListener } from "@/lib/broadcastSync"
 
 export function Providers({ children }: { children: React.ReactNode }) {
@@ -11,19 +13,31 @@ export function Providers({ children }: { children: React.ReactNode }) {
     return cleanup
   }, [])
 
+  const [trpcClient] = useState(() =>
+    trpc.createClient({
+      links: [
+        httpBatchLink({
+          url: "/api/trpc",
+        }),
+      ],
+    })
+  )
+
   return (
-    <PersistQueryClientProvider
-      client={queryClient}
-      persistOptions={{
-        persister: idbPersister,
-        maxAge: 24 * 60 * 60_000,
-        dehydrateOptions: {
-          shouldDehydrateQuery: (query) =>
-            ["rooms", "messages"].includes(query.queryKey[0] as string),
-        },
-      }}
-    >
-      {children}
-    </PersistQueryClientProvider>
+    <trpc.Provider client={trpcClient} queryClient={queryClient}>
+      <PersistQueryClientProvider
+        client={queryClient}
+        persistOptions={{
+          persister: idbPersister,
+          maxAge: 24 * 60 * 60_000,
+          dehydrateOptions: {
+            shouldDehydrateQuery: (query) =>
+              ["rooms", "messages"].includes(query.queryKey[0] as string),
+          },
+        }}
+      >
+        {children}
+      </PersistQueryClientProvider>
+    </trpc.Provider>
   )
 }

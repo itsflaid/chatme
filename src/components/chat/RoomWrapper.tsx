@@ -2,8 +2,9 @@
 
 import { useEffect, useRef } from "react"
 import { useQueryClient } from "@tanstack/react-query"
+import { getQueryKey } from "@trpc/react-query"
 import { useMessagesQuery } from "@/hooks/useMessages"
-import { queryKeys } from "@/lib/queryKeys"
+import { trpc } from "@/lib/trpc"
 import ChatContainer from "./ChatContainer"
 import type { ChatMessage } from "@/types/chat"
 
@@ -42,22 +43,27 @@ export default function RoomWrapper({ roomId, userId, room }: Props) {
     messagesRef.current = messages
   }, [messages])
 
+  const utils = trpc.useUtils()
+
   useEffect(() => {
     let interval: ReturnType<typeof setInterval> | null = null
 
     async function pollReminders() {
       if (document.hidden) return
       try {
-        const res = await fetch(`/api/rooms/${roomId}/reminders`)
-        if (!res.ok) return
-        const newBotMessages: ChatMessage[] = await res.json()
+        const newBotMessages = await utils.message.checkReminders.fetch({ roomId })
         if (newBotMessages.length > 0) {
           const currentMessages = messagesRef.current
           const existingIds = new Set(currentMessages.map((m) => m.id))
           const newOnes = newBotMessages.filter((m) => !existingIds.has(m.id))
           if (newOnes.length > 0) {
             showReminderNotifications(newOnes, currentMessages, room.name)
-            queryClient.setQueryData(queryKeys.messages(roomId), (old: any) => {
+            const messagesKey = getQueryKey(trpc.message.list, { roomId }, "infinite")
+            type MessagesPageData = {
+              pageParams: unknown[]
+              pages: { messages: ChatMessage[]; hasMore: boolean }[]
+            }
+            queryClient.setQueryData(messagesKey, (old: MessagesPageData | undefined) => {
               if (!old) return old
               const pages = [...old.pages]
               const lastIndex = pages.length - 1
@@ -78,7 +84,7 @@ export default function RoomWrapper({ roomId, userId, room }: Props) {
     return () => {
       if (interval) clearInterval(interval)
     }
-  }, [roomId, room.name, queryClient])
+  }, [roomId, room.name, queryClient, utils])
 
   return (
     <ChatContainer

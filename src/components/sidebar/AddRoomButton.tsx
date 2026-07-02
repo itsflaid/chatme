@@ -3,7 +3,8 @@
 import { useState } from "react"
 import { FiPlus, FiX } from "react-icons/fi"
 import { useQueryClient } from "@tanstack/react-query"
-import { queryKeys } from "@/lib/queryKeys"
+import { getQueryKey } from "@trpc/react-query"
+import { trpc } from "@/lib/trpc"
 
 const EMOJIS = ['💬','📚','🏪','💸','💭','🎯','📝','🛒','💡','🏋️','🎮','🎵','✈️','🍜','💊','📦','🔧','🌙','⚡','🎨']
 
@@ -22,19 +23,16 @@ export default function AddRoomButton() {
     setDescription("")
   }
 
+  const createRoom = trpc.room.create.useMutation()
+
   async function handleCreate() {
     if (!name.trim()) return
     setLoading(true)
-    const res = await fetch("/api/rooms", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: name.trim(), icon, description: description.trim() || null }),
-    })
+    await createRoom.mutateAsync({ name: name.trim(), icon, description: description.trim() || undefined })
     setLoading(false)
     handleClose()
-    if (res.ok) {
-      queryClient.invalidateQueries({ queryKey: queryKeys.rooms })
-    }
+    const roomsKey = getQueryKey(trpc.room.list)
+    queryClient.invalidateQueries({ queryKey: roomsKey })
   }
 
   return (

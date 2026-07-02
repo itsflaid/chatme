@@ -1,4 +1,3 @@
-import { useEffect } from "react"
 import RoomItem from "./RoomItem"
 import EmptyRooms from "./EmptyRooms"
 
@@ -15,34 +14,6 @@ type Props = {
 }
 
 export default function RoomList({ rooms }: Props) {
-  useEffect(() => {
-    if (rooms.length === 0) return
-
-    const immediate = rooms.slice(0, 7)
-    const delayed = rooms.slice(7)
-
-    immediate.forEach((room) => {
-      fetch(`/api/rooms/${room.id}/messages`, { method: "GET" }).catch(() => {})
-    })
-
-    let timeout: ReturnType<typeof setTimeout>
-    function scheduleNext(index: number) {
-      if (index >= delayed.length) return
-      timeout = setTimeout(() => {
-        fetch(`/api/rooms/${delayed[index].id}/messages`, { method: "GET" }).catch(() => {})
-        scheduleNext(index + 1)
-      }, 300)
-    }
-
-    if (delayed.length > 0) {
-      const handle = requestIdleCallback(() => scheduleNext(0), { timeout: 3000 })
-      return () => {
-        cancelIdleCallback(handle)
-        clearTimeout(timeout)
-      }
-    }
-  }, [rooms])
-
   if (rooms.length === 0) return <EmptyRooms />
 
   return (

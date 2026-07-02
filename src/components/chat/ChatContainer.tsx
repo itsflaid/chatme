@@ -3,12 +3,13 @@
 import { useState, useMemo } from "react"
 import { FiChevronUp, FiChevronDown, FiX } from "react-icons/fi"
 import { useQueryClient } from "@tanstack/react-query"
+import { getQueryKey } from "@trpc/react-query"
 import ChatMessages from "./ChatMessages"
 import ChatHeader from "./ChatHeader"
 import ChatInput from "./ChatInput"
 import SnoozeModal from "./modals/SnoozeModal"
 import { useToggleDone, useMarkReminded, useSetReminder } from "@/hooks/useMessages"
-import { queryKeys } from "@/lib/queryKeys"
+import { trpc } from "@/lib/trpc"
 import type { ChatMessage } from "@/types/chat"
 
 type Props = {
@@ -51,17 +52,22 @@ export default function ChatContainer({ room, userId, messages, loading, loading
   }
 
   const queryClient = useQueryClient()
+  const utils = trpc.useUtils()
+  const messagesKey = getQueryKey(trpc.message.list, { roomId }, "infinite")
+
+  type MessagesPageData = {
+    pageParams: unknown[]
+    pages: { messages: ChatMessage[]; hasMore: boolean }[]
+  }
 
   async function handleCheckReminders() {
     try {
-      const res = await fetch(`/api/rooms/${roomId}/reminders`)
-      if (!res.ok) return
-      const newBotMessages: ChatMessage[] = await res.json()
+      const newBotMessages = await utils.message.checkReminders.fetch({ roomId })
       if (newBotMessages.length > 0) {
         const existingIds = new Set(messages.map((m) => m.id))
         const newOnes = newBotMessages.filter((m) => !existingIds.has(m.id))
         if (newOnes.length > 0) {
-          queryClient.setQueryData(queryKeys.messages(roomId), (old: any) => {
+          queryClient.setQueryData(messagesKey, (old: MessagesPageData | undefined) => {
             if (!old) return old
             const pages = [...old.pages]
             const lastIndex = pages.length - 1
@@ -79,8 +85,8 @@ export default function ChatContainer({ room, userId, messages, loading, loading
   }
 
   function handleBotDone(botMessageId: string, sourceMessageId: string) {
-    toggleDone.mutate({ messageId: sourceMessageId, isDone: true })
-    markReminded.mutate({ messageId: botMessageId })
+    toggleDone.mutate({ id: sourceMessageId, isDone: true })
+    markReminded.mutate({ id: botMessageId })
   }
 
   function handleBotSnooze(botMessageId: string, sourceMessageId: string) {
@@ -91,15 +97,15 @@ export default function ChatContainer({ room, userId, messages, loading, loading
   async function handleSnoozeSelect(minutes: number) {
     if (!snoozeBotId || !snoozeSourceId) return
     const newRemindAt = new Date(Date.now() + minutes * 60 * 1000)
-    setReminder.mutate({ messageId: snoozeSourceId, remindAt: newRemindAt.toISOString() })
-    markReminded.mutate({ messageId: snoozeBotId })
+    setReminder.mutate({ id: snoozeSourceId, remindAt: newRemindAt.toISOString() })
+    markReminded.mutate({ id: snoozeBotId })
     setSnoozeBotId(null)
     setSnoozeSourceId(null)
   }
 
   function handleReminderDone(messageId: string) {
-    markReminded.mutate({ messageId })
-    toggleDone.mutate({ messageId, isDone: true })
+    markReminded.mutate({ id: messageId })
+    toggleDone.mutate({ id: messageId, isDone: true })
   }
 
   return (

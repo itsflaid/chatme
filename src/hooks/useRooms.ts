@@ -1,7 +1,6 @@
 "use client"
 
-import { useQuery } from "@tanstack/react-query"
-import { queryKeys } from "@/lib/queryKeys"
+import { trpc } from "@/lib/trpc"
 
 export type RoomData = {
   id: string
@@ -11,23 +10,8 @@ export type RoomData = {
   messages: { text: string; createdAt: Date }[]
 }
 
-async function fetchRooms(): Promise<RoomData[]> {
-  const res = await fetch("/api/rooms")
-  if (!res.ok) throw new Error("Gagal mengambil data")
-  const data = await res.json()
-  return data.rooms.map((r: Record<string, unknown>) => ({
-    ...r,
-    messages: (r.messages as Record<string, unknown>[]).map((m) => ({
-      ...m,
-      createdAt: new Date(m.createdAt as string),
-    })),
-  })) as RoomData[]
-}
-
 export default function useRooms(serverRooms?: RoomData[] | null) {
-  const { data, isLoading, error, refetch } = useQuery({
-    queryKey: queryKeys.rooms,
-    queryFn: fetchRooms,
+  const { data, isLoading, error, refetch } = trpc.room.list.useQuery(undefined, {
     initialData: serverRooms ?? undefined,
   })
 

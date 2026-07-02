@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
-import { useCallback, useRef } from "react"
+import { useCallback } from "react"
 
 type Props = {
   id: string
@@ -28,27 +28,11 @@ export default function RoomItem({ id, name, icon, pendingCount, lastMessage }: 
   const pathname = usePathname()
   const router = useRouter()
   const isActive = pathname === `/room/${id}`
-  const prefetchedRef = useRef(false)
 
-  // Prefetch page JS saat hover (Next.js router)
-  // Prefetch API data saat hover — masuk ke browser HTTP cache
   const handleMouseEnter = useCallback(
     (e: React.MouseEvent<HTMLAnchorElement>) => {
       if (!isActive) e.currentTarget.style.background = "var(--surface3)"
-
-      if (!prefetchedRef.current) {
-        prefetchedRef.current = true
-        // Prefetch Next.js page bundle
-        router.prefetch(`/room/${id}`)
-        // Prefetch API data — browser cache-kan response ini
-        fetch(`/api/rooms/${id}/messages`, {
-          method: "GET",
-          // next: { revalidate: 0 } — tidak perlu, ini client fetch
-        }).catch(() => {
-          // silent — prefetch gagal tidak masalah
-          prefetchedRef.current = false
-        })
-      }
+      router.prefetch(`/room/${id}`)
     },
     [id, isActive, router]
   )

@@ -2,6 +2,7 @@
 
 import { useState, memo } from "react"
 import { FiCheck, FiEdit2, FiList, FiPlus, FiTrash2, FiX } from "react-icons/fi"
+import { trpc } from "@/lib/trpc"
 import type { ChatMessage } from "@/types/chat"
 
 type Props = {
@@ -17,6 +18,8 @@ const ChecklistBubble = memo(function ChecklistBubble({ message, onUpdate }: Pro
     message.checklistItems.map((item) => ({ text: item.text, isDone: item.isDone }))
   )
 
+  const utils = trpc.useUtils()
+
   const completed = message.checklistItems.filter((item) => item.isDone).length
   const total = message.checklistItems.length
   const progress = total ? Math.round((completed / total) * 100) : 0
@@ -30,13 +33,9 @@ const ChecklistBubble = memo(function ChecklistBubble({ message, onUpdate }: Pro
     const messageIsDone = nextItems.every((item) => item.isDone)
     onUpdate(message.id, { checklistItems: nextItems, isDone: messageIsDone })
 
-    const res = await fetch(`/api/checklist-items/${itemId}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ isDone }),
-    })
-
-    if (!res.ok) {
+    try {
+      await utils.checklistItem.toggle.mutate({ id: itemId, isDone })
+    } catch {
       onUpdate(message.id, {
         checklistItems: message.checklistItems,
         isDone: message.isDone,
@@ -60,16 +59,16 @@ const ChecklistBubble = memo(function ChecklistBubble({ message, onUpdate }: Pro
     if (!title.trim() || items.length < 2) return
     setSaving(true)
 
-    const res = await fetch(`/api/messages/${message.id}/checklist`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ title: title.trim(), items }),
-    })
-
-    if (res.ok) {
-      const updated: ChatMessage = await res.json()
-      onUpdate(message.id, updated)
+    try {
+      const updated = await utils.message.updateChecklist.mutate({
+        id: message.id,
+        title: title.trim(),
+        items,
+      })
+      onUpdate(message.id, updated as unknown as ChatMessage)
       setEditing(false)
+    } catch {
+      /* silent */
     }
     setSaving(false)
   }

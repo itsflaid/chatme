@@ -1,10 +1,10 @@
 "use client"
 
 import { useState } from "react"
-import { useRouter } from "next/navigation"
 import { FiX } from "react-icons/fi"
 import { useQueryClient } from "@tanstack/react-query"
-import { queryKeys } from "@/lib/queryKeys"
+import { getQueryKey } from "@trpc/react-query"
+import { trpc } from "@/lib/trpc"
 
 const EMOJIS = ['💬','📚','🏪','💸','💭','🎯','📝','🛒','💡','🏋️','🎮','🎵','✈️','🍜','💊','📦','🔧','🌙','⚡','🎨']
 
@@ -24,19 +24,17 @@ export default function EditRoomModal({
   const [description, setDescription] = useState(initialDescription ?? "")
   const queryClient = useQueryClient()
   const [loading, setLoading] = useState(false)
-  const router = useRouter()
+
+  const updateRoom = trpc.room.update.useMutation()
 
   async function handleSave() {
     if (!name.trim()) return
     setLoading(true)
-    await fetch(`/api/rooms/${roomId}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: name.trim(), icon, description: description.trim() || null }),
-    })
+    await updateRoom.mutateAsync({ id: roomId, name: name.trim(), icon, description: description.trim() || null })
     setLoading(false)
     onClose()
-    queryClient.invalidateQueries({ queryKey: queryKeys.rooms })
+    const roomsKey = getQueryKey(trpc.room.list)
+    queryClient.invalidateQueries({ queryKey: roomsKey })
   }
 
   return (

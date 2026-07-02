@@ -9,8 +9,9 @@ import MessageBubble from "./MessageBubble"
 import ChecklistBubble from "./ChecklistBubble"
 import { MessageType } from "@prisma/client"
 import { useQueryClient } from "@tanstack/react-query"
+import { getQueryKey } from "@trpc/react-query"
 import { useEditMessage, useDeleteMessage, useTogglePin, useToggleDone, useSetReminder, useMarkReminded, useChecklistToggle } from "@/hooks/useMessages"
-import { queryKeys } from "@/lib/queryKeys"
+import { trpc } from "@/lib/trpc"
 import type { ChatMessage } from "@/types/chat"
 
 type Props = {
@@ -33,6 +34,7 @@ const BubbleWrapper = memo(function BubbleWrapper({
   const touchTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const queryClient = useQueryClient()
+  const messagesKey = getQueryKey(trpc.message.list, { roomId }, "infinite")
   const editMessage = useEditMessage(roomId)
   const deleteMessage = useDeleteMessage(roomId)
   const togglePin = useTogglePin(roomId)
@@ -68,33 +70,33 @@ const BubbleWrapper = memo(function BubbleWrapper({
         isDone: !message.isDone,
       }))
       checklistToggle.mutate({
-        messageId: message.id,
+        id: message.id,
         title: message.text,
         items: nextItems,
       })
       return
     }
-    toggleDone.mutate({ messageId: message.id, isDone: !message.isDone })
+    toggleDone.mutate({ id: message.id, isDone: !message.isDone })
   }, [message, toggleDone, checklistToggle])
 
   const handleTogglePin = useCallback(() => {
-    togglePin.mutate({ messageId: message.id, isPinned: !message.isPinned })
+    togglePin.mutate({ id: message.id, isPinned: !message.isPinned })
   }, [message.id, message.isPinned, togglePin])
 
   const handleDelete = useCallback(async () => {
-    await deleteMessage.mutateAsync(message.id)
+    await deleteMessage.mutateAsync({ id: message.id })
   }, [message.id, deleteMessage])
 
   const handleEdit = useCallback(async (text: string) => {
-    await editMessage.mutateAsync({ messageId: message.id, text })
+    await editMessage.mutateAsync({ id: message.id, text })
   }, [message.id, editMessage])
 
   const handleRemindSave = useCallback((remindAt: Date) => {
-    setReminder.mutate({ messageId: message.id, remindAt: remindAt.toISOString() })
+    setReminder.mutate({ id: message.id, remindAt: remindAt.toISOString() })
   }, [message.id, setReminder])
 
   const handleMarkReminded = useCallback(() => {
-    markReminded.mutate({ messageId: message.id })
+    markReminded.mutate({ id: message.id })
   }, [message.id, markReminded])
 
   return (
@@ -108,11 +110,15 @@ const BubbleWrapper = memo(function BubbleWrapper({
       >
         {message.type === MessageType.CHECKLIST ? (
           <ChecklistBubble message={message} onUpdate={(id, patch) => {
-            queryClient.setQueryData(queryKeys.messages(roomId), (old: any) => {
+            type MessagesPageData = {
+              pageParams: unknown[]
+              pages: { messages: ChatMessage[]; hasMore: boolean }[]
+            }
+            queryClient.setQueryData(messagesKey, (old: MessagesPageData | undefined) => {
               if (!old) return old
-              const pages = old.pages.map((page: any) => ({
+              const pages = old.pages.map((page) => ({
                 ...page,
-                messages: page.messages.map((m: any) =>
+                messages: page.messages.map((m) =>
                   m.id === id ? { ...m, ...patch } : m
                 ),
               }))
