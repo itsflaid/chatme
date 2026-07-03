@@ -6,6 +6,8 @@ import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client
 import { queryClient, idbPersister } from "@/lib/queryClient"
 import { trpc } from "@/lib/trpc"
 import { initBroadcastListener } from "@/lib/broadcastSync"
+import superjson from 'superjson';
+
 
 export function Providers({ children }: { children: React.ReactNode }) {
   useEffect(() => {
@@ -13,11 +15,12 @@ export function Providers({ children }: { children: React.ReactNode }) {
     return cleanup
   }, [])
 
-  const [trpcClient] = useState(() =>
+const [trpcClient] = useState(() =>
     trpc.createClient({
       links: [
         httpBatchLink({
           url: "/api/trpc",
+          transformer: superjson,
         }),
       ],
     })
