@@ -32,7 +32,7 @@ export default function RemindModal({ messageId, messageText, onClose, onSave }:
       return
     }
 
-    await utils.message.update.mutate({ id: messageId, remindAt: remindAt.toISOString() })
+    await utils.client.message.update.mutate({ id: messageId, remindAt: remindAt.toISOString() })
     setLoading(false)
     onClose()
   }

@@ -34,7 +34,7 @@ const ChecklistBubble = memo(function ChecklistBubble({ message, onUpdate }: Pro
     onUpdate(message.id, { checklistItems: nextItems, isDone: messageIsDone })
 
     try {
-      await utils.checklistItem.toggle.mutate({ id: itemId, isDone })
+      await utils.client.checklistItem.toggle.mutate({ id: itemId, isDone })
     } catch {
       onUpdate(message.id, {
         checklistItems: message.checklistItems,
@@ -60,7 +60,7 @@ const ChecklistBubble = memo(function ChecklistBubble({ message, onUpdate }: Pro
     setSaving(true)
 
     try {
-      const updated = await utils.message.updateChecklist.mutate({
+      const updated = await utils.client.message.updateChecklist.mutate({
         id: message.id,
         title: title.trim(),
         items,

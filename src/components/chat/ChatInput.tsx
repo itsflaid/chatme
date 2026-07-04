@@ -8,13 +8,11 @@ import { useSendMessage } from "@/hooks/useMessages"
 
 type Props = {
   roomId: string
-  userId: string
   onCheckReminders: () => void
 }
 
 export default function ChatInput({
   roomId,
-  userId,
   onCheckReminders,
 }: Props) {
   const [text, setText] = useState("")
@@ -37,7 +35,7 @@ export default function ChatInput({
     setText("")
     if (textareaRef.current) textareaRef.current.style.height = "auto"
     sendMessage.mutate(
-      { roomId, userId, text: trimmed },
+      { roomId, text: trimmed },
       { onSuccess: () => onCheckReminders() }
     )
   }
@@ -46,7 +44,7 @@ export default function ChatInput({
     setChecklistLoading(true)
     setShowChecklist(false)
     sendMessage.mutate(
-      { roomId, userId, text: title, type: MessageType.CHECKLIST, items },
+      { roomId, text: title, type: MessageType.CHECKLIST, items },
       {
         onSuccess: () => {
           onCheckReminders()

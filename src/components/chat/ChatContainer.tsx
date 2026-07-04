@@ -180,7 +180,6 @@ export default function ChatContainer({ room, userId, messages, loading, loading
 
       <ChatInput
         roomId={roomId}
-        userId={userId}
         onCheckReminders={handleCheckReminders}
       />
 

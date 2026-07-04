@@ -32,15 +32,22 @@ export default async function MainLayout({ children }: { children: React.ReactNo
 
   const rooms = rawRooms
     .map((r) => ({
-      ...r,
+      id: r.id,
+      name: r.name,
+      icon: r.icon,
+      description: r.description,
+      userId: r.userId,
+      createdAt: r.createdAt.toISOString(),
+      updatedAt: r.updatedAt.toISOString(),
+      _count: r._count,
       messages: r.messages.map((m) => ({
-        ...m,
-        createdAt: m.createdAt.toISOString(), // serialize untuk client component
+        text: m.text,
+        createdAt: m.createdAt.toISOString(),
       })),
     }))
     .sort((a, b) => {
-      const aActivity = a.messages[0]?.createdAt ?? a.updatedAt.toISOString()
-      const bActivity = b.messages[0]?.createdAt ?? b.updatedAt.toISOString()
+      const aActivity = a.messages[0]?.createdAt ?? a.updatedAt
+      const bActivity = b.messages[0]?.createdAt ?? b.updatedAt
       return bActivity.localeCompare(aActivity)
     })
 

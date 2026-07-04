@@ -205,12 +205,12 @@ export function useToggleDone(roomId: string) {
     onMutate: async ({ id, isDone }) => {
       await queryClient.cancelQueries({ queryKey: messagesKey })
       updateMessagesCache(queryClient, messagesKey, (msgs) =>
-        msgs.map((m) => (m.id === id ? { ...m, isDone } : m))
+        msgs.map((m) => (m.id === id ? { ...m, isDone: isDone ?? m.isDone } : m))
       )
     },
     onSuccess: (updated) => {
       updateMessagesCache(queryClient, messagesKey, (msgs) =>
-        msgs.map((m) => (m.id === updated.id ? updated : m))
+        msgs.map((m) => (m.id === updated.id ? { ...updated, checklistItems: m.checklistItems } : m))
       )
     },
     onError: () => {
@@ -229,7 +229,7 @@ export function useTogglePin(roomId: string) {
     onMutate: async ({ id, isPinned }) => {
       await queryClient.cancelQueries({ queryKey: messagesKey })
       updateMessagesCache(queryClient, messagesKey, (msgs) =>
-        msgs.map((m) => (m.id === id ? { ...m, isPinned } : m))
+        msgs.map((m) => (m.id === id ? { ...m, isPinned: isPinned ?? m.isPinned } : m))
       )
     },
     onError: () => {

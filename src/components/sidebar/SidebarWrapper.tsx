@@ -8,6 +8,10 @@ type ServerRoom = {
   id: string
   name: string
   icon: string
+  description: string | null
+  userId: string
+  createdAt: string
+  updatedAt: string
   _count: { messages: number }
   messages: { text: string; createdAt: string }[]
 }
@@ -23,6 +27,8 @@ export default function SidebarWrapper({ serverRooms }: Props) {
     () =>
       serverRooms?.map((r) => ({
         ...r,
+        createdAt: new Date(r.createdAt),
+        updatedAt: new Date(r.updatedAt),
         messages: r.messages.map((m) => ({
           ...m,
           createdAt: new Date(m.createdAt),

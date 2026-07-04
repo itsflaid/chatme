@@ -6,6 +6,10 @@ export type RoomData = {
   id: string
   name: string
   icon: string
+  description: string | null
+  userId: string
+  createdAt: Date
+  updatedAt: Date
   _count: { messages: number }
   messages: { text: string; createdAt: Date }[]
 }

@@ -19,12 +19,12 @@ export default function PinnedMessagesModal({ messages, onClose }: Props) {
   const roomsKey = getQueryKey(trpc.room.list)
 
   async function handleUnpin(messageId: string) {
-    await utils.message.update.mutate({ id: messageId, isPinned: false })
+    await utils.client.message.update.mutate({ id: messageId, isPinned: false })
     queryClient.invalidateQueries({ queryKey: roomsKey })
   }
 
   async function handleDone(messageId: string) {
-    await utils.message.update.mutate({ id: messageId, isDone: true, isPinned: false })
+    await utils.client.message.update.mutate({ id: messageId, isDone: true, isPinned: false })
     queryClient.invalidateQueries({ queryKey: roomsKey })
   }
 
