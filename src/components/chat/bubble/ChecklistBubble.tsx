@@ -4,6 +4,7 @@ import { useState, memo } from "react"
 import { FiCheck, FiEdit2, FiList, FiPlus, FiTrash2, FiX } from "react-icons/fi"
 import { trpc } from "@/lib/trpc"
 import { ModalPortal } from "@/components/ui/ModalPortal"
+import { useToggleChecklistItem } from "@/hooks/useMessages"
 import type { ChatMessage } from "@/types/chat"
 
 type Props = {
@@ -20,28 +21,32 @@ const ChecklistBubble = memo(function ChecklistBubble({ message, onUpdate }: Pro
   )
 
   const utils = trpc.useUtils()
+  const toggleChecklistItem = useToggleChecklistItem()
 
   const completed = message.checklistItems.filter((item) => item.isDone).length
   const total = message.checklistItems.length
   const progress = total ? Math.round((completed / total) * 100) : 0
   const isPending = message.id.startsWith("temp-")
 
-  async function toggleItem(itemId: string, isDone: boolean) {
+  function toggleItem(itemId: string, isDone: boolean) {
     if (isPending) return
-    const nextItems = message.checklistItems.map((item) => (
+    const nextItems = message.checklistItems.map((item) =>
       item.id === itemId ? { ...item, isDone } : item
-    ))
+    )
     const messageIsDone = nextItems.every((item) => item.isDone)
     onUpdate(message.id, { checklistItems: nextItems, isDone: messageIsDone })
 
-    try {
-      await utils.client.checklistItem.toggle.mutate({ id: itemId, isDone })
-    } catch {
-      onUpdate(message.id, {
-        checklistItems: message.checklistItems,
-        isDone: message.isDone,
-      })
-    }
+    toggleChecklistItem.mutate(
+      { id: itemId, isDone },
+      {
+        onError: () => {
+          onUpdate(message.id, {
+            checklistItems: message.checklistItems,
+            isDone: message.isDone,
+          })
+        },
+      }
+    )
   }
 
   function startEditing() {

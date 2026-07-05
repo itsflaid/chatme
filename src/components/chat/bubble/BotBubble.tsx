@@ -10,8 +10,8 @@ import Image from "next/image"
 type Props = {
   message: Message
   sourceMessage?: Message | null
-  onDone: () => void
-  onSnooze: () => void
+  onDone: (botMessageId: string, sourceMessageId: string) => void
+  onSnooze: (botMessageId: string, sourceMessageId: string) => void
   isNew?: boolean
 }
 
@@ -58,12 +58,12 @@ const BotBubble = memo(function BotBubble({
 
   function handleDone() {
     setCardStatus("done")
-    onDone()
+    onDone(message.id, message.sourceMessageId!)
   }
 
   function handleSnooze() {
     setCardStatus("snoozed")
-    onSnooze()
+    onSnooze(message.id, message.sourceMessageId!)
   }
 
   return (

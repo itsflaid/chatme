@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useState, useMemo, useCallback } from "react"
 import { FiChevronUp, FiChevronDown, FiX } from "react-icons/fi"
 import { useQueryClient } from "@tanstack/react-query"
 import { getQueryKey } from "@trpc/react-query"
@@ -8,6 +8,7 @@ import ChatMessages from "./ChatMessages"
 import ChatHeader from "./ChatHeader"
 import ChatInput from "./ChatInput"
 import SnoozeModal from "./modals/SnoozeModal"
+import { MessageActionsProvider } from "@/hooks/useMessageActions"
 import { useToggleDone, useMarkReminded, useSetReminder } from "@/hooks/useMessages"
 import { trpc } from "@/lib/trpc"
 import type { ChatMessage } from "@/types/chat"
@@ -84,15 +85,15 @@ export default function ChatContainer({ room, userId, messages, loading, loading
     }
   }
 
-  function handleBotDone(botMessageId: string, sourceMessageId: string) {
+  const handleBotDone = useCallback((botMessageId: string, sourceMessageId: string) => {
     toggleDone.mutate({ id: sourceMessageId, isDone: true })
     markReminded.mutate({ id: botMessageId })
-  }
+  }, [toggleDone, markReminded])
 
-  function handleBotSnooze(botMessageId: string, sourceMessageId: string) {
+  const handleBotSnooze = useCallback((botMessageId: string, sourceMessageId: string) => {
     setSnoozeBotId(botMessageId)
     setSnoozeSourceId(sourceMessageId)
-  }
+  }, [])
 
   async function handleSnoozeSelect(minutes: number) {
     if (!snoozeBotId || !snoozeSourceId) return
@@ -109,6 +110,7 @@ export default function ChatContainer({ room, userId, messages, loading, loading
   }
 
   return (
+    <MessageActionsProvider roomId={roomId}>
     <div className="flex flex-col flex-1 min-h-0">
       <ChatHeader
         roomId={roomId}
@@ -193,5 +195,6 @@ export default function ChatContainer({ room, userId, messages, loading, loading
         />
       )}
     </div>
+    </MessageActionsProvider>
   )
 }

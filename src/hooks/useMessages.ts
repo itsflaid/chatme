@@ -41,6 +41,24 @@ function updateMessagesCache(
 ) {
   queryClient.setQueryData(messagesKey, (old: MessagesPageData | undefined) => {
     if (!old) return old
+    const pages = old.pages.map((page) => {
+      const nextMessages = updater(page.messages)
+      const unchanged =
+        nextMessages.length === page.messages.length &&
+        nextMessages.every((m, i) => m === page.messages[i])
+      return unchanged ? page : { ...page, messages: nextMessages }
+    })
+    return { ...old, pages }
+  })
+}
+
+function updateMessagesCacheFlatten(
+  queryClient: ReturnType<typeof useQueryClient>,
+  messagesKey: ReturnType<typeof getQueryKey>,
+  updater: (messages: ChatMessage[]) => ChatMessage[]
+) {
+  queryClient.setQueryData(messagesKey, (old: MessagesPageData | undefined) => {
+    if (!old) return old
     const all = old.pages.flatMap((p) => p.messages)
     const updated = updater(all)
     const pageSize = old.pages[old.pages.length - 1]?.messages.length ?? 50
@@ -123,18 +141,18 @@ export function useSendMessage(roomId: string) {
         })) ?? [],
       }
 
-      updateMessagesCache(queryClient, messagesKey, (msgs) => [...msgs, tempMessage])
+      updateMessagesCacheFlatten(queryClient, messagesKey, (msgs) => [...msgs, tempMessage])
       return { tempId }
     },
     onSuccess: (realMessage, _input, context) => {
-      updateMessagesCache(queryClient, messagesKey, (msgs) =>
+      updateMessagesCacheFlatten(queryClient, messagesKey, (msgs) =>
         msgs.map((m) => (m.id === context?.tempId ? realMessage : m))
       )
       updateSidebarPreview(queryClient, roomsKey, roomId, realMessage.text, new Date(realMessage.createdAt))
       broadcastInvalidate(roomsKey)
     },
     onError: (_err, _input, context) => {
-      updateMessagesCache(queryClient, messagesKey, (msgs) =>
+      updateMessagesCacheFlatten(queryClient, messagesKey, (msgs) =>
         msgs.filter((m) => m.id !== context?.tempId)
       )
     },
@@ -179,7 +197,7 @@ export function useDeleteMessage(roomId: string) {
   return trpc.message.delete.useMutation({
     onSuccess: (_data, variables) => {
       const messageId = variables.id
-      updateMessagesCache(queryClient, messagesKey, (msgs) =>
+      updateMessagesCacheFlatten(queryClient, messagesKey, (msgs) =>
         msgs.filter((m) => m.id !== messageId)
       )
 
@@ -308,4 +326,10 @@ export function useChecklistToggle(roomId: string) {
       queryClient.invalidateQueries({ queryKey: messagesKey })
     },
   })
+}
+
+// ── Checklist item toggle individual ────────────────────────────────────
+
+export function useToggleChecklistItem() {
+  return trpc.checklistItem.toggle.useMutation()
 }
