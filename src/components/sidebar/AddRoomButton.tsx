@@ -5,6 +5,7 @@ import { FiPlus, FiX } from "react-icons/fi"
 import { useQueryClient } from "@tanstack/react-query"
 import { getQueryKey } from "@trpc/react-query"
 import { trpc } from "@/lib/trpc"
+import { ModalPortal } from "@/components/ui/ModalPortal"
 
 const EMOJIS = ['💬','📚','🏪','💸','💭','🎯','📝','🛒','💡','🏋️','🎮','🎵','✈️','🍜','💊','📦','🔧','🌙','⚡','🎨']
 
@@ -46,11 +47,12 @@ export default function AddRoomButton() {
       </button>
 
       {open && (
-        <div
-          className="fixed inset-0 z-50 flex items-end justify-center"
-          style={{ background: "#00000070", backdropFilter: "blur(4px)" }}
-          onClick={(e) => e.target === e.currentTarget && handleClose()}
-        >
+        <ModalPortal>
+          <div
+            className="fixed inset-0 z-50 flex items-end justify-center"
+            style={{ background: "#00000070", backdropFilter: "blur(4px)" }}
+            onClick={(e) => e.target === e.currentTarget && handleClose()}
+          >
           <div className="neo-panel w-[calc(100%-24px)] max-w-md rounded-2xl bg-[var(--surface)] p-6 pb-8">
             <div className="w-12 h-2 rotate-1 rounded-md mx-auto mb-5 bg-[var(--accent)] border-2 border-[var(--neo-line)]" />
 
@@ -107,6 +109,7 @@ export default function AddRoomButton() {
             </button>
           </div>
         </div>
+        </ModalPortal>
       )}
     </>
   )

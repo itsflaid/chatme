@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useRef } from "react"
 import { useRouter } from "next/navigation"
 import { FiArrowLeft, FiMoreVertical, FiX, FiCheck } from "react-icons/fi"
 import { IoSearch, IoNotificationsOutline } from "react-icons/io5"
@@ -9,6 +9,7 @@ import RoomSettingsMenu from "./modals/RoomSettingsMenu"
 import EditRoomModal from "./modals/EditRoomModal"
 import DeleteRoomModal from "./modals/DeleteRoomModal"
 import PinnedMessagesModal from "./modals/PinnedMessagesModal"
+import { ModalPortal } from "@/components/ui/ModalPortal"
 
 type Props = {
   roomId: string
@@ -49,12 +50,22 @@ export default function ChatHeader({
     }
   }
 
+  const menuBtnRef = useRef<HTMLButtonElement>(null)
+  const [menuPos, setMenuPos] = useState({ x: 0, y: 0 })
   const [showMenu, setShowMenu] = useState(false)
   const [showEdit, setShowEdit] = useState(false)
   const [showDelete, setShowDelete] = useState(false)
   const [showPinned, setShowPinned] = useState(false)
   const [showReminders, setShowReminders] = useState(false)
   const [showMobileSearch, setShowMobileSearch] = useState(false)
+
+  function handleMenuOpen() {
+    if (menuBtnRef.current) {
+      const rect = menuBtnRef.current.getBoundingClientRect()
+      setMenuPos({ x: rect.right, y: rect.bottom })
+    }
+    setShowMenu(true)
+  }
 
   return (
     <>
@@ -135,7 +146,8 @@ export default function ChatHeader({
 
           {/* titik tiga */}
           <button
-            onClick={() => setShowMenu(true)}
+            ref={menuBtnRef}
+            onClick={handleMenuOpen}
             className="neo-button rounded-lg bg-[var(--surface2)] p-2 transition text-[var(--text2)]"
           >
             <FiMoreVertical size={18} />
@@ -145,6 +157,8 @@ export default function ChatHeader({
         {/* dropdown menu */}
         {showMenu && (
           <RoomSettingsMenu
+            x={menuPos.x}
+            y={menuPos.y}
             onEdit={() => setShowEdit(true)}
             onPinned={() => setShowPinned(true)}
             onDelete={() => setShowDelete(true)}
@@ -184,11 +198,12 @@ export default function ChatHeader({
 
       {/* Modal Reminder List */}
       {showReminders && (
-        <div
-          className="fixed inset-0 z-50 flex items-end justify-center"
-          style={{ background: "#00000070", backdropFilter: "blur(4px)" }}
-          onClick={(e) => e.target === e.currentTarget && setShowReminders(false)}
-        >
+        <ModalPortal>
+          <div
+            className="fixed inset-0 z-50 flex items-end justify-center"
+            style={{ background: "#00000070", backdropFilter: "blur(4px)" }}
+            onClick={(e) => e.target === e.currentTarget && setShowReminders(false)}
+          >
           <div className="neo-panel w-[calc(100%-24px)] max-w-md rounded-2xl bg-[var(--surface)] p-6 pb-8">
             <div className="w-12 h-2 -rotate-1 rounded-md mx-auto mb-5 bg-[var(--accent)] border-2 border-[var(--neo-line)]" />
             <div className="flex items-center justify-between mb-4">
@@ -236,7 +251,8 @@ export default function ChatHeader({
               </div>
             )}
           </div>
-        </div>
+          </div>
+        </ModalPortal>
       )}
 
       {/* Modal lainnya */}

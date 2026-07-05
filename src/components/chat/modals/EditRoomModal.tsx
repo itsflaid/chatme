@@ -5,6 +5,7 @@ import { FiX } from "react-icons/fi"
 import { useQueryClient } from "@tanstack/react-query"
 import { getQueryKey } from "@trpc/react-query"
 import { trpc } from "@/lib/trpc"
+import { ModalPortal } from "@/components/ui/ModalPortal"
 
 const EMOJIS = ['💬','📚','🏪','💸','💭','🎯','📝','🛒','💡','🏋️','🎮','🎵','✈️','🍜','💊','📦','🔧','🌙','⚡','🎨']
 
@@ -38,11 +39,12 @@ export default function EditRoomModal({
   }
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-end justify-center"
-      style={{ background: "#00000070", backdropFilter: "blur(4px)" }}
-      onClick={(e) => e.target === e.currentTarget && onClose()}
-    >
+    <ModalPortal>
+      <div
+        className="fixed inset-0 z-50 flex items-end justify-center"
+        style={{ background: "#00000070", backdropFilter: "blur(4px)" }}
+        onClick={(e) => e.target === e.currentTarget && onClose()}
+      >
       <div className="w-full max-w-md rounded-t-3xl p-6 pb-10 bg-[var(--surface)] border-t border-[var(--border2)]">
         <div className="w-9 h-1 rounded-full mx-auto mb-5 bg-[var(--border2)]" />
 
@@ -93,7 +95,8 @@ export default function EditRoomModal({
         >
           {loading ? "Menyimpan..." : "Simpan"}
         </button>
+        </div>
       </div>
-    </div>
+    </ModalPortal>
   )
 }

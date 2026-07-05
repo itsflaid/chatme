@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { FiBell, FiX } from "react-icons/fi"
 import { trpc } from "@/lib/trpc"
+import { ModalPortal } from "@/components/ui/ModalPortal"
 
 type Props = {
   messageId: string
@@ -38,11 +39,12 @@ export default function RemindModal({ messageId, messageText, onClose, onSave }:
   }
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-end justify-center"
-      style={{ background: "#00000070", backdropFilter: "blur(4px)" }}
-      onClick={(e) => e.target === e.currentTarget && onClose()}
-    >
+    <ModalPortal>
+      <div
+        className="fixed inset-0 z-50 flex items-end justify-center"
+        style={{ background: "#00000070", backdropFilter: "blur(4px)" }}
+        onClick={(e) => e.target === e.currentTarget && onClose()}
+      >
       <div
         className="w-full max-w-md rounded-t-3xl p-6 pb-10 bg-[var(--surface)] border-t border-[var(--border2)]"
       >
@@ -82,7 +84,8 @@ export default function RemindModal({ messageId, messageText, onClose, onSave }:
         >
           {loading ? "Menyimpan..." : "Simpan Pengingat"}
         </button>
+        </div>
       </div>
-    </div>
+    </ModalPortal>
   )
 }

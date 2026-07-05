@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { FiList, FiPlus, FiTrash2, FiX } from "react-icons/fi"
+import { ModalPortal } from "@/components/ui/ModalPortal"
 
 type Props = {
   loading: boolean
@@ -27,10 +28,11 @@ export default function ChecklistComposer({ loading, onClose, onSubmit }: Props)
   const canSubmit = title.trim() && validItems.length >= 2 && !loading
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-end justify-center bg-[#10201999] p-3 sm:items-center"
-      onClick={(event) => event.target === event.currentTarget && onClose()}
-    >
+    <ModalPortal>
+      <div
+        className="fixed inset-0 z-50 flex items-end justify-center bg-[#10201999] p-3 sm:items-center"
+        onClick={(event) => event.target === event.currentTarget && onClose()}
+      >
       <div className="neo-panel w-full max-w-md rounded-2xl bg-[var(--surface)] p-5">
         <div className="mb-5 flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -111,7 +113,8 @@ export default function ChecklistComposer({ loading, onClose, onSubmit }: Props)
         >
           {loading ? "Mengirim..." : "Kirim Checklist"}
         </button>
+        </div>
       </div>
-    </div>
+    </ModalPortal>
   )
 }

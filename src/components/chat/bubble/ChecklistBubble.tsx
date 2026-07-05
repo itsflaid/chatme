@@ -3,6 +3,7 @@
 import { useState, memo } from "react"
 import { FiCheck, FiEdit2, FiList, FiPlus, FiTrash2, FiX } from "react-icons/fi"
 import { trpc } from "@/lib/trpc"
+import { ModalPortal } from "@/components/ui/ModalPortal"
 import type { ChatMessage } from "@/types/chat"
 
 type Props = {
@@ -144,10 +145,11 @@ const ChecklistBubble = memo(function ChecklistBubble({ message, onUpdate }: Pro
       <span className="mt-1 pr-1 text-[10px] tabular-nums text-[var(--text3)]">{time}</span>
 
       {editing && (
-        <div
-          className="fixed inset-0 z-50 flex items-end justify-center bg-[#10201999] p-3 sm:items-center"
-          onClick={(event) => event.target === event.currentTarget && setEditing(false)}
-        >
+        <ModalPortal>
+          <div
+            className="fixed inset-0 z-50 flex items-end justify-center bg-[#10201999] p-3 sm:items-center"
+            onClick={(event) => event.target === event.currentTarget && setEditing(false)}
+          >
           <div className="neo-panel w-full max-w-md rounded-2xl bg-[var(--surface)] p-5">
             <div className="mb-5 flex items-center justify-between">
               <h2 className="font-sora text-base font-bold">Edit Checklist</h2>
@@ -215,6 +217,7 @@ const ChecklistBubble = memo(function ChecklistBubble({ message, onUpdate }: Pro
             </button>
           </div>
         </div>
+        </ModalPortal>
       )}
     </div>
   )
