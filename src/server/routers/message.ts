@@ -7,7 +7,7 @@ export const messageRouter = router({
   list: protectedProcedure
     .input(z.object({
       roomId: z.string(),
-      cursor: z.string().optional(),
+      cursor: z.string().nullish(),
       limit: z.number().min(1).max(100).default(50),
     }))
     .query(async ({ ctx, input }) => {
@@ -16,22 +16,23 @@ export const messageRouter = router({
       })
       if (!room) throw new TRPCError({ code: "NOT_FOUND" })
 
-      const where: Record<string, unknown> = { roomId: input.roomId }
-      if (input.cursor) {
-        const cursorMsg = await ctx.prisma.message.findUnique({
-          where: { id: input.cursor },
-          select: { createdAt: true },
+      let messages
+      try {
+        messages = await ctx.prisma.message.findMany({
+          where: { roomId: input.roomId },
+          orderBy: { createdAt: "desc" },
+          take: input.limit + 1,
+          ...(input.cursor ? { cursor: { id: input.cursor }, skip: 1 } : {}),
+          include: { checklistItems: { orderBy: { position: "asc" } } },
         })
-        if (cursorMsg) where.createdAt = { lt: cursorMsg.createdAt }
+      } catch {
+        messages = await ctx.prisma.message.findMany({
+          where: { roomId: input.roomId },
+          orderBy: { createdAt: "desc" },
+          take: input.limit + 1,
+          include: { checklistItems: { orderBy: { position: "asc" } } },
+        })
       }
-
-      const take = input.limit + 1
-      const messages = await ctx.prisma.message.findMany({
-        where,
-        orderBy: { createdAt: "desc" },
-        take,
-        include: { checklistItems: { orderBy: { position: "asc" } } },
-      })
 
       const hasMore = messages.length > input.limit
       if (hasMore) messages.pop()

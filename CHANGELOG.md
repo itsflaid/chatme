@@ -41,3 +41,12 @@
 - **`useMessages.ts`:** export `updateMessagesCache` & `updateMessagesCacheFlatten` biar bisa dipakai dari luar
 - **`BubbleWrapper.tsx`:** `handleChecklistUpdate` pakai `useCallback` + `updateMessagesCache` (bukan inline `setQueryData`) → `ChecklistBubble.memo()` benar-benar jalan
 - **`ChatContainer.tsx`:** `handleCheckReminders` pakai `updateMessagesCacheFlatten` (bukan raw `setQueryData`)
+
+## Fase 7 — Polish: CSS Animasi, Shake Jitter, Cursor Query
+
+### Perubahan
+- **`globals.css`:** tambah `@keyframes bubble-in-user/bot` + class utility
+- **`MessageBubble.tsx`:** ganti `motion.div` (framer-motion) dengan `div` + CSS class `animate-bubble-user` — hanya dipasang untuk `isNew`, bubble lama tanpa animasi
+- **`BotBubble.tsx`:** ganti outer `motion.div` dengan `div` + CSS class `animate-bubble-bot`; tambah jitter random 0–1s di shake interval supaya timer gak fire bersamaan
+- **`animation.ts`:** dihapus (sudah tidak dipakai)
+- **`message.ts` (server router):** ganti 2 round-trip cursor (`findUnique` + `findMany`) jadi native Prisma cursor `{ id, skip: 1 }` — 1 round-trip, dengan try/catch fallback kalau cursor id sudah dihapus

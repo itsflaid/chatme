@@ -4,7 +4,6 @@ import { motion, AnimatePresence } from "framer-motion"
 import { useState, useEffect, memo } from "react"
 import { Message } from "@prisma/client"
 import { FiBell } from "react-icons/fi"
-import { botBubbleAnim } from "@/lib/animation"
 import Image from "next/image"
 
 type Props = {
@@ -51,9 +50,13 @@ const BotBubble = memo(function BotBubble({
       setTimeout(() => el.classList.remove("animate-shake"), 600)
     }
 
-    shake()
-    const interval = setInterval(shake, 5000)
-    return () => clearInterval(interval)
+    const jitter = Math.random() * 1000
+    const timeoutId = setTimeout(() => {
+      shake()
+      const interval = setInterval(shake, 5000)
+      return () => clearInterval(interval)
+    }, jitter)
+    return () => clearTimeout(timeoutId)
   }, [cardId, showCard])
 
   function handleDone() {
@@ -67,11 +70,8 @@ const BotBubble = memo(function BotBubble({
   }
 
   return (
-    <motion.div
-      initial={isNew ? botBubbleAnim.initial : false}
-      animate={botBubbleAnim.animate}
-      transition={botBubbleAnim.transition}
-      className="flex flex-col items-start gap-1 my-2"
+    <div
+      className={`flex flex-col items-start gap-1 my-2${isNew ? " animate-bubble-bot" : ""}`}
     >
       <div className="flex items-end gap-2">
         <Image
@@ -154,7 +154,7 @@ const BotBubble = memo(function BotBubble({
           </motion.div>
         )}
       </AnimatePresence>
-    </motion.div>
+    </div>
   )
 })
 
