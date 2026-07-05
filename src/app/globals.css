@@ -93,8 +93,26 @@
   75% { transform: translateX(-2px); }
 }
 
+@keyframes bubble-in-user {
+  from { transform: translateX(60px) scale(0.96); opacity: 0; }
+  to { transform: translateX(0) scale(1); opacity: 1; }
+}
+
+@keyframes bubble-in-bot {
+  from { transform: translateX(-60px) scale(0.96); opacity: 0; }
+  to { transform: translateX(0) scale(1); opacity: 1; }
+}
+
 .animate-shake {
   animation: shake 0.6s ease;
+}
+
+.animate-bubble-user {
+  animation: bubble-in-user 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.animate-bubble-bot {
+  animation: bubble-in-bot 0.28s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 @layer components {

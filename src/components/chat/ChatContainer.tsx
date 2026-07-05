@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useState, useMemo, useCallback } from "react"
 import { FiChevronUp, FiChevronDown, FiX } from "react-icons/fi"
 import { useQueryClient } from "@tanstack/react-query"
 import { getQueryKey } from "@trpc/react-query"
@@ -8,13 +8,13 @@ import ChatMessages from "./ChatMessages"
 import ChatHeader from "./ChatHeader"
 import ChatInput from "./ChatInput"
 import SnoozeModal from "./modals/SnoozeModal"
-import { useToggleDone, useMarkReminded, useSetReminder } from "@/hooks/useMessages"
+import { MessageActionsProvider } from "@/hooks/useMessageActions"
+import { useToggleDone, useMarkReminded, useSetReminder, updateMessagesCacheFlatten } from "@/hooks/useMessages"
 import { trpc } from "@/lib/trpc"
 import type { ChatMessage } from "@/types/chat"
 
 type Props = {
   room: { id: string; name: string; icon: string; description: string | null }
-  userId: string
   messages: ChatMessage[]
   loading: boolean
   loadingMore: boolean
@@ -22,7 +22,7 @@ type Props = {
   onLoadMore: () => void
 }
 
-export default function ChatContainer({ room, userId, messages, loading, loadingMore, hasMore, onLoadMore }: Props) {
+export default function ChatContainer({ room, messages, loading, loadingMore, hasMore, onLoadMore }: Props) {
   const roomId = room.id
   const toggleDone = useToggleDone(roomId)
   const markReminded = useMarkReminded(roomId)
@@ -55,11 +55,6 @@ export default function ChatContainer({ room, userId, messages, loading, loading
   const utils = trpc.useUtils()
   const messagesKey = getQueryKey(trpc.message.list, { roomId }, "infinite")
 
-  type MessagesPageData = {
-    pageParams: unknown[]
-    pages: { messages: ChatMessage[]; hasMore: boolean }[]
-  }
-
   async function handleCheckReminders() {
     try {
       const newBotMessages = await utils.message.checkReminders.fetch({ roomId })
@@ -67,16 +62,7 @@ export default function ChatContainer({ room, userId, messages, loading, loading
         const existingIds = new Set(messages.map((m) => m.id))
         const newOnes = newBotMessages.filter((m) => !existingIds.has(m.id))
         if (newOnes.length > 0) {
-          queryClient.setQueryData(messagesKey, (old: MessagesPageData | undefined) => {
-            if (!old) return old
-            const pages = [...old.pages]
-            const lastIndex = pages.length - 1
-            pages[lastIndex] = {
-              ...pages[lastIndex],
-              messages: [...pages[lastIndex].messages, ...newOnes],
-            }
-            return { ...old, pages }
-          })
+          updateMessagesCacheFlatten(queryClient, messagesKey, (msgs) => [...msgs, ...newOnes])
         }
       }
     } catch {
@@ -84,15 +70,15 @@ export default function ChatContainer({ room, userId, messages, loading, loading
     }
   }
 
-  function handleBotDone(botMessageId: string, sourceMessageId: string) {
+  const handleBotDone = useCallback((botMessageId: string, sourceMessageId: string) => {
     toggleDone.mutate({ id: sourceMessageId, isDone: true })
     markReminded.mutate({ id: botMessageId })
-  }
+  }, [toggleDone, markReminded])
 
-  function handleBotSnooze(botMessageId: string, sourceMessageId: string) {
+  const handleBotSnooze = useCallback((botMessageId: string, sourceMessageId: string) => {
     setSnoozeBotId(botMessageId)
     setSnoozeSourceId(sourceMessageId)
-  }
+  }, [])
 
   async function handleSnoozeSelect(minutes: number) {
     if (!snoozeBotId || !snoozeSourceId) return
@@ -109,6 +95,7 @@ export default function ChatContainer({ room, userId, messages, loading, loading
   }
 
   return (
+    <MessageActionsProvider roomId={roomId}>
     <div className="flex flex-col flex-1 min-h-0">
       <ChatHeader
         roomId={roomId}
@@ -193,5 +180,6 @@ export default function ChatContainer({ room, userId, messages, loading, loading
         />
       )}
     </div>
+    </MessageActionsProvider>
   )
 }

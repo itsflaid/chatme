@@ -1,6 +1,7 @@
 "use client"
 
 import { FiX, FiClock } from "react-icons/fi"
+import { ModalPortal } from "@/components/ui/ModalPortal"
 
 type Props = {
   onSelect: (minutes: number) => void
@@ -15,11 +16,12 @@ const OPTIONS = [
 
 export default function SnoozeModal({ onSelect, onClose }: Props) {
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-end justify-center"
-      style={{ background: "#00000070", backdropFilter: "blur(4px)" }}
-      onClick={(e) => e.target === e.currentTarget && onClose()}
-    >
+    <ModalPortal>
+      <div
+        className="fixed inset-0 z-50 flex items-end justify-center"
+        style={{ background: "#00000070", backdropFilter: "blur(4px)" }}
+        onClick={(e) => e.target === e.currentTarget && onClose()}
+      >
       <div
         className="w-full max-w-md rounded-t-3xl p-6 pb-10"
         style={{ background: "var(--surface)", borderTop: "1px solid var(--border2)" }}
@@ -56,5 +58,6 @@ export default function SnoozeModal({ onSelect, onClose }: Props) {
         </div>
       </div>
     </div>
+    </ModalPortal>
   )
 }

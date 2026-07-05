@@ -223,8 +223,8 @@ export default function ChatMessages({
                     key={message.id}
                     message={message}
                     sourceMessage={sourceMessage}
-                    onDone={() => onBotDone(message.id, message.sourceMessageId!)}
-                    onSnooze={() => onBotSnooze(message.id, message.sourceMessageId!)}
+                    onDone={onBotDone}
+                    onSnooze={onBotSnooze}
                     isNew={isTemp}
                   />
                 )

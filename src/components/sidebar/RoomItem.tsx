@@ -3,6 +3,7 @@
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import { useCallback } from "react"
+import { trpc } from "@/lib/trpc"
 
 type Props = {
   id: string
@@ -28,14 +29,24 @@ export default function RoomItem({ id, name, icon, pendingCount, lastMessage }: 
   const pathname = usePathname()
   const router = useRouter()
   const isActive = pathname === `/room/${id}`
+  const utils = trpc.useUtils()
+
+  const prefetchRoom = useCallback(() => {
+    utils.message.list.prefetchInfinite({ roomId: id, limit: 50 })
+  }, [id, utils])
 
   const handleMouseEnter = useCallback(
     (e: React.MouseEvent<HTMLAnchorElement>) => {
       if (!isActive) e.currentTarget.style.background = "var(--surface3)"
       router.prefetch(`/room/${id}`)
+      prefetchRoom()
     },
-    [id, isActive, router]
+    [id, isActive, router, prefetchRoom]
   )
+
+  const handlePointerDown = useCallback(() => {
+    prefetchRoom()
+  }, [prefetchRoom])
 
   return (
     <Link
@@ -45,6 +56,7 @@ export default function RoomItem({ id, name, icon, pendingCount, lastMessage }: 
         background: isActive ? "var(--accent)" : "var(--surface)",
       }}
       onMouseEnter={handleMouseEnter}
+      onPointerDown={handlePointerDown}
       onMouseLeave={(e) => {
         if (!isActive) e.currentTarget.style.background = "var(--surface)"
       }}

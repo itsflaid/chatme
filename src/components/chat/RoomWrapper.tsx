@@ -10,7 +10,6 @@ import type { ChatMessage } from "@/types/chat"
 
 type Props = {
   roomId: string
-  userId: string
   room: { id: string; name: string; icon: string; description: string | null }
 }
 
@@ -34,7 +33,7 @@ function showReminderNotifications(
   }
 }
 
-export default function RoomWrapper({ roomId, userId, room }: Props) {
+export default function RoomWrapper({ roomId, room }: Props) {
   const queryClient = useQueryClient()
   const { data: messages = [], fetchNextPage, hasNextPage, isFetchingNextPage, isLoading } = useMessagesQuery(roomId)
   const messagesRef = useRef(messages)
@@ -89,7 +88,6 @@ export default function RoomWrapper({ roomId, userId, room }: Props) {
   return (
     <ChatContainer
       room={room}
-      userId={userId}
       messages={messages}
       loading={isLoading}
       loadingMore={isFetchingNextPage}

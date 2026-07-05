@@ -22,7 +22,6 @@ export default async function RoomPage({ params }: Props) {
     <div className="flex flex-col" style={{ background: "var(--bg)", height: "100dvh" }}>
       <RoomWrapper
         roomId={id}
-        userId={userId}
         room={room}
       />
     </div>

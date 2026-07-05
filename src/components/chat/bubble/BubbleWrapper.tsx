@@ -10,7 +10,8 @@ import ChecklistBubble from "./ChecklistBubble"
 import { MessageType } from "@prisma/client"
 import { useQueryClient } from "@tanstack/react-query"
 import { getQueryKey } from "@trpc/react-query"
-import { useEditMessage, useDeleteMessage, useTogglePin, useToggleDone, useSetReminder, useMarkReminded, useChecklistToggle } from "@/hooks/useMessages"
+import { useMessageActions } from "@/hooks/useMessageActions"
+import { updateMessagesCache } from "@/hooks/useMessages"
 import { trpc } from "@/lib/trpc"
 import type { ChatMessage } from "@/types/chat"
 
@@ -35,13 +36,7 @@ const BubbleWrapper = memo(function BubbleWrapper({
 
   const queryClient = useQueryClient()
   const messagesKey = getQueryKey(trpc.message.list, { roomId }, "infinite")
-  const editMessage = useEditMessage(roomId)
-  const deleteMessage = useDeleteMessage(roomId)
-  const togglePin = useTogglePin(roomId)
-  const toggleDone = useToggleDone(roomId)
-  const setReminder = useSetReminder(roomId)
-  const markReminded = useMarkReminded(roomId)
-  const checklistToggle = useChecklistToggle(roomId)
+  const { editMessage, deleteMessage, togglePin, toggleDone, setReminder, markReminded, checklistToggle } = useMessageActions()
 
   function openMenu(x: number, y: number) { setMenuPos({ x, y }) }
 
@@ -99,6 +94,15 @@ const BubbleWrapper = memo(function BubbleWrapper({
     markReminded.mutate({ id: message.id })
   }, [message.id, markReminded])
 
+  const handleChecklistUpdate = useCallback(
+    (id: string, patch: Partial<ChatMessage>) => {
+      updateMessagesCache(queryClient, messagesKey, (msgs) =>
+        msgs.map((m) => (m.id === id ? { ...m, ...patch } : m))
+      )
+    },
+    [queryClient, messagesKey]
+  )
+
   return (
     <>
       <div
@@ -109,22 +113,7 @@ const BubbleWrapper = memo(function BubbleWrapper({
         className="select-none"
       >
         {message.type === MessageType.CHECKLIST ? (
-          <ChecklistBubble message={message} onUpdate={(id, patch) => {
-            type MessagesPageData = {
-              pageParams: unknown[]
-              pages: { messages: ChatMessage[]; hasMore: boolean }[]
-            }
-            queryClient.setQueryData(messagesKey, (old: MessagesPageData | undefined) => {
-              if (!old) return old
-              const pages = old.pages.map((page) => ({
-                ...page,
-                messages: page.messages.map((m) =>
-                  m.id === id ? { ...m, ...patch } : m
-                ),
-              }))
-              return { ...old, pages }
-            })
-          }} />
+          <ChecklistBubble message={message} onUpdate={handleChecklistUpdate} />
         ) : (
           <MessageBubble
             message={message}

@@ -34,8 +34,10 @@ const [trpcClient] = useState(() =>
           persister: idbPersister,
           maxAge: 24 * 60 * 60_000,
           dehydrateOptions: {
-            shouldDehydrateQuery: (query) =>
-              ["rooms", "messages"].includes(query.queryKey[0] as string),
+            shouldDehydrateQuery: (query) => {
+            const key = query.queryKey[0]
+            return Array.isArray(key) && (key[0] === "room" || key[0] === "message")
+          },
           },
         }}
       >

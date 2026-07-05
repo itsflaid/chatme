@@ -43,3 +43,5 @@ next-env.d.ts
 /src/generated/prisma
 
 caching.md
+update.md
+update2.md

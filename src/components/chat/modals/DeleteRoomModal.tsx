@@ -3,9 +3,8 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { FiAlertTriangle, FiX } from "react-icons/fi"
-import { useQueryClient } from "@tanstack/react-query"
-import { getQueryKey } from "@trpc/react-query"
-import { trpc } from "@/lib/trpc"
+import { ModalPortal } from "@/components/ui/ModalPortal"
+import { useDeleteRoom } from "@/hooks/useRooms"
 
 type Props = {
   roomId: string
@@ -14,28 +13,26 @@ type Props = {
 }
 
 export default function DeleteRoomModal({ roomId, roomName, onClose }: Props) {
-  const queryClient = useQueryClient()
   const [loading, setLoading] = useState(false)
   const router = useRouter()
 
-  const deleteRoom = trpc.room.delete.useMutation()
+  const deleteRoom = useDeleteRoom()
 
   async function handleDelete() {
     setLoading(true)
     await deleteRoom.mutateAsync({ id: roomId })
     setLoading(false)
     onClose()
-    const roomsKey = getQueryKey(trpc.room.list)
-    queryClient.invalidateQueries({ queryKey: roomsKey })
     router.push("/")
   }
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-end justify-center"
-      style={{ background: "#00000070", backdropFilter: "blur(4px)" }}
-      onClick={(e) => e.target === e.currentTarget && onClose()}
-    >
+    <ModalPortal>
+      <div
+        className="fixed inset-0 z-50 flex items-end justify-center"
+        style={{ background: "#00000070", backdropFilter: "blur(4px)" }}
+        onClick={(e) => e.target === e.currentTarget && onClose()}
+      >
       <div className="w-full max-w-md rounded-t-3xl p-6 pb-10 bg-[var(--surface)] border-t border-[var(--border2)]">
         <div className="w-9 h-1 rounded-full mx-auto mb-5 bg-[var(--border2)]" />
 
@@ -75,5 +72,6 @@ export default function DeleteRoomModal({ roomId, roomName, onClose }: Props) {
         </div>
       </div>
     </div>
+    </ModalPortal>
   )
 }

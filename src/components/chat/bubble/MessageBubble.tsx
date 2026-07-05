@@ -1,11 +1,9 @@
 "use client"
 
 import { useEffect, useState, memo } from "react"
-import { motion } from "framer-motion"
 import { Message } from "@prisma/client"
 import { IoCheckmarkDone } from "react-icons/io5"
 import { FiBell, FiBookmark, FiCheck } from "react-icons/fi"
-import { userBubbleAnim } from "@/lib/animation"
 
 type Props = {
   message: Message
@@ -82,11 +80,8 @@ const MessageBubble = memo(function MessageBubble({
   }, [message.isRemindDone, message.remindAt])
 
   return (
-    <motion.div
-      initial={isNew ? userBubbleAnim.initial : false}
-      animate={userBubbleAnim.animate}
-      transition={userBubbleAnim.transition}
-      className="flex flex-col items-end"
+    <div
+      className={`flex flex-col items-end${isNew ? " animate-bubble-user" : ""}`}
     >
       <div
         className="neo-card relative max-w-[82%] rotate-[0.4deg] rounded-xl rounded-br-sm bg-[var(--accent)] px-4 py-2.5"
@@ -154,7 +149,7 @@ const MessageBubble = memo(function MessageBubble({
           }`}
         />
       </div>
-    </motion.div>
+    </div>
   )
 })
 

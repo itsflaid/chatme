@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { FiEdit2, FiX } from "react-icons/fi"
+import { ModalPortal } from "@/components/ui/ModalPortal"
 
 type Props = {
   initialText: string
@@ -23,10 +24,11 @@ export default function EditMessageModal({ initialText, onSave, onClose }: Props
   }
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-end justify-center bg-[#10201999] p-3 sm:items-center"
-      onClick={(event) => event.target === event.currentTarget && onClose()}
-    >
+    <ModalPortal>
+      <div
+        className="fixed inset-0 z-50 flex items-end justify-center bg-[#10201999] p-3 sm:items-center"
+        onClick={(event) => event.target === event.currentTarget && onClose()}
+      >
       <div className="neo-panel w-full max-w-md rounded-2xl bg-[var(--surface)] p-5">
         <div className="mb-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -63,7 +65,8 @@ export default function EditMessageModal({ initialText, onSave, onClose }: Props
         >
           {loading ? "Menyimpan..." : "Simpan Perubahan"}
         </button>
+        </div>
       </div>
-    </div>
+    </ModalPortal>
   )
 }
