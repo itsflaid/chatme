@@ -34,7 +34,7 @@ type MessagesPageData = {
   pages: { messages: ChatMessage[]; hasMore: boolean }[]
 }
 
-function updateMessagesCache(
+export function updateMessagesCache(
   queryClient: ReturnType<typeof useQueryClient>,
   messagesKey: ReturnType<typeof getQueryKey>,
   updater: (messages: ChatMessage[]) => ChatMessage[]
@@ -52,7 +52,7 @@ function updateMessagesCache(
   })
 }
 
-function updateMessagesCacheFlatten(
+export function updateMessagesCacheFlatten(
   queryClient: ReturnType<typeof useQueryClient>,
   messagesKey: ReturnType<typeof getQueryKey>,
   updater: (messages: ChatMessage[]) => ChatMessage[]

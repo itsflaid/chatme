@@ -34,3 +34,10 @@
 - **`AddRoomButton.tsx`:** pake `useCreateRoom` → room muncul tanpa refetch penuh
 - **`EditRoomModal.tsx`:** pake `useUpdateRoom` → edit langsung berubah di sidebar (optimistic), rollback otomatis kalau gagal
 - **`DeleteRoomModal.tsx`:** pake `useDeleteRoom` → room hilang seketika dari sidebar, redirect `/` tetap jalan
+
+## Fase 6 — Satu Pintu Cache Writer untuk `message.list`
+
+### Perubahan
+- **`useMessages.ts`:** export `updateMessagesCache` & `updateMessagesCacheFlatten` biar bisa dipakai dari luar
+- **`BubbleWrapper.tsx`:** `handleChecklistUpdate` pakai `useCallback` + `updateMessagesCache` (bukan inline `setQueryData`) → `ChecklistBubble.memo()` benar-benar jalan
+- **`ChatContainer.tsx`:** `handleCheckReminders` pakai `updateMessagesCacheFlatten` (bukan raw `setQueryData`)

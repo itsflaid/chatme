@@ -11,6 +11,7 @@ import { MessageType } from "@prisma/client"
 import { useQueryClient } from "@tanstack/react-query"
 import { getQueryKey } from "@trpc/react-query"
 import { useMessageActions } from "@/hooks/useMessageActions"
+import { updateMessagesCache } from "@/hooks/useMessages"
 import { trpc } from "@/lib/trpc"
 import type { ChatMessage } from "@/types/chat"
 
@@ -93,6 +94,15 @@ const BubbleWrapper = memo(function BubbleWrapper({
     markReminded.mutate({ id: message.id })
   }, [message.id, markReminded])
 
+  const handleChecklistUpdate = useCallback(
+    (id: string, patch: Partial<ChatMessage>) => {
+      updateMessagesCache(queryClient, messagesKey, (msgs) =>
+        msgs.map((m) => (m.id === id ? { ...m, ...patch } : m))
+      )
+    },
+    [queryClient, messagesKey]
+  )
+
   return (
     <>
       <div
@@ -103,22 +113,7 @@ const BubbleWrapper = memo(function BubbleWrapper({
         className="select-none"
       >
         {message.type === MessageType.CHECKLIST ? (
-          <ChecklistBubble message={message} onUpdate={(id, patch) => {
-            type MessagesPageData = {
-              pageParams: unknown[]
-              pages: { messages: ChatMessage[]; hasMore: boolean }[]
-            }
-            queryClient.setQueryData(messagesKey, (old: MessagesPageData | undefined) => {
-              if (!old) return old
-              const pages = old.pages.map((page) => ({
-                ...page,
-                messages: page.messages.map((m) =>
-                  m.id === id ? { ...m, ...patch } : m
-                ),
-              }))
-              return { ...old, pages }
-            })
-          }} />
+          <ChecklistBubble message={message} onUpdate={handleChecklistUpdate} />
         ) : (
           <MessageBubble
             message={message}

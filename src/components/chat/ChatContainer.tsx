@@ -9,7 +9,7 @@ import ChatHeader from "./ChatHeader"
 import ChatInput from "./ChatInput"
 import SnoozeModal from "./modals/SnoozeModal"
 import { MessageActionsProvider } from "@/hooks/useMessageActions"
-import { useToggleDone, useMarkReminded, useSetReminder } from "@/hooks/useMessages"
+import { useToggleDone, useMarkReminded, useSetReminder, updateMessagesCacheFlatten } from "@/hooks/useMessages"
 import { trpc } from "@/lib/trpc"
 import type { ChatMessage } from "@/types/chat"
 
@@ -55,11 +55,6 @@ export default function ChatContainer({ room, messages, loading, loadingMore, ha
   const utils = trpc.useUtils()
   const messagesKey = getQueryKey(trpc.message.list, { roomId }, "infinite")
 
-  type MessagesPageData = {
-    pageParams: unknown[]
-    pages: { messages: ChatMessage[]; hasMore: boolean }[]
-  }
-
   async function handleCheckReminders() {
     try {
       const newBotMessages = await utils.message.checkReminders.fetch({ roomId })
@@ -67,16 +62,7 @@ export default function ChatContainer({ room, messages, loading, loadingMore, ha
         const existingIds = new Set(messages.map((m) => m.id))
         const newOnes = newBotMessages.filter((m) => !existingIds.has(m.id))
         if (newOnes.length > 0) {
-          queryClient.setQueryData(messagesKey, (old: MessagesPageData | undefined) => {
-            if (!old) return old
-            const pages = [...old.pages]
-            const lastIndex = pages.length - 1
-            pages[lastIndex] = {
-              ...pages[lastIndex],
-              messages: [...pages[lastIndex].messages, ...newOnes],
-            }
-            return { ...old, pages }
-          })
+          updateMessagesCacheFlatten(queryClient, messagesKey, (msgs) => [...msgs, ...newOnes])
         }
       }
     } catch {
