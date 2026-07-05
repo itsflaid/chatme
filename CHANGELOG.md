@@ -26,3 +26,11 @@
 ### Perubahan
 
 - **`RoomItem.tsx`:** tambah `prefetchInfinite` data `message.list` via `onPointerDown` (selain `router.prefetch` via `onMouseEnter` yang sudah ada). Data pesan mulai di-fetch sebelum navigasi selesai
+
+## Fase 5 — Optimistic Room Mutations
+
+### Perubahan
+- **`useRooms.ts`:** tambah `useCreateRoom`, `useUpdateRoom`, `useDeleteRoom` — optimistic update (update/delete) & skip invalidate (create)
+- **`AddRoomButton.tsx`:** pake `useCreateRoom` → room muncul tanpa refetch penuh
+- **`EditRoomModal.tsx`:** pake `useUpdateRoom` → edit langsung berubah di sidebar (optimistic), rollback otomatis kalau gagal
+- **`DeleteRoomModal.tsx`:** pake `useDeleteRoom` → room hilang seketika dari sidebar, redirect `/` tetap jalan

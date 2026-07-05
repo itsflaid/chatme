@@ -2,15 +2,12 @@
 
 import { useState } from "react"
 import { FiPlus, FiX } from "react-icons/fi"
-import { useQueryClient } from "@tanstack/react-query"
-import { getQueryKey } from "@trpc/react-query"
-import { trpc } from "@/lib/trpc"
 import { ModalPortal } from "@/components/ui/ModalPortal"
+import { useCreateRoom } from "@/hooks/useRooms"
 
 const EMOJIS = ['💬','📚','🏪','💸','💭','🎯','📝','🛒','💡','🏋️','🎮','🎵','✈️','🍜','💊','📦','🔧','🌙','⚡','🎨']
 
 export default function AddRoomButton() {
-  const queryClient = useQueryClient()
   const [open, setOpen] = useState(false)
   const [name, setName] = useState("")
   const [icon, setIcon] = useState("💬")
@@ -24,7 +21,7 @@ export default function AddRoomButton() {
     setDescription("")
   }
 
-  const createRoom = trpc.room.create.useMutation()
+  const createRoom = useCreateRoom()
 
   async function handleCreate() {
     if (!name.trim()) return
@@ -32,8 +29,6 @@ export default function AddRoomButton() {
     await createRoom.mutateAsync({ name: name.trim(), icon, description: description.trim() || undefined })
     setLoading(false)
     handleClose()
-    const roomsKey = getQueryKey(trpc.room.list)
-    queryClient.invalidateQueries({ queryKey: roomsKey })
   }
 
   return (

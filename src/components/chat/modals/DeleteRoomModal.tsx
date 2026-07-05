@@ -3,10 +3,8 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { FiAlertTriangle, FiX } from "react-icons/fi"
-import { useQueryClient } from "@tanstack/react-query"
-import { getQueryKey } from "@trpc/react-query"
-import { trpc } from "@/lib/trpc"
 import { ModalPortal } from "@/components/ui/ModalPortal"
+import { useDeleteRoom } from "@/hooks/useRooms"
 
 type Props = {
   roomId: string
@@ -15,19 +13,16 @@ type Props = {
 }
 
 export default function DeleteRoomModal({ roomId, roomName, onClose }: Props) {
-  const queryClient = useQueryClient()
   const [loading, setLoading] = useState(false)
   const router = useRouter()
 
-  const deleteRoom = trpc.room.delete.useMutation()
+  const deleteRoom = useDeleteRoom()
 
   async function handleDelete() {
     setLoading(true)
     await deleteRoom.mutateAsync({ id: roomId })
     setLoading(false)
     onClose()
-    const roomsKey = getQueryKey(trpc.room.list)
-    queryClient.invalidateQueries({ queryKey: roomsKey })
     router.push("/")
   }
 
