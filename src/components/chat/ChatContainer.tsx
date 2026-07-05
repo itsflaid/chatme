@@ -15,7 +15,6 @@ import type { ChatMessage } from "@/types/chat"
 
 type Props = {
   room: { id: string; name: string; icon: string; description: string | null }
-  userId: string
   messages: ChatMessage[]
   loading: boolean
   loadingMore: boolean
@@ -23,7 +22,7 @@ type Props = {
   onLoadMore: () => void
 }
 
-export default function ChatContainer({ room, userId, messages, loading, loadingMore, hasMore, onLoadMore }: Props) {
+export default function ChatContainer({ room, messages, loading, loadingMore, hasMore, onLoadMore }: Props) {
   const roomId = room.id
   const toggleDone = useToggleDone(roomId)
   const markReminded = useMarkReminded(roomId)
