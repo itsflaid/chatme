@@ -50,3 +50,10 @@
 - **`BotBubble.tsx`:** ganti outer `motion.div` dengan `div` + CSS class `animate-bubble-bot`; tambah jitter random 0–1s di shake interval supaya timer gak fire bersamaan
 - **`animation.ts`:** dihapus (sudah tidak dipakai)
 - **`message.ts` (server router):** ganti 2 round-trip cursor (`findUnique` + `findMany`) jadi native Prisma cursor `{ id, skip: 1 }` — 1 round-trip, dengan try/catch fallback kalau cursor id sudah dihapus
+
+## Fase 8 — Minor Cleanup
+
+### Perubahan
+- **`src/server/services/rooms.ts`:** extract `getRoomsForUser` untuk shared query room list (duluan logic identik ditulis 2x di SSR layout & tRPC router)
+- **`layout.tsx` & `room.ts`:** panggil `getRoomsForUser` dari shared service
+- **`room.ts` update/delete:** ganti `findFirst` (cek) + `update`/`delete` (aksi) jadi `updateMany`/`deleteMany` — 1 round-trip langsung dengan ownership check built-in

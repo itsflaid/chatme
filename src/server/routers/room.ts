@@ -1,32 +1,11 @@
 import { z } from "zod"
 import { router, protectedProcedure } from "../trpc"
 import { TRPCError } from "@trpc/server"
+import { getRoomsForUser } from "@/server/services/rooms"
 
 export const roomRouter = router({
   list: protectedProcedure.query(async ({ ctx }) => {
-    const rawRooms = await ctx.prisma.room.findMany({
-      where: { userId: ctx.userId },
-      orderBy: { updatedAt: "desc" },
-      include: {
-        _count: {
-          select: { messages: { where: { isDone: false, isBot: false } } },
-        },
-        messages: {
-          where: { isBot: false },
-          orderBy: { createdAt: "desc" },
-          take: 1,
-          select: { text: true, createdAt: true },
-        },
-      },
-    })
-
-    rawRooms.sort((a, b) => {
-      const aActivity = a.messages[0]?.createdAt ?? a.createdAt
-      const bActivity = b.messages[0]?.createdAt ?? b.createdAt
-      return bActivity.getTime() - aActivity.getTime()
-    })
-
-    return rawRooms
+    return getRoomsForUser(ctx.prisma, ctx.userId)
   }),
 
   create: protectedProcedure
@@ -54,30 +33,28 @@ export const roomRouter = router({
       description: z.string().nullable().optional(),
     }))
     .mutation(async ({ ctx, input }) => {
-      const room = await ctx.prisma.room.findFirst({
+      const result = await ctx.prisma.room.updateMany({
         where: { id: input.id, userId: ctx.userId },
-      })
-      if (!room) throw new TRPCError({ code: "NOT_FOUND" })
-
-      return ctx.prisma.room.update({
-        where: { id: input.id },
         data: {
           ...(input.name && { name: input.name }),
           ...(input.icon && { icon: input.icon }),
-          description: input.description ?? room.description,
+          ...(input.description !== undefined && { description: input.description }),
         },
+      })
+      if (result.count === 0) throw new TRPCError({ code: "NOT_FOUND" })
+
+      return ctx.prisma.room.findUniqueOrThrow({
+        where: { id: input.id },
       })
     }),
 
   delete: protectedProcedure
     .input(z.object({ id: z.string() }))
     .mutation(async ({ ctx, input }) => {
-      const room = await ctx.prisma.room.findFirst({
+      const result = await ctx.prisma.room.deleteMany({
         where: { id: input.id, userId: ctx.userId },
       })
-      if (!room) throw new TRPCError({ code: "NOT_FOUND" })
-
-      await ctx.prisma.room.delete({ where: { id: input.id } })
+      if (result.count === 0) throw new TRPCError({ code: "NOT_FOUND" })
       return { success: true }
     }),
 })
