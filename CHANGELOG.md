@@ -20,3 +20,9 @@
 - **`BotBubble.tsx`:** callback `onDone`/`onSnooze` terima ID langsung, panggil dari dalam komponen — `ChatMessages.tsx` pass function reference, bukan inline arrow
 - **`ChatContainer.tsx`:** `handleBotDone`/`handleBotSnooze` dibungkus `useCallback`
 - **`ChecklistBubble.tsx`:** `toggleItem` pake `useToggleChecklistItem` (via `useMutation`), bukan `utils.client.*.mutate()` langsung
+
+## Fase 3 — Prefetch Data Room
+
+### Perubahan
+
+- **`RoomItem.tsx`:** tambah `prefetchInfinite` data `message.list` via `onPointerDown` (selain `router.prefetch` via `onMouseEnter` yang sudah ada). Data pesan mulai di-fetch sebelum navigasi selesai
