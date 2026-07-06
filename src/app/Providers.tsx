@@ -35,9 +35,12 @@ const [trpcClient] = useState(() =>
           maxAge: 24 * 60 * 60_000,
           dehydrateOptions: {
             shouldDehydrateQuery: (query) => {
-            const key = query.queryKey[0]
-            return Array.isArray(key) && (key[0] === "room" || key[0] === "message")
-          },
+              const key = query.queryKey[0]
+              if (!Array.isArray(key)) return false
+              if (key[0] === "room") return true
+              if (key[0] === "message" && key[1] !== "list") return true
+              return false
+            },
           },
         }}
       >

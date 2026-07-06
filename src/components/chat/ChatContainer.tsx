@@ -7,8 +7,8 @@ import ChatMessages from "./ChatMessages"
 import ChatHeader from "./ChatHeader"
 import ChatInput from "./ChatInput"
 import SnoozeModal from "./modals/SnoozeModal"
-import { MessageActionsProvider } from "@/hooks/useMessageActions"
-import { useToggleDone, useMarkReminded, useSetReminder, updateMessagesCacheFlatten, getMessagesKey } from "@/hooks/useMessages"
+import { MessageActionsProvider, useMessageActions } from "@/hooks/useMessageActions"
+import { updateMessagesCacheFlatten, getMessagesKey } from "@/hooks/useMessages"
 import { trpc } from "@/lib/trpc"
 import type { ChatMessage } from "@/types/chat"
 
@@ -21,11 +21,9 @@ type Props = {
   onLoadMore: () => void
 }
 
-export default function ChatContainer({ room, messages, loading, loadingMore, hasMore, onLoadMore }: Props) {
+function ChatContainerInner({ room, messages, loading, loadingMore, hasMore, onLoadMore }: Props) {
   const roomId = room.id
-  const toggleDone = useToggleDone(roomId)
-  const markReminded = useMarkReminded(roomId)
-  const setReminder = useSetReminder(roomId)
+  const { toggleDone, markReminded, setReminder } = useMessageActions()
 
   const [snoozeBotId, setSnoozeBotId] = useState<string | null>(null)
   const [snoozeSourceId, setSnoozeSourceId] = useState<string | null>(null)
@@ -98,7 +96,6 @@ export default function ChatContainer({ room, messages, loading, loadingMore, ha
   }
 
   return (
-    <MessageActionsProvider roomId={roomId}>
     <div className="flex flex-col flex-1 min-h-0">
       <ChatHeader
         roomId={roomId}
@@ -183,6 +180,13 @@ export default function ChatContainer({ room, messages, loading, loadingMore, ha
         />
       )}
     </div>
+  )
+}
+
+export default function ChatContainer(props: Props) {
+  return (
+    <MessageActionsProvider roomId={props.room.id}>
+      <ChatContainerInner {...props} />
     </MessageActionsProvider>
   )
 }
