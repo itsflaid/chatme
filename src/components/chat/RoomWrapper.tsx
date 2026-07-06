@@ -2,8 +2,7 @@
 
 import { useEffect, useRef } from "react"
 import { useQueryClient } from "@tanstack/react-query"
-import { getQueryKey } from "@trpc/react-query"
-import { useMessagesQuery } from "@/hooks/useMessages"
+import { useMessagesQuery, getMessagesKey } from "@/hooks/useMessages"
 import { trpc } from "@/lib/trpc"
 import ChatContainer from "./ChatContainer"
 import type { ChatMessage } from "@/types/chat"
@@ -57,7 +56,7 @@ export default function RoomWrapper({ roomId, room }: Props) {
           const newOnes = newBotMessages.filter((m) => !existingIds.has(m.id))
           if (newOnes.length > 0) {
             showReminderNotifications(newOnes, currentMessages, room.name)
-            const messagesKey = getQueryKey(trpc.message.list, { roomId }, "infinite")
+            const messagesKey = getMessagesKey(roomId)
             type MessagesPageData = {
               pageParams: unknown[]
               pages: { messages: ChatMessage[]; hasMore: boolean }[]

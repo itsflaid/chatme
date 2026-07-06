@@ -9,10 +9,8 @@ import MessageBubble from "./MessageBubble"
 import ChecklistBubble from "./ChecklistBubble"
 import { MessageType } from "@prisma/client"
 import { useQueryClient } from "@tanstack/react-query"
-import { getQueryKey } from "@trpc/react-query"
 import { useMessageActions } from "@/hooks/useMessageActions"
-import { updateMessagesCache } from "@/hooks/useMessages"
-import { trpc } from "@/lib/trpc"
+import { updateMessagesCache, getMessagesKey } from "@/hooks/useMessages"
 import type { ChatMessage } from "@/types/chat"
 
 type Props = {
@@ -35,7 +33,7 @@ const BubbleWrapper = memo(function BubbleWrapper({
   const touchTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const queryClient = useQueryClient()
-  const messagesKey = getQueryKey(trpc.message.list, { roomId }, "infinite")
+  const messagesKey = getMessagesKey(roomId)
   const { editMessage, deleteMessage, togglePin, toggleDone, setReminder, markReminded, checklistToggle } = useMessageActions()
 
   function openMenu(x: number, y: number) { setMenuPos({ x, y }) }
@@ -105,20 +103,25 @@ const BubbleWrapper = memo(function BubbleWrapper({
 
   return (
     <>
-      <div
-        onContextMenu={handleContextMenu}
-        onTouchStart={handleTouchStart}
-        onTouchEnd={handleTouchEnd}
-        onTouchMove={handleTouchEnd}
-        className="select-none"
-      >
+      <div className="select-none">
         {message.type === MessageType.CHECKLIST ? (
-          <ChecklistBubble message={message} onUpdate={handleChecklistUpdate} />
+          <ChecklistBubble
+            message={message}
+            onUpdate={handleChecklistUpdate}
+            onContextMenu={handleContextMenu}
+            onTouchStart={handleTouchStart}
+            onTouchEnd={handleTouchEnd}
+            onTouchMove={handleTouchEnd}
+          />
         ) : (
           <MessageBubble
             message={message}
             isNew={isNew}
             searchQuery={searchQuery}
+            onContextMenu={handleContextMenu}
+            onTouchStart={handleTouchStart}
+            onTouchEnd={handleTouchEnd}
+            onTouchMove={handleTouchEnd}
           />
         )}
       </div>

@@ -1,8 +1,8 @@
 "use client"
 
 import { useQueryClient } from "@tanstack/react-query"
-import { getQueryKey } from "@trpc/react-query"
 import { trpc } from "@/lib/trpc"
+import { getRoomsKey } from "./useMessages"
 
 export type RoomData = {
   id: string
@@ -31,7 +31,7 @@ export default function useRooms(serverRooms?: RoomData[] | null) {
 
 export function useCreateRoom() {
   const queryClient = useQueryClient()
-  const roomsKey = getQueryKey(trpc.room.list)
+  const roomsKey = getRoomsKey()
 
   return trpc.room.create.useMutation({
     onSuccess: (newRoom) => {
@@ -45,7 +45,7 @@ export function useCreateRoom() {
 
 export function useUpdateRoom() {
   const queryClient = useQueryClient()
-  const roomsKey = getQueryKey(trpc.room.list)
+  const roomsKey = getRoomsKey()
 
   return trpc.room.update.useMutation({
     onMutate: async (variables) => {
@@ -64,7 +64,7 @@ export function useUpdateRoom() {
 
 export function useDeleteRoom() {
   const queryClient = useQueryClient()
-  const roomsKey = getQueryKey(trpc.room.list)
+  const roomsKey = getRoomsKey()
 
   return trpc.room.delete.useMutation({
     onMutate: async (variables) => {

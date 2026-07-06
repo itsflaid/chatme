@@ -10,9 +10,20 @@ import type { ChatMessage } from "@/types/chat"
 type Props = {
   message: ChatMessage
   onUpdate: (id: string, patch: Partial<ChatMessage>) => void
+  onContextMenu?: (e: React.MouseEvent) => void
+  onTouchStart?: (e: React.TouchEvent) => void
+  onTouchEnd?: (e: React.TouchEvent) => void
+  onTouchMove?: (e: React.TouchEvent) => void
 }
 
-const ChecklistBubble = memo(function ChecklistBubble({ message, onUpdate }: Props) {
+const ChecklistBubble = memo(function ChecklistBubble({
+  message,
+  onUpdate,
+  onContextMenu,
+  onTouchStart,
+  onTouchEnd,
+  onTouchMove,
+}: Props) {
   const [editing, setEditing] = useState(false)
   const [saving, setSaving] = useState(false)
   const [title, setTitle] = useState(message.text)
@@ -86,7 +97,13 @@ const ChecklistBubble = memo(function ChecklistBubble({ message, onUpdate }: Pro
 
   return (
     <div className="flex flex-col items-end">
-      <div className="neo-panel w-full max-w-[390px] rotate-[0.25deg] rounded-2xl bg-[var(--accent)] p-4 text-[var(--text)]">
+      <div
+        onContextMenu={onContextMenu}
+        onTouchStart={onTouchStart}
+        onTouchEnd={onTouchEnd}
+        onTouchMove={onTouchMove}
+        className="neo-panel w-full max-w-[390px] rotate-[0.25deg] rounded-2xl bg-[var(--accent)] p-4 text-[var(--text)]"
+      >
         <div className="mb-4 flex items-start justify-between gap-3">
           <div className="flex min-w-0 items-center gap-3">
             <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg border-2 border-[var(--neo-line)] bg-[var(--paper)]">

@@ -3,13 +3,12 @@
 import { useState, useMemo, useCallback } from "react"
 import { FiChevronUp, FiChevronDown, FiX } from "react-icons/fi"
 import { useQueryClient } from "@tanstack/react-query"
-import { getQueryKey } from "@trpc/react-query"
 import ChatMessages from "./ChatMessages"
 import ChatHeader from "./ChatHeader"
 import ChatInput from "./ChatInput"
 import SnoozeModal from "./modals/SnoozeModal"
 import { MessageActionsProvider } from "@/hooks/useMessageActions"
-import { useToggleDone, useMarkReminded, useSetReminder, updateMessagesCacheFlatten } from "@/hooks/useMessages"
+import { useToggleDone, useMarkReminded, useSetReminder, updateMessagesCacheFlatten, getMessagesKey } from "@/hooks/useMessages"
 import { trpc } from "@/lib/trpc"
 import type { ChatMessage } from "@/types/chat"
 
@@ -42,9 +41,13 @@ export default function ChatContainer({ room, messages, loading, loadingMore, ha
     [messages]
   )
 
-  const matchedMessages = searchQuery.trim()
-    ? messages.filter((m) => !m.isBot && m.text.toLowerCase().includes(searchQuery.toLowerCase()))
-    : []
+  const matchedMessages = useMemo(
+    () =>
+      searchQuery.trim()
+        ? messages.filter((m) => !m.isBot && m.text.toLowerCase().includes(searchQuery.toLowerCase()))
+        : [],
+    [messages, searchQuery]
+  )
 
   function handleSearch(query: string) {
     setSearchQuery(query)
@@ -53,7 +56,7 @@ export default function ChatContainer({ room, messages, loading, loadingMore, ha
 
   const queryClient = useQueryClient()
   const utils = trpc.useUtils()
-  const messagesKey = getQueryKey(trpc.message.list, { roomId }, "infinite")
+  const messagesKey = getMessagesKey(roomId)
 
   async function handleCheckReminders() {
     try {

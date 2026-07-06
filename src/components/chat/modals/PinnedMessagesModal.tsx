@@ -3,7 +3,7 @@
 import { FiX, FiBookmark, FiCheck } from "react-icons/fi"
 import { Message } from "@prisma/client"
 import { useQueryClient } from "@tanstack/react-query"
-import { getQueryKey } from "@trpc/react-query"
+import { getRoomsKey } from "@/hooks/useMessages"
 import { trpc } from "@/lib/trpc"
 import { ModalPortal } from "@/components/ui/ModalPortal"
 
@@ -17,7 +17,7 @@ export default function PinnedMessagesModal({ messages, onClose }: Props) {
   const pinned = messages.filter(m => m.isPinned && !m.isBot)
 
   const utils = trpc.useUtils()
-  const roomsKey = getQueryKey(trpc.room.list)
+  const roomsKey = getRoomsKey()
 
   async function handleUnpin(messageId: string) {
     await utils.client.message.update.mutate({ id: messageId, isPinned: false })

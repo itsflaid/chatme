@@ -8,11 +8,36 @@ import { MessageType } from "@prisma/client"
 import type { ChatMessage } from "@/types/chat"
 import type { RoomData } from "./useRooms"
 
+// ── Query key helpers ───────────────────────────────────────────────────
+//
+// PENTING: `queryClient.setQueryData(key, ...)` butuh key yang PERSIS SAMA
+// (exact hash match) dengan key yang dipakai hook query aslinya — beda
+// dengan `invalidateQueries` yang partial-match. `getQueryKey()` dari
+// @trpc/react-query men-generate key berdasarkan INPUT LENGKAP yang dipakai
+// hook (untuk infinite query, cuma `cursor`/`direction` yang di-strip —
+// field lain seperti `limit` tetap masuk key). Kalau input yang dikasih ke
+// getQueryKey() di sini beda dari input yang dikasih ke useInfiniteQuery/
+// useQuery di komponen, hasilnya adalah entry cache lain yang tidak
+// disubscribe siapa pun → setQueryData jadi no-op diam-diam.
+//
+// Makanya SEMUA tempat yang butuh key untuk message.list / room.list WAJIB
+// pakai 2 helper ini, jangan panggil getQueryKey() manual lagi.
+
+export const MESSAGES_LIMIT = 50
+
+export function getMessagesKey(roomId: string) {
+  return getQueryKey(trpc.message.list, { roomId, limit: MESSAGES_LIMIT }, "infinite")
+}
+
+export function getRoomsKey() {
+  return getQueryKey(trpc.room.list, undefined, "query")
+}
+
 // ── Read query ──────────────────────────────────────────────────────────
 
 export function useMessagesQuery(roomId: string) {
   return trpc.message.list.useInfiniteQuery(
-    { roomId, limit: 50 },
+    { roomId, limit: MESSAGES_LIMIT },
     {
       getNextPageParam: (lastPage) =>
         lastPage.hasMore ? lastPage.messages[0]?.id : undefined,
@@ -106,8 +131,8 @@ function getMessagesFromCache(
 
 export function useSendMessage(roomId: string) {
   const queryClient = useQueryClient()
-  const messagesKey = getQueryKey(trpc.message.list, { roomId }, "infinite")
-  const roomsKey = getQueryKey(trpc.room.list)
+  const messagesKey = getMessagesKey(roomId)
+  const roomsKey = getRoomsKey()
 
   return trpc.message.send.useMutation({
     onMutate: async (input) => {
@@ -163,8 +188,8 @@ export function useSendMessage(roomId: string) {
 
 export function useEditMessage(roomId: string) {
   const queryClient = useQueryClient()
-  const messagesKey = getQueryKey(trpc.message.list, { roomId }, "infinite")
-  const roomsKey = getQueryKey(trpc.room.list)
+  const messagesKey = getMessagesKey(roomId)
+  const roomsKey = getRoomsKey()
 
   return trpc.message.update.useMutation({
     onSuccess: (updated) => {
@@ -191,8 +216,8 @@ export function useEditMessage(roomId: string) {
 
 export function useDeleteMessage(roomId: string) {
   const queryClient = useQueryClient()
-  const messagesKey = getQueryKey(trpc.message.list, { roomId }, "infinite")
-  const roomsKey = getQueryKey(trpc.room.list)
+  const messagesKey = getMessagesKey(roomId)
+  const roomsKey = getRoomsKey()
 
   return trpc.message.delete.useMutation({
     onSuccess: (_data, variables) => {
@@ -217,7 +242,7 @@ export function useDeleteMessage(roomId: string) {
 
 export function useToggleDone(roomId: string) {
   const queryClient = useQueryClient()
-  const messagesKey = getQueryKey(trpc.message.list, { roomId }, "infinite")
+  const messagesKey = getMessagesKey(roomId)
 
   return trpc.message.update.useMutation({
     onMutate: async ({ id, isDone }) => {
@@ -241,7 +266,7 @@ export function useToggleDone(roomId: string) {
 
 export function useTogglePin(roomId: string) {
   const queryClient = useQueryClient()
-  const messagesKey = getQueryKey(trpc.message.list, { roomId }, "infinite")
+  const messagesKey = getMessagesKey(roomId)
 
   return trpc.message.update.useMutation({
     onMutate: async ({ id, isPinned }) => {
@@ -260,7 +285,7 @@ export function useTogglePin(roomId: string) {
 
 export function useSetReminder(roomId: string) {
   const queryClient = useQueryClient()
-  const messagesKey = getQueryKey(trpc.message.list, { roomId }, "infinite")
+  const messagesKey = getMessagesKey(roomId)
 
   return trpc.message.update.useMutation({
     onMutate: async ({ id, remindAt }) => {
@@ -281,7 +306,7 @@ export function useSetReminder(roomId: string) {
 
 export function useMarkReminded(roomId: string) {
   const queryClient = useQueryClient()
-  const messagesKey = getQueryKey(trpc.message.list, { roomId }, "infinite")
+  const messagesKey = getMessagesKey(roomId)
 
   return trpc.message.update.useMutation({
     onMutate: async ({ id }) => {
@@ -300,7 +325,7 @@ export function useMarkReminded(roomId: string) {
 
 export function useChecklistToggle(roomId: string) {
   const queryClient = useQueryClient()
-  const messagesKey = getQueryKey(trpc.message.list, { roomId }, "infinite")
+  const messagesKey = getMessagesKey(roomId)
 
   return trpc.message.updateChecklist.useMutation({
     onMutate: async ({ id, items }) => {

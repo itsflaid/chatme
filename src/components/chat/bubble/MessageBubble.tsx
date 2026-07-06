@@ -9,6 +9,10 @@ type Props = {
   message: Message
   isNew?: boolean
   searchQuery?: string
+  onContextMenu?: (e: React.MouseEvent) => void
+  onTouchStart?: (e: React.TouchEvent) => void
+  onTouchEnd?: (e: React.TouchEvent) => void
+  onTouchMove?: (e: React.TouchEvent) => void
 }
 
 function highlightText(text: string, query: string) {
@@ -37,6 +41,10 @@ const MessageBubble = memo(function MessageBubble({
   message,
   isNew = false,
   searchQuery = "",
+  onContextMenu,
+  onTouchStart,
+  onTouchEnd,
+  onTouchMove,
 }: Props) {
   const [isReminderDue, setIsReminderDue] = useState(false)
 
@@ -84,6 +92,10 @@ const MessageBubble = memo(function MessageBubble({
       className={`flex flex-col items-end${isNew ? " animate-bubble-user" : ""}`}
     >
       <div
+        onContextMenu={onContextMenu}
+        onTouchStart={onTouchStart}
+        onTouchEnd={onTouchEnd}
+        onTouchMove={onTouchMove}
         className="neo-card relative max-w-[82%] rotate-[0.4deg] rounded-xl rounded-br-sm bg-[var(--accent)] px-4 py-2.5"
         style={{ opacity: message.isDone ? 0.78 : 1 }}
       >

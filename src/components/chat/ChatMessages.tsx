@@ -234,7 +234,7 @@ export default function ChatMessages({
                 <div
                   key={message.id}
                   ref={isActiveMatch ? activeRef : null}
-                  className="rounded-2xl transition-all duration-300"
+                  className="rounded-2xl transition-opacity duration-300"
                   style={{
                     outline: isActiveMatch
                       ? "2px solid var(--accent)"
