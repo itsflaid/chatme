@@ -17,7 +17,7 @@ export default function RoomList({ rooms }: Props) {
   if (rooms.length === 0) return <EmptyRooms />
 
   return (
-    <div className="flex-1 overflow-y-auto bg-[var(--bg)] px-3 mb-2 ">
+    <div className="flex-1 overflow-y-auto bg-[var(--bg)] px-3 py-1 mb-2 ">
       {rooms.map((room) => (
         <RoomItem
           key={room.id}
