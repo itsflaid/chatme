@@ -1,15 +1,16 @@
 "use client"
 
 import { useEffect, useRef } from "react"
+import { useRouter } from "next/navigation"
 import { useQueryClient } from "@tanstack/react-query"
 import { useMessagesQuery, getMessagesKey } from "@/hooks/useMessages"
+import { useRoom } from "@/hooks/useRoom"
 import { trpc } from "@/lib/trpc"
 import ChatContainer from "./ChatContainer"
 import type { ChatMessage } from "@/types/chat"
 
 type Props = {
   roomId: string
-  room: { id: string; name: string; icon: string; description: string | null }
 }
 
 function showReminderNotifications(
@@ -32,8 +33,10 @@ function showReminderNotifications(
   }
 }
 
-export default function RoomWrapper({ roomId, room }: Props) {
+export default function RoomWrapper({ roomId }: Props) {
+  const router = useRouter()
   const queryClient = useQueryClient()
+  const { data: room, error: roomError } = useRoom(roomId)
   const { data: messages = [], fetchNextPage, hasNextPage, isFetchingNextPage, isLoading } = useMessagesQuery(roomId)
   const messagesRef = useRef(messages)
 
@@ -41,9 +44,14 @@ export default function RoomWrapper({ roomId, room }: Props) {
     messagesRef.current = messages
   }, [messages])
 
+  useEffect(() => {
+    if (roomError) router.replace("/")
+  }, [roomError, router])
+
   const utils = trpc.useUtils()
 
   useEffect(() => {
+    if (!room) return
     let interval: ReturnType<typeof setInterval> | null = null
 
     async function pollReminders() {
@@ -55,7 +63,7 @@ export default function RoomWrapper({ roomId, room }: Props) {
           const existingIds = new Set(currentMessages.map((m) => m.id))
           const newOnes = newBotMessages.filter((m) => !existingIds.has(m.id))
           if (newOnes.length > 0) {
-            showReminderNotifications(newOnes, currentMessages, room.name)
+            showReminderNotifications(newOnes, currentMessages, room!.name)
             const messagesKey = getMessagesKey(roomId)
             type MessagesPageData = {
               pageParams: unknown[]
@@ -82,7 +90,22 @@ export default function RoomWrapper({ roomId, room }: Props) {
     return () => {
       if (interval) clearInterval(interval)
     }
-  }, [roomId, room.name, queryClient, utils])
+  }, [roomId, room, queryClient, utils])
+
+  if (!room && !roomError) {
+    return (
+      <div className="flex items-center gap-3 px-4 py-3 border-b bg-[var(--surface)] border-[var(--border)]">
+        <div className="w-8 h-8 rounded-lg bg-[var(--surface2)] animate-pulse" />
+        <div className="w-10 h-10 rounded-full bg-[var(--surface2)] animate-pulse" />
+        <div className="flex flex-col gap-2 flex-1">
+          <div className="w-28 h-3 rounded-full bg-[var(--surface2)] animate-pulse" />
+          <div className="w-20 h-2 rounded-full bg-[var(--surface2)] animate-pulse" />
+        </div>
+      </div>
+    )
+  }
+
+  if (roomError || !room) return null
 
   return (
     <ChatContainer

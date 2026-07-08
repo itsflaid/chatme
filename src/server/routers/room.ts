@@ -48,6 +48,17 @@ export const roomRouter = router({
       })
     }),
 
+  getById: protectedProcedure
+    .input(z.object({ id: z.string() }))
+    .query(async ({ ctx, input }) => {
+      const room = await ctx.prisma.room.findFirst({
+        where: { id: input.id, userId: ctx.userId },
+        select: { id: true, name: true, icon: true, description: true },
+      })
+      if (!room) throw new TRPCError({ code: "NOT_FOUND" })
+      return room
+    }),
+
   delete: protectedProcedure
     .input(z.object({ id: z.string() }))
     .mutation(async ({ ctx, input }) => {
