@@ -4,6 +4,7 @@ import { useEffect, useState, memo } from "react"
 import { Message } from "@prisma/client"
 import { IoCheckmarkDone } from "react-icons/io5"
 import { FiBell, FiBookmark, FiCheck } from "react-icons/fi"
+import { highlightText, parseFormattedText } from "@/lib/messageFormat"
 
 type Props = {
   message: Message
@@ -13,28 +14,6 @@ type Props = {
   onTouchStart?: (e: React.TouchEvent) => void
   onTouchEnd?: (e: React.TouchEvent) => void
   onTouchMove?: (e: React.TouchEvent) => void
-}
-
-function highlightText(text: string, query: string) {
-  if (!query.trim()) return <>{text}</>
-  const parts = text.split(new RegExp(`(${query})`, "gi"))
-
-  return (
-    <>
-      {parts.map((part, index) =>
-        part.toLowerCase() === query.toLowerCase() ? (
-          <mark
-            key={index}
-            className="rounded-sm bg-[var(--bg)] px-0.5 font-semibold text-[var(--accent)]"
-          >
-            {part}
-          </mark>
-        ) : (
-          part
-        )
-      )}
-    </>
-  )
 }
 
 const MessageBubble = memo(function MessageBubble({
@@ -128,9 +107,9 @@ const MessageBubble = memo(function MessageBubble({
           </div>
         )}
 
-        <p className="break-words text-sm leading-relaxed text-[var(--accent-ink)] select-none">
-          {highlightText(message.text, searchQuery)}
-        </p>
+        <div className="text-sm leading-relaxed text-[var(--accent-ink)] select-none space-y-1">
+          {parseFormattedText(message.text, searchQuery)}
+        </div>
 
         {hasActiveReminder && message.remindAt && (
           <span className="mt-1.5 block text-[10px] font-semibold text-[var(--accent-ink)] opacity-70">
