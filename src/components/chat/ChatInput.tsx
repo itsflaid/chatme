@@ -56,7 +56,62 @@ export default function ChatInput({
     )
   }
 
-  function handleKey(e: React.KeyboardEvent) {
+  function getListContinuation(value: string, cursorPos: number): string | null {
+    const beforeCursor = value.slice(0, cursorPos)
+    const currentLineStart = beforeCursor.lastIndexOf("\n") + 1
+    const currentLine = beforeCursor.slice(currentLineStart)
+
+    const bulletMatch = currentLine.match(/^(\s*)([-*])\s+(.*)/)
+    if (bulletMatch) {
+      if (bulletMatch[3].trim() === "") return ""
+      return `${bulletMatch[1]}${bulletMatch[2]} `
+    }
+
+    const numberedMatch = currentLine.match(/^(\s*)(\d+)\.\s+(.*)/)
+    if (numberedMatch) {
+      if (numberedMatch[3].trim() === "") return ""
+      const nextNumber = parseInt(numberedMatch[2], 10) + 1
+      return `${numberedMatch[1]}${nextNumber}. `
+    }
+
+    return null
+  }
+
+  function handleKey(e: React.KeyboardEvent<HTMLTextAreaElement>) {
+    if (e.key === "Enter" && (e.nativeEvent as KeyboardEvent).isComposing) return
+
+    if (e.key === "Enter" && e.shiftKey) {
+      const el = textareaRef.current
+      if (!el) return
+      const continuation = getListContinuation(el.value, el.selectionStart)
+      if (continuation === null) return
+
+      e.preventDefault()
+      const cursorPos = el.selectionStart
+      const currentLineStart = el.value.slice(0, cursorPos).lastIndexOf("\n") + 1
+      const currentLine = el.value.slice(currentLineStart, cursorPos)
+
+      if (continuation === "") {
+        const newValue = el.value.slice(0, currentLineStart) + el.value.slice(cursorPos)
+        setText(newValue)
+        requestAnimationFrame(() => {
+          el.selectionStart = el.selectionEnd = currentLineStart
+          autoResize()
+        })
+        return
+      }
+
+      const insertion = "\n" + continuation
+      const newValue = el.value.slice(0, cursorPos) + insertion + el.value.slice(cursorPos)
+      setText(newValue)
+      requestAnimationFrame(() => {
+        const newCursorPos = cursorPos + insertion.length
+        el.selectionStart = el.selectionEnd = newCursorPos
+        autoResize()
+      })
+      return
+    }
+
     if (e.key === "Enter" && !e.shiftKey && !(e.nativeEvent as KeyboardEvent).isComposing) {
       e.preventDefault()
       handleSend()
