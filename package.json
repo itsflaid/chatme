@@ -11,6 +11,8 @@
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.11.2",
+    "@neondatabase/serverless": "^1.1.0",
+    "@prisma/adapter-neon": "^7.8.0",
     "@prisma/client": "^6.19.3",
     "@serwist/next": "^9.5.11",
     "@tanstack/query-async-storage-persister": "^5.101.2",
@@ -32,12 +34,14 @@
     "react-icons": "^5.6.0",
     "superjson": "^2.2.6",
     "tailwindcss": "^3.4.19",
+    "ws": "^8.21.0",
     "zod": "^4.4.3"
   },
   "devDependencies": {
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@types/ws": "^8.18.1",
     "eslint": "^9",
     "eslint-config-next": "16.2.4",
     "serwist": "^9.5.11",
