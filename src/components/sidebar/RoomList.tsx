@@ -13,12 +13,14 @@ type Props = {
   rooms: Room[]
 }
 
+const EAGER_PREFETCH_COUNT = 3
+
 export default function RoomList({ rooms }: Props) {
   if (rooms.length === 0) return <EmptyRooms />
 
   return (
     <div className="flex-1 overflow-y-auto bg-[var(--bg)] px-3 py-1 mb-2 ">
-      {rooms.map((room) => (
+      {rooms.map((room, index) => (
         <RoomItem
           key={room.id}
           id={room.id}
@@ -26,9 +28,9 @@ export default function RoomList({ rooms }: Props) {
           icon={room.icon}
           pendingCount={room._count.messages}
           lastMessage={room.messages[0] ?? null}
+          eagerPrefetch={index < EAGER_PREFETCH_COUNT}
         />
       ))}
-      {/* spacer bawah — sama dengan pt-2 di atas, ditambah clearance tombol + */}
       <div className="h-24 flex-shrink-0" />
     </div>
   )

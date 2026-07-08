@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
-import { useCallback } from "react"
+import { useCallback, useEffect, useRef } from "react"
 import { trpc } from "@/lib/trpc"
 
 type Props = {
@@ -11,6 +11,7 @@ type Props = {
   icon: string
   pendingCount: number
   lastMessage: { text: string; createdAt: Date } | null
+  eagerPrefetch?: boolean
 }
 
 function formatTime(date: Date): string {
@@ -25,23 +26,56 @@ function formatTime(date: Date): string {
   return d.toLocaleDateString("id-ID", { day: "numeric", month: "short" })
 }
 
-export default function RoomItem({ id, name, icon, pendingCount, lastMessage }: Props) {
+export default function RoomItem({
+  id,
+  name,
+  icon,
+  pendingCount,
+  lastMessage,
+  eagerPrefetch = false,
+}: Props) {
   const pathname = usePathname()
   const router = useRouter()
   const isActive = pathname === `/room/${id}`
   const utils = trpc.useUtils()
+  const linkRef = useRef<HTMLAnchorElement>(null)
+  const hasPrefetched = useRef(false)
 
   const prefetchRoom = useCallback(() => {
+    if (hasPrefetched.current) return
+    hasPrefetched.current = true
+    router.prefetch(`/room/${id}`)
     utils.message.list.prefetchInfinite({ roomId: id, limit: 50 })
-  }, [id, utils])
+  }, [id, router, utils])
+
+  useEffect(() => {
+    const el = linkRef.current
+    if (!el) return
+
+    if (eagerPrefetch) {
+      prefetchRoom()
+      return
+    }
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting) {
+          prefetchRoom()
+          observer.disconnect()
+        }
+      },
+      { rootMargin: "200px" }
+    )
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [eagerPrefetch, prefetchRoom])
 
   const handleMouseEnter = useCallback(
     (e: React.MouseEvent<HTMLAnchorElement>) => {
       if (!isActive) e.currentTarget.style.background = "var(--surface3)"
-      router.prefetch(`/room/${id}`)
       prefetchRoom()
     },
-    [id, isActive, router, prefetchRoom]
+    [isActive, prefetchRoom]
   )
 
   const handlePointerDown = useCallback(() => {
@@ -50,6 +84,7 @@ export default function RoomItem({ id, name, icon, pendingCount, lastMessage }: 
 
   return (
     <Link
+      ref={linkRef}
       href={`/room/${id}`}
       className="neo-card mb-3 flex items-center gap-3 rounded-xl px-3 py-3 transition-all duration-150 cursor-pointer relative hover:-translate-x-0.5 hover:-translate-y-0.5"
       style={{
