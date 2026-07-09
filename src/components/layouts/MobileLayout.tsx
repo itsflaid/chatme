@@ -27,15 +27,25 @@ export default function MobileLayout({ sidebar, children }: Props) {
       <div className="flex md:hidden w-full  relative overflow-hidden" style={{ height: "100dvh" }}>
 
         <div
-          className="absolute inset-0 min-h-0 flex flex-col transition-transform duration-200 ease-in-out"
-          style={{ transform: isContentPage ? "translateX(-100%)" : "translateX(0)" }}
+          className="absolute inset-0 min-h-0 flex flex-col transition-transform"
+          style={{
+            transform: isContentPage ? "translateX(-100%)" : "translateX(0)",
+            transitionDuration: "280ms",
+            transitionTimingFunction: "cubic-bezier(0.4, 0, 0.2, 1)",
+            willChange: "transform",
+          }}
         >
           {sidebar}
         </div>
 
         <div
-          className="absolute inset-0 min-h-0 flex flex-col transition-transform duration-200 ease-in-out"
-          style={{ transform: isContentPage ? "translateX(0)" : "translateX(100%)" }}
+          className="absolute inset-0 min-h-0 flex flex-col transition-transform"
+          style={{
+            transform: isContentPage ? "translateX(0)" : "translateX(100%)",
+            transitionDuration: "280ms",
+            transitionTimingFunction: "cubic-bezier(0.4, 0, 0.2, 1)",
+            willChange: "transform",
+          }}
         >
           {children}
         </div>
