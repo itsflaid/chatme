@@ -1,15 +1,68 @@
 "use client"
 
 import { usePathname } from "next/navigation"
+import { useReducer, useRef } from "react"
 
 type Props = {
   sidebar: React.ReactNode
   children: React.ReactNode
 }
 
+type SlideState = {
+  displayedIsContentPage: boolean
+  phase: "idle" | "sliding"
+  frozenChildren: React.ReactNode | null
+  frozenSidebar: React.ReactNode | null
+}
+
+type SlideAction =
+  | { type: "freeze"; children: React.ReactNode; sidebar: React.ReactNode; isContentPage: boolean }
+  | { type: "unfreeze" }
+
+function slideReducer(state: SlideState, action: SlideAction): SlideState {
+  switch (action.type) {
+    case "freeze":
+      return {
+        displayedIsContentPage: action.isContentPage,
+        phase: "sliding",
+        frozenChildren: action.children,
+        frozenSidebar: action.sidebar,
+      }
+    case "unfreeze":
+      return { ...state, phase: "idle" }
+  }
+}
+
 export default function MobileLayout({ sidebar, children }: Props) {
   const pathname = usePathname()
   const isContentPage = pathname.startsWith("/room/") || pathname === "/profile"
+
+  const [slideState, dispatch] = useReducer(slideReducer, {
+    displayedIsContentPage: isContentPage,
+    phase: "idle",
+    frozenChildren: null,
+    frozenSidebar: null,
+  })
+
+  const contentRef = useRef<HTMLDivElement>(null)
+
+  if (isContentPage !== slideState.displayedIsContentPage) {
+    dispatch({
+      type: "freeze",
+      children,
+      sidebar,
+      isContentPage,
+    })
+  }
+
+  function handleTransitionEnd(e: React.TransitionEvent<HTMLDivElement>) {
+    if (e.target !== contentRef.current) return
+    if (e.propertyName !== "transform") return
+    dispatch({ type: "unfreeze" })
+  }
+
+  const renderedChildren = slideState.phase === "sliding" ? slideState.frozenChildren : children
+  const renderedSidebar = slideState.phase === "sliding" ? slideState.frozenSidebar : sidebar
 
   return (
     <div
@@ -29,25 +82,27 @@ export default function MobileLayout({ sidebar, children }: Props) {
         <div
           className="absolute inset-0 min-h-0 flex flex-col transition-transform"
           style={{
-            transform: isContentPage ? "translateX(-100%)" : "translateX(0)",
+            transform: slideState.displayedIsContentPage ? "translateX(-100%)" : "translateX(0)",
             transitionDuration: "280ms",
             transitionTimingFunction: "cubic-bezier(0.4, 0, 0.2, 1)",
             willChange: "transform",
           }}
         >
-          {sidebar}
+          {renderedSidebar}
         </div>
 
         <div
+          ref={contentRef}
+          onTransitionEnd={handleTransitionEnd}
           className="absolute inset-0 min-h-0 flex flex-col transition-transform"
           style={{
-            transform: isContentPage ? "translateX(0)" : "translateX(100%)",
+            transform: slideState.displayedIsContentPage ? "translateX(0)" : "translateX(100%)",
             transitionDuration: "280ms",
             transitionTimingFunction: "cubic-bezier(0.4, 0, 0.2, 1)",
             willChange: "transform",
           }}
         >
-          {children}
+          {renderedChildren}
         </div>
 
       </div>
