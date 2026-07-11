@@ -84,10 +84,6 @@ export const messageRouter = router({
     .input(z.object({
       id: z.string(),
       text: z.string().optional(),
-      isDone: z.boolean().optional(),
-      isPinned: z.boolean().optional(),
-      remindAt: z.string().nullable().optional(),
-      isRemindDone: z.boolean().optional(),
       remindSnoozeAt: z.string().nullable().optional(),
     }))
     .mutation(async ({ ctx, input }) => {
@@ -99,7 +95,6 @@ export const messageRouter = router({
         if (!data.text) throw new TRPCError({ code: "BAD_REQUEST", message: "Pesan tidak boleh kosong" })
         data.editedAt = new Date()
       }
-      if (typeof data.remindAt === "string") data.remindAt = new Date(data.remindAt as string)
       if (typeof data.remindSnoozeAt === "string") data.remindSnoozeAt = new Date(data.remindSnoozeAt as string)
 
       const owned = await ctx.prisma.message.findFirst({
@@ -112,6 +107,84 @@ export const messageRouter = router({
       }
 
       return ctx.prisma.message.update({ where: { id }, data })
+    }),
+
+  toggleDone: protectedProcedure
+    .input(z.object({ id: z.string(), isDone: z.boolean() }))
+    .mutation(async ({ ctx, input }) => {
+      const owned = await ctx.prisma.message.findFirst({
+        where: { id: input.id, userId: ctx.userId },
+        select: { id: true },
+      })
+      if (!owned) throw new TRPCError({ code: "NOT_FOUND" })
+
+      return ctx.prisma.message.update({
+        where: { id: input.id },
+        data: { isDone: input.isDone },
+      })
+    }),
+
+  togglePin: protectedProcedure
+    .input(z.object({ id: z.string(), isPinned: z.boolean() }))
+    .mutation(async ({ ctx, input }) => {
+      const owned = await ctx.prisma.message.findFirst({
+        where: { id: input.id, userId: ctx.userId },
+        select: { id: true },
+      })
+      if (!owned) throw new TRPCError({ code: "NOT_FOUND" })
+
+      return ctx.prisma.message.update({
+        where: { id: input.id },
+        data: { isPinned: input.isPinned },
+      })
+    }),
+
+  setReminder: protectedProcedure
+    .input(z.object({ id: z.string(), remindAt: z.string().nullable() }))
+    .mutation(async ({ ctx, input }) => {
+      const owned = await ctx.prisma.message.findFirst({
+        where: { id: input.id, userId: ctx.userId },
+        select: { id: true },
+      })
+      if (!owned) throw new TRPCError({ code: "NOT_FOUND" })
+
+      return ctx.prisma.message.update({
+        where: { id: input.id },
+        data: {
+          remindAt: input.remindAt ? new Date(input.remindAt) : null,
+          isRemindDone: false,
+        },
+      })
+    }),
+
+  markReminded: protectedProcedure
+    .input(z.object({ id: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      const owned = await ctx.prisma.message.findFirst({
+        where: { id: input.id, userId: ctx.userId },
+        select: { id: true },
+      })
+      if (!owned) throw new TRPCError({ code: "NOT_FOUND" })
+
+      return ctx.prisma.message.update({
+        where: { id: input.id },
+        data: { isRemindDone: true },
+      })
+    }),
+
+  markRemindedAndDone: protectedProcedure
+    .input(z.object({ id: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      const owned = await ctx.prisma.message.findFirst({
+        where: { id: input.id, userId: ctx.userId },
+        select: { id: true },
+      })
+      if (!owned) throw new TRPCError({ code: "NOT_FOUND" })
+
+      return ctx.prisma.message.update({
+        where: { id: input.id },
+        data: { isRemindDone: true, isDone: true },
+      })
     }),
 
   delete: protectedProcedure

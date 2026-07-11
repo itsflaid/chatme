@@ -8,7 +8,7 @@ import ChatHeader from "./ChatHeader"
 import ChatInput from "./ChatInput"
 import SnoozeModal from "./modals/SnoozeModal"
 import { MessageActionsProvider, useMessageActions } from "@/hooks/useMessageActions"
-import { updateMessagesCacheFlatten, getMessagesKey } from "@/hooks/useMessages"
+import { updateMessagesCacheFlatten, getMessagesKey, useMarkRemindedAndDone } from "@/hooks/useMessages"
 import { trpc } from "@/lib/trpc"
 import type { ChatMessage } from "@/types/chat"
 
@@ -24,6 +24,7 @@ type Props = {
 function ChatContainerInner({ room, messages, loading, loadingMore, hasMore, onLoadMore }: Props) {
   const roomId = room.id
   const { toggleDone, markReminded, setReminder } = useMessageActions()
+  const markRemindedAndDone = useMarkRemindedAndDone(roomId)
 
   const [snoozeBotId, setSnoozeBotId] = useState<string | null>(null)
   const [snoozeSourceId, setSnoozeSourceId] = useState<string | null>(null)
@@ -91,8 +92,7 @@ function ChatContainerInner({ room, messages, loading, loadingMore, hasMore, onL
   }
 
   function handleReminderDone(messageId: string) {
-    markReminded.mutate({ id: messageId })
-    toggleDone.mutate({ id: messageId, isDone: true })
+    markRemindedAndDone.mutate({ id: messageId })
   }
 
   return (

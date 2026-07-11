@@ -244,16 +244,16 @@ export function useToggleDone(roomId: string) {
   const queryClient = useQueryClient()
   const messagesKey = getMessagesKey(roomId)
 
-  return trpc.message.update.useMutation({
+  return trpc.message.toggleDone.useMutation({
     onMutate: async ({ id, isDone }) => {
       await queryClient.cancelQueries({ queryKey: messagesKey })
       updateMessagesCache(queryClient, messagesKey, (msgs) =>
-        msgs.map((m) => (m.id === id ? { ...m, isDone: isDone ?? m.isDone } : m))
+        msgs.map((m) => (m.id === id ? { ...m, isDone } : m))
       )
     },
     onSuccess: (updated) => {
       updateMessagesCache(queryClient, messagesKey, (msgs) =>
-        msgs.map((m) => (m.id === updated.id ? { ...updated, checklistItems: m.checklistItems } : m))
+        msgs.map((m) => (m.id === updated.id ? { ...m, isDone: updated.isDone } : m))
       )
     },
     onError: () => {
@@ -268,11 +268,11 @@ export function useTogglePin(roomId: string) {
   const queryClient = useQueryClient()
   const messagesKey = getMessagesKey(roomId)
 
-  return trpc.message.update.useMutation({
+  return trpc.message.togglePin.useMutation({
     onMutate: async ({ id, isPinned }) => {
       await queryClient.cancelQueries({ queryKey: messagesKey })
       updateMessagesCache(queryClient, messagesKey, (msgs) =>
-        msgs.map((m) => (m.id === id ? { ...m, isPinned: isPinned ?? m.isPinned } : m))
+        msgs.map((m) => (m.id === id ? { ...m, isPinned } : m))
       )
     },
     onError: () => {
@@ -287,12 +287,12 @@ export function useSetReminder(roomId: string) {
   const queryClient = useQueryClient()
   const messagesKey = getMessagesKey(roomId)
 
-  return trpc.message.update.useMutation({
+  return trpc.message.setReminder.useMutation({
     onMutate: async ({ id, remindAt }) => {
       await queryClient.cancelQueries({ queryKey: messagesKey })
       updateMessagesCache(queryClient, messagesKey, (msgs) =>
         msgs.map((m) =>
-          m.id === id ? { ...m, remindAt: new Date(remindAt!), isRemindDone: false } : m
+          m.id === id ? { ...m, remindAt: remindAt ? new Date(remindAt) : null, isRemindDone: false } : m
         )
       )
     },
@@ -308,11 +308,30 @@ export function useMarkReminded(roomId: string) {
   const queryClient = useQueryClient()
   const messagesKey = getMessagesKey(roomId)
 
-  return trpc.message.update.useMutation({
+  return trpc.message.markReminded.useMutation({
     onMutate: async ({ id }) => {
       await queryClient.cancelQueries({ queryKey: messagesKey })
       updateMessagesCache(queryClient, messagesKey, (msgs) =>
         msgs.map((m) => (m.id === id ? { ...m, isRemindDone: true } : m))
+      )
+    },
+    onError: () => {
+      queryClient.invalidateQueries({ queryKey: messagesKey })
+    },
+  })
+}
+
+// ── Mark reminded and done (combined) ───────────────────────────────────
+
+export function useMarkRemindedAndDone(roomId: string) {
+  const queryClient = useQueryClient()
+  const messagesKey = getMessagesKey(roomId)
+
+  return trpc.message.markRemindedAndDone.useMutation({
+    onMutate: async ({ id }) => {
+      await queryClient.cancelQueries({ queryKey: messagesKey })
+      updateMessagesCache(queryClient, messagesKey, (msgs) =>
+        msgs.map((m) => (m.id === id ? { ...m, isRemindDone: true, isDone: true } : m))
       )
     },
     onError: () => {
