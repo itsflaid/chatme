@@ -112,91 +112,74 @@ export const messageRouter = router({
   toggleDone: protectedProcedure
     .input(z.object({ id: z.string(), isDone: z.boolean() }))
     .mutation(async ({ ctx, input }) => {
-      const owned = await ctx.prisma.message.findFirst({
+      const result = await ctx.prisma.message.updateMany({
         where: { id: input.id, userId: ctx.userId },
-        select: { id: true },
-      })
-      if (!owned) throw new TRPCError({ code: "NOT_FOUND" })
-
-      return ctx.prisma.message.update({
-        where: { id: input.id },
         data: { isDone: input.isDone },
       })
+      if (result.count === 0) throw new TRPCError({ code: "NOT_FOUND" })
+
+      return ctx.prisma.message.findUniqueOrThrow({ where: { id: input.id } })
     }),
 
   togglePin: protectedProcedure
     .input(z.object({ id: z.string(), isPinned: z.boolean() }))
     .mutation(async ({ ctx, input }) => {
-      const owned = await ctx.prisma.message.findFirst({
+      const result = await ctx.prisma.message.updateMany({
         where: { id: input.id, userId: ctx.userId },
-        select: { id: true },
-      })
-      if (!owned) throw new TRPCError({ code: "NOT_FOUND" })
-
-      return ctx.prisma.message.update({
-        where: { id: input.id },
         data: { isPinned: input.isPinned },
       })
+      if (result.count === 0) throw new TRPCError({ code: "NOT_FOUND" })
+
+      return ctx.prisma.message.findUniqueOrThrow({ where: { id: input.id } })
     }),
 
   setReminder: protectedProcedure
     .input(z.object({ id: z.string(), remindAt: z.string().nullable() }))
     .mutation(async ({ ctx, input }) => {
-      const owned = await ctx.prisma.message.findFirst({
+      const result = await ctx.prisma.message.updateMany({
         where: { id: input.id, userId: ctx.userId },
-        select: { id: true },
-      })
-      if (!owned) throw new TRPCError({ code: "NOT_FOUND" })
-
-      return ctx.prisma.message.update({
-        where: { id: input.id },
         data: {
           remindAt: input.remindAt ? new Date(input.remindAt) : null,
           isRemindDone: false,
         },
       })
+      if (result.count === 0) throw new TRPCError({ code: "NOT_FOUND" })
+
+      return ctx.prisma.message.findUniqueOrThrow({ where: { id: input.id } })
     }),
 
   markReminded: protectedProcedure
     .input(z.object({ id: z.string() }))
     .mutation(async ({ ctx, input }) => {
-      const owned = await ctx.prisma.message.findFirst({
+      const result = await ctx.prisma.message.updateMany({
         where: { id: input.id, userId: ctx.userId },
-        select: { id: true },
-      })
-      if (!owned) throw new TRPCError({ code: "NOT_FOUND" })
-
-      return ctx.prisma.message.update({
-        where: { id: input.id },
         data: { isRemindDone: true },
       })
+      if (result.count === 0) throw new TRPCError({ code: "NOT_FOUND" })
+
+      return ctx.prisma.message.findUniqueOrThrow({ where: { id: input.id } })
     }),
 
   markRemindedAndDone: protectedProcedure
     .input(z.object({ id: z.string() }))
     .mutation(async ({ ctx, input }) => {
-      const owned = await ctx.prisma.message.findFirst({
+      const result = await ctx.prisma.message.updateMany({
         where: { id: input.id, userId: ctx.userId },
-        select: { id: true },
-      })
-      if (!owned) throw new TRPCError({ code: "NOT_FOUND" })
-
-      return ctx.prisma.message.update({
-        where: { id: input.id },
         data: { isRemindDone: true, isDone: true },
       })
+      if (result.count === 0) throw new TRPCError({ code: "NOT_FOUND" })
+
+      return ctx.prisma.message.findUniqueOrThrow({ where: { id: input.id } })
     }),
 
   delete: protectedProcedure
     .input(z.object({ id: z.string() }))
     .mutation(async ({ ctx, input }) => {
-      const owned = await ctx.prisma.message.findFirst({
+      const result = await ctx.prisma.message.deleteMany({
         where: { id: input.id, userId: ctx.userId },
-        select: { id: true },
       })
-      if (!owned) throw new TRPCError({ code: "NOT_FOUND" })
+      if (result.count === 0) throw new TRPCError({ code: "NOT_FOUND" })
 
-      await ctx.prisma.message.delete({ where: { id: input.id } })
       return { success: true }
     }),
 

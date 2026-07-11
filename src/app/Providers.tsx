@@ -34,7 +34,14 @@ const [trpcClient] = useState(() =>
           persister: idbPersister,
           maxAge: 24 * 60 * 60_000,
           dehydrateOptions: {
-            shouldDehydrateQuery: (query) => {
+            // ── Persistence filter ─────────────────────────────────────────
+          // `room.*` queries are persisted for sidebar/offline access.
+          // `message.list` (infinite query for chat content) is intentionally
+          // EXCLUDED: infinite queries have edge cases with the async storage
+          // persister (page params, cursor tracking), and unbounded IndexedDB
+          // growth on long chat histories. If re-enabling, test carefully for
+          // memory/storage leaks — see update.md §D2.
+          shouldDehydrateQuery: (query) => {
               const key = query.queryKey[0]
               if (!Array.isArray(key)) return false
               if (key[0] === "room") return true
