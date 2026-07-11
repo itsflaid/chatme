@@ -221,20 +221,28 @@ export function useDeleteMessage(roomId: string) {
   const roomsKey = getRoomsKey()
 
   return trpc.message.delete.useMutation({
-    onSuccess: (_data, variables) => {
-      const messageId = variables.id
+    onMutate: async (variables) => {
+      await queryClient.cancelQueries({ queryKey: messagesKey })
+      const previous = queryClient.getQueryData(messagesKey)
       updateMessagesCacheFlatten(queryClient, messagesKey, (msgs) =>
-        msgs.filter((m) => m.id !== messageId)
+        msgs.filter((m) => m.id !== variables.id)
       )
-
+      return { previous }
+    },
+    onSuccess: (_data, variables, context) => {
       const allMsgs = getMessagesFromCache(queryClient, messagesKey)
       const latest = allMsgs.reduce((a, b) =>
         new Date(a.createdAt) > new Date(b.createdAt) ? a : b
       , allMsgs[0])
 
-      if (!latest || !allMsgs.some((m) => m.id === messageId)) {
+      if (!latest || !allMsgs.some((m) => m.id === variables.id)) {
         queryClient.invalidateQueries({ queryKey: roomsKey })
       }
+      broadcastInvalidate(messagesKey)
+      broadcastInvalidate(roomsKey)
+    },
+    onError: (_err, _variables, context) => {
+      if (context?.previous) queryClient.setQueryData(messagesKey, context.previous)
     },
   })
 }
@@ -248,17 +256,20 @@ export function useToggleDone(roomId: string) {
   return trpc.message.toggleDone.useMutation({
     onMutate: async ({ id, isDone }) => {
       await queryClient.cancelQueries({ queryKey: messagesKey })
+      const previous = queryClient.getQueryData(messagesKey)
       updateMessagesCache(queryClient, messagesKey, (msgs) =>
         msgs.map((m) => (m.id === id ? { ...m, isDone } : m))
       )
+      return { previous }
     },
     onSuccess: (updated) => {
       updateMessagesCache(queryClient, messagesKey, (msgs) =>
         msgs.map((m) => (m.id === updated.id ? { ...m, isDone: updated.isDone } : m))
       )
+      broadcastInvalidate(messagesKey)
     },
-    onError: () => {
-      queryClient.invalidateQueries({ queryKey: messagesKey })
+    onError: (_err, _variables, context) => {
+      if (context?.previous) queryClient.setQueryData(messagesKey, context.previous)
     },
   })
 }
@@ -272,12 +283,17 @@ export function useTogglePin(roomId: string) {
   return trpc.message.togglePin.useMutation({
     onMutate: async ({ id, isPinned }) => {
       await queryClient.cancelQueries({ queryKey: messagesKey })
+      const previous = queryClient.getQueryData(messagesKey)
       updateMessagesCache(queryClient, messagesKey, (msgs) =>
         msgs.map((m) => (m.id === id ? { ...m, isPinned } : m))
       )
+      return { previous }
     },
-    onError: () => {
-      queryClient.invalidateQueries({ queryKey: messagesKey })
+    onSuccess: () => {
+      broadcastInvalidate(messagesKey)
+    },
+    onError: (_err, _variables, context) => {
+      if (context?.previous) queryClient.setQueryData(messagesKey, context.previous)
     },
   })
 }
@@ -291,14 +307,19 @@ export function useSetReminder(roomId: string) {
   return trpc.message.setReminder.useMutation({
     onMutate: async ({ id, remindAt }) => {
       await queryClient.cancelQueries({ queryKey: messagesKey })
+      const previous = queryClient.getQueryData(messagesKey)
       updateMessagesCache(queryClient, messagesKey, (msgs) =>
         msgs.map((m) =>
           m.id === id ? { ...m, remindAt: remindAt ? new Date(remindAt) : null, isRemindDone: false } : m
         )
       )
+      return { previous }
     },
-    onError: () => {
-      queryClient.invalidateQueries({ queryKey: messagesKey })
+    onSuccess: () => {
+      broadcastInvalidate(messagesKey)
+    },
+    onError: (_err, _variables, context) => {
+      if (context?.previous) queryClient.setQueryData(messagesKey, context.previous)
     },
   })
 }
@@ -312,12 +333,17 @@ export function useMarkReminded(roomId: string) {
   return trpc.message.markReminded.useMutation({
     onMutate: async ({ id }) => {
       await queryClient.cancelQueries({ queryKey: messagesKey })
+      const previous = queryClient.getQueryData(messagesKey)
       updateMessagesCache(queryClient, messagesKey, (msgs) =>
         msgs.map((m) => (m.id === id ? { ...m, isRemindDone: true } : m))
       )
+      return { previous }
     },
-    onError: () => {
-      queryClient.invalidateQueries({ queryKey: messagesKey })
+    onSuccess: () => {
+      broadcastInvalidate(messagesKey)
+    },
+    onError: (_err, _variables, context) => {
+      if (context?.previous) queryClient.setQueryData(messagesKey, context.previous)
     },
   })
 }
@@ -331,12 +357,17 @@ export function useMarkRemindedAndDone(roomId: string) {
   return trpc.message.markRemindedAndDone.useMutation({
     onMutate: async ({ id }) => {
       await queryClient.cancelQueries({ queryKey: messagesKey })
+      const previous = queryClient.getQueryData(messagesKey)
       updateMessagesCache(queryClient, messagesKey, (msgs) =>
         msgs.map((m) => (m.id === id ? { ...m, isRemindDone: true, isDone: true } : m))
       )
+      return { previous }
     },
-    onError: () => {
-      queryClient.invalidateQueries({ queryKey: messagesKey })
+    onSuccess: () => {
+      broadcastInvalidate(messagesKey)
+    },
+    onError: (_err, _variables, context) => {
+      if (context?.previous) queryClient.setQueryData(messagesKey, context.previous)
     },
   })
 }
@@ -350,6 +381,7 @@ export function useChecklistToggle(roomId: string) {
   return trpc.message.updateChecklist.useMutation({
     onMutate: async ({ id, items }) => {
       await queryClient.cancelQueries({ queryKey: messagesKey })
+      const previous = queryClient.getQueryData(messagesKey)
       const allDone = items.every((i) => i.isDone)
       updateMessagesCache(queryClient, messagesKey, (msgs) =>
         msgs.map((m) =>
@@ -361,6 +393,7 @@ export function useChecklistToggle(roomId: string) {
             : m
         )
       )
+      return { previous }
     },
     onSuccess: (updated) => {
       updateMessagesCache(queryClient, messagesKey, (msgs) =>
@@ -370,9 +403,10 @@ export function useChecklistToggle(roomId: string) {
             : m
         )
       )
+      broadcastInvalidate(messagesKey)
     },
-    onError: () => {
-      queryClient.invalidateQueries({ queryKey: messagesKey })
+    onError: (_err, _variables, context) => {
+      if (context?.previous) queryClient.setQueryData(messagesKey, context.previous)
     },
   })
 }
