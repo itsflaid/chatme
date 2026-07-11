@@ -51,7 +51,7 @@ model Message {
   remindAt        DateTime?                  // waktu reminder diset user
   remindSnoozeAt  DateTime?                  // waktu baru setelah ditunda
   isRemindDone    Boolean   @default(false)  // reminder sudah di-resolve
-  sourceMessageId String?                    // relasi ke pesan asli yang di-remind
+  sourceMessageId String? @unique             // relasi ke pesan asli yang di-remind (unique mencegah duplikat bot reminder)
   userId          String
   roomId          String
   createdAt       DateTime  @default(now())

@@ -58,7 +58,7 @@ function ChatContainerInner({ room, messages, loading, loadingMore, hasMore, onL
 
   async function handleCheckReminders() {
     try {
-      const newBotMessages = await utils.message.checkReminders.fetch({ roomId })
+      const newBotMessages = await utils.message.checkReminders.mutateAsync({ roomId })
       if (newBotMessages.length > 0) {
         const existingIds = new Set(messages.map((m) => m.id))
         const newOnes = newBotMessages.filter((m) => !existingIds.has(m.id))

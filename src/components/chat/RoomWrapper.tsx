@@ -57,7 +57,7 @@ export default function RoomWrapper({ roomId }: Props) {
     async function pollReminders() {
       if (document.hidden) return
       try {
-        const newBotMessages = await utils.message.checkReminders.fetch({ roomId })
+        const newBotMessages = await utils.message.checkReminders.mutateAsync({ roomId })
         if (newBotMessages.length > 0) {
           const currentMessages = messagesRef.current
           const existingIds = new Set(currentMessages.map((m) => m.id))

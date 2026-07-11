@@ -169,7 +169,7 @@ export const messageRouter = router({
 
   checkReminders: protectedProcedure
     .input(z.object({ roomId: z.string() }))
-    .query(async ({ ctx, input }) => {
+    .mutation(async ({ ctx, input }) => {
       const pendingReminders = await ctx.prisma.message.findMany({
         where: {
           roomId: input.roomId,
@@ -191,6 +191,7 @@ export const messageRouter = router({
           roomId: input.roomId,
           userId: ctx.userId,
         })),
+        skipDuplicates: true,
       })
 
       return ctx.prisma.message.findMany({
