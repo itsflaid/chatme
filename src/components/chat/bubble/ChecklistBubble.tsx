@@ -2,14 +2,15 @@
 
 import { useState, memo } from "react"
 import { FiCheck, FiEdit2, FiList, FiPlus, FiTrash2, FiX } from "react-icons/fi"
+import { useQueryClient } from "@tanstack/react-query"
 import { trpc } from "@/lib/trpc"
 import { ModalPortal } from "@/components/ui/ModalPortal"
-import { useToggleChecklistItem } from "@/hooks/useMessages"
+import { useToggleChecklistItemOptimistic, updateMessagesCache, getMessagesKey } from "@/hooks/useMessages"
 import type { ChatMessage } from "@/types/chat"
 
 type Props = {
   message: ChatMessage
-  onUpdate: (id: string, patch: Partial<ChatMessage>) => void
+  roomId: string
   onContextMenu?: (e: React.MouseEvent) => void
   onTouchStart?: (e: React.TouchEvent) => void
   onTouchEnd?: (e: React.TouchEvent) => void
@@ -18,7 +19,7 @@ type Props = {
 
 const ChecklistBubble = memo(function ChecklistBubble({
   message,
-  onUpdate,
+  roomId,
   onContextMenu,
   onTouchStart,
   onTouchEnd,
@@ -32,7 +33,8 @@ const ChecklistBubble = memo(function ChecklistBubble({
   )
 
   const utils = trpc.useUtils()
-  const toggleChecklistItem = useToggleChecklistItem()
+  const queryClient = useQueryClient()
+  const { optimisticToggle } = useToggleChecklistItemOptimistic(roomId)
 
   const completed = message.checklistItems.filter((item) => item.isDone).length
   const total = message.checklistItems.length
@@ -41,23 +43,7 @@ const ChecklistBubble = memo(function ChecklistBubble({
 
   function toggleItem(itemId: string, isDone: boolean) {
     if (isPending) return
-    const nextItems = message.checklistItems.map((item) =>
-      item.id === itemId ? { ...item, isDone } : item
-    )
-    const messageIsDone = nextItems.every((item) => item.isDone)
-    onUpdate(message.id, { checklistItems: nextItems, isDone: messageIsDone })
-
-    toggleChecklistItem.mutate(
-      { id: itemId, isDone },
-      {
-        onError: () => {
-          onUpdate(message.id, {
-            checklistItems: message.checklistItems,
-            isDone: message.isDone,
-          })
-        },
-      }
-    )
+    optimisticToggle(message.id, message.checklistItems, itemId, isDone)
   }
 
   function startEditing() {
@@ -82,7 +68,14 @@ const ChecklistBubble = memo(function ChecklistBubble({
         title: title.trim(),
         items,
       })
-      onUpdate(message.id, updated as unknown as ChatMessage)
+      const messagesKey = getMessagesKey(roomId)
+      updateMessagesCache(queryClient, messagesKey, (msgs) =>
+        msgs.map((m) =>
+          m.id === updated.id
+            ? { ...m, text: updated.text, isDone: updated.isDone, checklistItems: updated.checklistItems }
+            : m
+        )
+      )
       setEditing(false)
     } catch {
       /* silent */

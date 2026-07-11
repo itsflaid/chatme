@@ -3,7 +3,7 @@
 import { useEffect, useRef } from "react"
 import { useRouter } from "next/navigation"
 import { useQueryClient } from "@tanstack/react-query"
-import { useMessagesQuery, getMessagesKey } from "@/hooks/useMessages"
+import { useMessagesQuery, getMessagesKey, updateMessagesCacheFlatten } from "@/hooks/useMessages"
 import { useRoom } from "@/hooks/useRoom"
 import { trpc } from "@/lib/trpc"
 import ChatContainer from "./ChatContainer"
@@ -65,20 +65,7 @@ export default function RoomWrapper({ roomId }: Props) {
           if (newOnes.length > 0) {
             showReminderNotifications(newOnes, currentMessages, room!.name)
             const messagesKey = getMessagesKey(roomId)
-            type MessagesPageData = {
-              pageParams: unknown[]
-              pages: { messages: ChatMessage[]; hasMore: boolean }[]
-            }
-            queryClient.setQueryData(messagesKey, (old: MessagesPageData | undefined) => {
-              if (!old) return old
-              const pages = [...old.pages]
-              const lastIndex = pages.length - 1
-              pages[lastIndex] = {
-                ...pages[lastIndex],
-                messages: [...pages[lastIndex].messages, ...newOnes],
-              }
-              return { ...old, pages }
-            })
+            updateMessagesCacheFlatten(queryClient, messagesKey, (msgs) => [...msgs, ...newOnes])
           }
         }
       } catch {

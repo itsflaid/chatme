@@ -1,5 +1,6 @@
 "use client"
 
+import { useCallback } from "react"
 import { useQueryClient } from "@tanstack/react-query"
 import { trpc } from "@/lib/trpc"
 import { getQueryKey } from "@trpc/react-query"
@@ -363,7 +364,11 @@ export function useChecklistToggle(roomId: string) {
     },
     onSuccess: (updated) => {
       updateMessagesCache(queryClient, messagesKey, (msgs) =>
-        msgs.map((m) => (m.id === updated.id ? updated : m))
+        msgs.map((m) =>
+          m.id === updated.id
+            ? { ...m, text: updated.text, isDone: updated.isDone, checklistItems: updated.checklistItems }
+            : m
+        )
       )
     },
     onError: () => {
@@ -376,4 +381,47 @@ export function useChecklistToggle(roomId: string) {
 
 export function useToggleChecklistItem() {
   return trpc.checklistItem.toggle.useMutation()
+}
+
+// ── Checklist item toggle with optimistic cache update ──────────────────
+
+export function useToggleChecklistItemOptimistic(roomId: string) {
+  const queryClient = useQueryClient()
+  const messagesKey = getMessagesKey(roomId)
+  const toggleItem = useToggleChecklistItem()
+
+  const optimisticToggle = useCallback(
+    (messageId: string, prevItems: ChatMessage['checklistItems'], itemId: string, isDone: boolean) => {
+      const nextItems = prevItems.map((item) =>
+        item.id === itemId ? { ...item, isDone } : item
+      )
+      const messageIsDone = nextItems.every((item) => item.isDone)
+
+      updateMessagesCache(queryClient, messagesKey, (msgs) =>
+        msgs.map((m) =>
+          m.id === messageId
+            ? { ...m, checklistItems: nextItems, isDone: messageIsDone }
+            : m
+        )
+      )
+
+      toggleItem.mutate(
+        { id: itemId, isDone },
+        {
+          onError: () => {
+            updateMessagesCache(queryClient, messagesKey, (msgs) =>
+              msgs.map((m) =>
+                m.id === messageId
+                  ? { ...m, checklistItems: prevItems, isDone: prevItems.every((i) => i.isDone) }
+                  : m
+              )
+            )
+          },
+        }
+      )
+    },
+    [queryClient, messagesKey, toggleItem]
+  )
+
+  return { optimisticToggle, toggleItem }
 }

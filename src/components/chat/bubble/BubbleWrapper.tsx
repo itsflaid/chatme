@@ -8,9 +8,7 @@ import EditMessageModal from "@/components/chat/modals/EditMessageModal"
 import MessageBubble from "./MessageBubble"
 import ChecklistBubble from "./ChecklistBubble"
 import { MessageType } from "@prisma/client"
-import { useQueryClient } from "@tanstack/react-query"
 import { useMessageActions } from "@/hooks/useMessageActions"
-import { updateMessagesCache, getMessagesKey } from "@/hooks/useMessages"
 import type { ChatMessage } from "@/types/chat"
 
 type Props = {
@@ -32,8 +30,6 @@ const BubbleWrapper = memo(function BubbleWrapper({
   const [showEdit, setShowEdit] = useState(false)
   const touchTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  const queryClient = useQueryClient()
-  const messagesKey = getMessagesKey(roomId)
   const { editMessage, deleteMessage, togglePin, toggleDone, setReminder, markReminded, checklistToggle } = useMessageActions()
 
   function openMenu(x: number, y: number) { setMenuPos({ x, y }) }
@@ -92,22 +88,13 @@ const BubbleWrapper = memo(function BubbleWrapper({
     markReminded.mutate({ id: message.id })
   }, [message.id, markReminded])
 
-  const handleChecklistUpdate = useCallback(
-    (id: string, patch: Partial<ChatMessage>) => {
-      updateMessagesCache(queryClient, messagesKey, (msgs) =>
-        msgs.map((m) => (m.id === id ? { ...m, ...patch } : m))
-      )
-    },
-    [queryClient, messagesKey]
-  )
-
   return (
     <>
       <div className="select-none">
         {message.type === MessageType.CHECKLIST ? (
           <ChecklistBubble
             message={message}
-            onUpdate={handleChecklistUpdate}
+            roomId={roomId}
             onContextMenu={handleContextMenu}
             onTouchStart={handleTouchStart}
             onTouchEnd={handleTouchEnd}
