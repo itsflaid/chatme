@@ -44,9 +44,25 @@ export default function MobileLayout({ sidebar, children }: Props) {
     frozenSidebar: null,
   })
 
+  const sidebarRef = useRef<HTMLDivElement>(null)
   const contentRef = useRef<HTMLDivElement>(null)
+  const justSnappedRef = useRef(false)
 
   if (isContentPage !== slideState.displayedIsContentPage) {
+    if (slideState.phase === "sliding") {
+      const sidebarEl = sidebarRef.current
+      const contentEl = contentRef.current
+      if (sidebarEl && contentEl) {
+        sidebarEl.style.transition = "none"
+        contentEl.style.transition = "none"
+        void sidebarEl.offsetWidth
+        justSnappedRef.current = true
+        setTimeout(() => {
+          justSnappedRef.current = false
+        }, 0)
+      }
+    }
+
     dispatch({
       type: "freeze",
       children,
@@ -58,6 +74,10 @@ export default function MobileLayout({ sidebar, children }: Props) {
   function handleTransitionEnd(e: React.TransitionEvent<HTMLDivElement>) {
     if (e.target !== contentRef.current) return
     if (e.propertyName !== "transform") return
+    if (justSnappedRef.current) {
+      justSnappedRef.current = false
+      return
+    }
     dispatch({ type: "unfreeze" })
   }
 
@@ -80,6 +100,7 @@ export default function MobileLayout({ sidebar, children }: Props) {
       <div className="flex md:hidden w-full  relative overflow-hidden" style={{ height: "100dvh" }}>
 
         <div
+          ref={sidebarRef}
           className="absolute inset-0 min-h-0 flex flex-col transition-transform"
           style={{
             transform: slideState.displayedIsContentPage ? "translateX(-100%)" : "translateX(0)",
