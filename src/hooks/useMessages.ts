@@ -1,6 +1,6 @@
 "use client"
 
-import { useCallback } from "react"
+import { useCallback, useRef } from "react"
 import { useQueryClient } from "@tanstack/react-query"
 import { trpc } from "@/lib/trpc"
 import { getQueryKey } from "@trpc/react-query"
@@ -229,7 +229,7 @@ export function useDeleteMessage(roomId: string) {
       )
       return { previous }
     },
-    onSuccess: (_data, variables, context) => {
+    onSuccess: (_data, variables) => {
       const allMsgs = getMessagesFromCache(queryClient, messagesKey)
       const latest = allMsgs.reduce((a, b) =>
         new Date(a.createdAt) > new Date(b.createdAt) ? a : b
@@ -370,6 +370,64 @@ export function useMarkRemindedAndDone(roomId: string) {
       if (context?.previous) queryClient.setQueryData(messagesKey, context.previous)
     },
   })
+}
+
+// ── Check reminders (shared, race-safe) ─────────────────────────────────
+//
+// SATU-SATUNYA tempat yang boleh manggil message.checkReminders. Dulu dobel
+// diimplement di ChatContainer & RoomWrapper, masing-masing ngecek "id ini
+// udah ada belum" pake snapshot messages yang STALE (ref/prop dari sebelum
+// mutate() resolve), baru abis itu nulis ke cache. Kalau 2 pemanggilan
+// beririsan (poll 5 detik overlap krn Neon lagi cold-start, atau 2 tempat
+// beneran jalan bareng), kedua-duanya sama-sama mikir "id ini baru" dan
+// sama-sama nulis ke cache -> 1 message ke-render 2x.
+//
+// Fix: pengecekan "sudah ada belum" dipindah ke DALAM callback setQueryData
+// -> selalu baca cache yang PALING LIVE persis di detik itu, bukan snapshot
+// lama. Ditambah isCheckingRef sebagai mutex biar tick yang overlap di-skip,
+// bukan numpuk. Return value = array yang BENERAN baru ditambahkan (buat
+// notifikasi), bukan raw response dari server.
+export function useCheckReminders(roomId: string) {
+  const queryClient = useQueryClient()
+  const utils = trpc.useUtils()
+  const messagesKey = getMessagesKey(roomId)
+  const isCheckingRef = useRef(false)
+
+  return useCallback(async (): Promise<ChatMessage[]> => {
+    if (isCheckingRef.current) return []
+    isCheckingRef.current = true
+    try {
+      const newBotMessages = await utils.client.message.checkReminders.mutate({ roomId })
+      if (newBotMessages.length === 0) return []
+
+      let actuallyNew: ChatMessage[] = []
+      queryClient.setQueryData(messagesKey, (old: MessagesPageData | undefined) => {
+        if (!old) return old
+        const all = old.pages.flatMap((p) => p.messages)
+        const existingIds = new Set(all.map((m) => m.id))
+        actuallyNew = newBotMessages.filter((m) => !existingIds.has(m.id))
+        if (actuallyNew.length === 0) return old
+
+        const updated = [...all, ...actuallyNew]
+        const pageSize = old.pages[old.pages.length - 1]?.messages.length ?? MESSAGES_LIMIT
+        const pages: MessagesPageData["pages"] = []
+        for (let i = 0; i < updated.length; i += pageSize) {
+          pages.push({ messages: updated.slice(i, i + pageSize), hasMore: true })
+        }
+        if (pages.length > 0) {
+          pages[pages.length - 1].hasMore = old.pages[old.pages.length - 1]?.hasMore ?? false
+        }
+        return { ...old, pages }
+      })
+
+      return actuallyNew
+    } catch (err) {
+      console.error("[checkReminders] gagal cek reminder:", err)
+      return []
+    } finally {
+      isCheckingRef.current = false
+    }
+  }, [roomId, queryClient, utils, messagesKey])
 }
 
 // ── Checklist toggle item ───────────────────────────────────────────────

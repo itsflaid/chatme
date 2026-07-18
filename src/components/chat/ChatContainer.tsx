@@ -2,14 +2,12 @@
 
 import { useState, useMemo, useCallback } from "react"
 import { FiChevronUp, FiChevronDown, FiX } from "react-icons/fi"
-import { useQueryClient } from "@tanstack/react-query"
 import ChatMessages from "./ChatMessages"
 import ChatHeader from "./ChatHeader"
 import ChatInput from "./ChatInput"
 import SnoozeModal from "./modals/SnoozeModal"
 import { MessageActionsProvider, useMessageActions } from "@/hooks/useMessageActions"
-import { updateMessagesCacheFlatten, getMessagesKey, useMarkRemindedAndDone } from "@/hooks/useMessages"
-import { trpc } from "@/lib/trpc"
+import { useMarkRemindedAndDone, useCheckReminders } from "@/hooks/useMessages"
 import type { ChatMessage } from "@/types/chat"
 
 type Props = {
@@ -53,23 +51,10 @@ function ChatContainerInner({ room, messages, loading, loadingMore, hasMore, onL
     setActiveIndex(0)
   }
 
-  const queryClient = useQueryClient()
-  const utils = trpc.useUtils()
-  const messagesKey = getMessagesKey(roomId)
+  const checkReminders = useCheckReminders(roomId)
 
   async function handleCheckReminders() {
-    try {
-      const newBotMessages = await utils.client.message.checkReminders.mutate({ roomId })
-      if (newBotMessages.length > 0) {
-        const existingIds = new Set(messages.map((m) => m.id))
-        const newOnes = newBotMessages.filter((m) => !existingIds.has(m.id))
-        if (newOnes.length > 0) {
-          updateMessagesCacheFlatten(queryClient, messagesKey, (msgs) => [...msgs, ...newOnes])
-        }
-      }
-    } catch {
-      /* silent */
-    }
+    await checkReminders()
   }
 
   const handleBotDone = useCallback((botMessageId: string, sourceMessageId: string) => {

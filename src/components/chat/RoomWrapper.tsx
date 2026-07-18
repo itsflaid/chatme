@@ -2,10 +2,8 @@
 
 import { useEffect, useRef } from "react"
 import { useRouter } from "next/navigation"
-import { useQueryClient } from "@tanstack/react-query"
-import { useMessagesQuery, getMessagesKey, updateMessagesCacheFlatten } from "@/hooks/useMessages"
+import { useMessagesQuery, useCheckReminders } from "@/hooks/useMessages"
 import { useRoom } from "@/hooks/useRoom"
-import { trpc } from "@/lib/trpc"
 import ChatContainer from "./ChatContainer"
 import type { ChatMessage } from "@/types/chat"
 
@@ -35,10 +33,10 @@ function showReminderNotifications(
 
 export default function RoomWrapper({ roomId }: Props) {
   const router = useRouter()
-  const queryClient = useQueryClient()
   const { data: room, error: roomError } = useRoom(roomId)
   const { data: messages = [], fetchNextPage, hasNextPage, isFetchingNextPage, isLoading } = useMessagesQuery(roomId)
   const messagesRef = useRef(messages)
+  const checkReminders = useCheckReminders(roomId)
 
   useEffect(() => {
     messagesRef.current = messages
@@ -48,28 +46,15 @@ export default function RoomWrapper({ roomId }: Props) {
     if (roomError) router.replace("/")
   }, [roomError, router])
 
-  const utils = trpc.useUtils()
-
   useEffect(() => {
     if (!room) return
     let interval: ReturnType<typeof setInterval> | null = null
 
     async function pollReminders() {
       if (document.hidden) return
-      try {
-        const newBotMessages = await utils.client.message.checkReminders.mutate({ roomId })
-        if (newBotMessages.length > 0) {
-          const currentMessages = messagesRef.current
-          const existingIds = new Set(currentMessages.map((m) => m.id))
-          const newOnes = newBotMessages.filter((m) => !existingIds.has(m.id))
-          if (newOnes.length > 0) {
-            showReminderNotifications(newOnes, currentMessages, room!.name)
-            const messagesKey = getMessagesKey(roomId)
-            updateMessagesCacheFlatten(queryClient, messagesKey, (msgs) => [...msgs, ...newOnes])
-          }
-        }
-      } catch {
-        /* silent */
+      const actuallyNew = await checkReminders()
+      if (actuallyNew.length > 0) {
+        showReminderNotifications(actuallyNew, messagesRef.current, room!.name)
       }
     }
 
@@ -77,7 +62,7 @@ export default function RoomWrapper({ roomId }: Props) {
     return () => {
       if (interval) clearInterval(interval)
     }
-  }, [roomId, room, queryClient, utils])
+  }, [room, checkReminders])
 
   if (!room && !roomError) {
     return (
