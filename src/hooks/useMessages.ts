@@ -372,53 +372,71 @@ export function useMarkRemindedAndDone(roomId: string) {
   })
 }
 
-// ── Check reminders (shared, race-safe) ─────────────────────────────────
+// ── Check reminders (shared, race-safe, GLOBAL — semua room) ───────────
 //
-// SATU-SATUNYA tempat yang boleh manggil message.checkReminders. Dulu dobel
-// diimplement di ChatContainer & RoomWrapper, masing-masing ngecek "id ini
-// udah ada belum" pake snapshot messages yang STALE (ref/prop dari sebelum
-// mutate() resolve), baru abis itu nulis ke cache. Kalau 2 pemanggilan
-// beririsan (poll 5 detik overlap krn Neon lagi cold-start, atau 2 tempat
-// beneran jalan bareng), kedua-duanya sama-sama mikir "id ini baru" dan
-// sama-sama nulis ke cache -> 1 message ke-render 2x.
+// v2: gak lagi di-scope roomId. Dulu poller nempel di RoomWrapper -> cuma
+// ngecek reminder room yang lagi kebuka doang, room lain diem aja sampe
+// dibuka manual. Sekarang checkReminders backend cek SEMUA room punya user,
+// dipanggil dari SATU poller global (lihat ReminderPoller.tsx) yang mounted
+// di Providers, independen dari navigasi antar room.
 //
-// Fix: pengecekan "sudah ada belum" dipindah ke DALAM callback setQueryData
-// -> selalu baca cache yang PALING LIVE persis di detik itu, bukan snapshot
-// lama. Ditambah isCheckingRef sebagai mutex biar tick yang overlap di-skip,
-// bukan numpuk. Return value = array yang BENERAN baru ditambahkan (buat
-// notifikasi), bukan raw response dari server.
-export function useCheckReminders(roomId: string) {
+// Karena hasilnya bisa nyebar ke banyak room sekaligus, di-group per roomId
+// dulu baru di-merge ke cache masing-masing. Pengecekan "udah ada belum"
+// tetep dilakuin DI DALAM callback setQueryData (baca cache paling live),
+// bukan dari snapshot luar -> tetep race-safe kayak versi sebelumnya.
+export function useCheckReminders() {
   const queryClient = useQueryClient()
   const utils = trpc.useUtils()
-  const messagesKey = getMessagesKey(roomId)
   const isCheckingRef = useRef(false)
 
   return useCallback(async (): Promise<ChatMessage[]> => {
     if (isCheckingRef.current) return []
     isCheckingRef.current = true
     try {
-      const newBotMessages = await utils.client.message.checkReminders.mutate({ roomId })
+      const newBotMessages = await utils.client.message.checkReminders.mutate()
       if (newBotMessages.length === 0) return []
 
-      let actuallyNew: ChatMessage[] = []
-      queryClient.setQueryData(messagesKey, (old: MessagesPageData | undefined) => {
-        if (!old) return old
-        const all = old.pages.flatMap((p) => p.messages)
-        const existingIds = new Set(all.map((m) => m.id))
-        actuallyNew = newBotMessages.filter((m) => !existingIds.has(m.id))
-        if (actuallyNew.length === 0) return old
+      const byRoom = new Map<string, ChatMessage[]>()
+      for (const msg of newBotMessages) {
+        const list = byRoom.get(msg.roomId) ?? []
+        list.push(msg)
+        byRoom.set(msg.roomId, list)
+      }
 
-        const updated = [...all, ...actuallyNew]
-        const pageSize = old.pages[old.pages.length - 1]?.messages.length ?? MESSAGES_LIMIT
-        const pages: MessagesPageData["pages"] = []
-        for (let i = 0; i < updated.length; i += pageSize) {
-          pages.push({ messages: updated.slice(i, i + pageSize), hasMore: true })
-        }
-        if (pages.length > 0) {
-          pages[pages.length - 1].hasMore = old.pages[old.pages.length - 1]?.hasMore ?? false
-        }
-        return { ...old, pages }
-      })
+      const actuallyNew: ChatMessage[] = []
+
+      for (const [roomId, roomMessages] of byRoom) {
+        const messagesKey = getMessagesKey(roomId)
+        let newOnesForRoom: ChatMessage[] = []
+
+        queryClient.setQueryData(messagesKey, (old: MessagesPageData | undefined) => {
+          if (!old) {
+            // Room ini belum pernah dibuka sesi ini -> gak ada cache buat
+            // di-merge. Begitu dibuka nanti, message.list bakal fetch fresh
+            // dari server (row-nya udah ada di DB). Tetep dianggap "baru"
+            // buat keperluan notifikasi.
+            newOnesForRoom = roomMessages
+            return old
+          }
+          const all = old.pages.flatMap((p) => p.messages)
+          const existingIds = new Set(all.map((m) => m.id))
+          newOnesForRoom = roomMessages.filter((m) => !existingIds.has(m.id))
+          if (newOnesForRoom.length === 0) return old
+
+          const updated = [...all, ...newOnesForRoom]
+          const pageSize = old.pages[old.pages.length - 1]?.messages.length ?? MESSAGES_LIMIT
+          const pages: MessagesPageData["pages"] = []
+          for (let i = 0; i < updated.length; i += pageSize) {
+            pages.push({ messages: updated.slice(i, i + pageSize), hasMore: true })
+          }
+          if (pages.length > 0) {
+            pages[pages.length - 1].hasMore = old.pages[old.pages.length - 1]?.hasMore ?? false
+          }
+          return { ...old, pages }
+        })
+
+        actuallyNew.push(...newOnesForRoom)
+      }
 
       return actuallyNew
     } catch (err) {
@@ -427,7 +445,7 @@ export function useCheckReminders(roomId: string) {
     } finally {
       isCheckingRef.current = false
     }
-  }, [roomId, queryClient, utils, messagesKey])
+  }, [queryClient, utils])
 }
 
 // ── Checklist toggle item ───────────────────────────────────────────────
