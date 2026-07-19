@@ -6,6 +6,7 @@ import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client
 import { queryClient, idbPersister } from "@/lib/queryClient"
 import { trpc } from "@/lib/trpc"
 import { initBroadcastListener } from "@/lib/broadcastSync"
+import ReminderPoller from "@/components/ReminderPoller"
 import superjson from 'superjson';
 
 
@@ -51,6 +52,7 @@ const [trpcClient] = useState(() =>
           },
         }}
       >
+        <ReminderPoller />
         {children}
       </PersistQueryClientProvider>
     </trpc.Provider>
