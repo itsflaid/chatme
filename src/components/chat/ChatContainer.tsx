@@ -51,7 +51,7 @@ function ChatContainerInner({ room, messages, loading, loadingMore, hasMore, onL
     setActiveIndex(0)
   }
 
-  const checkReminders = useCheckReminders(roomId)
+  const checkReminders = useCheckReminders()
 
   async function handleCheckReminders() {
     await checkReminders()

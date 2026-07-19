@@ -1,68 +1,23 @@
 "use client"
 
-import { useEffect, useRef } from "react"
+import { useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { useMessagesQuery, useCheckReminders } from "@/hooks/useMessages"
+import { useMessagesQuery } from "@/hooks/useMessages"
 import { useRoom } from "@/hooks/useRoom"
 import ChatContainer from "./ChatContainer"
-import type { ChatMessage } from "@/types/chat"
 
 type Props = {
   roomId: string
-}
-
-function showReminderNotifications(
-  botMessages: ChatMessage[],
-  messages: ChatMessage[],
-  roomName: string
-) {
-  if (!("Notification" in window) || Notification.permission !== "granted") return
-  for (const botMessage of botMessages) {
-    const sourceMessage = messages.find((m) => m.id === botMessage.sourceMessageId)
-    const notification = new Notification(`Pengingat dari ${roomName}`, {
-      body: sourceMessage?.text || "Ada pengingat yang perlu kamu cek.",
-      icon: "/favicon.ico",
-      tag: `chatme-reminder-${botMessage.sourceMessageId ?? botMessage.id}`,
-    })
-    notification.onclick = () => {
-      window.focus()
-      notification.close()
-    }
-  }
 }
 
 export default function RoomWrapper({ roomId }: Props) {
   const router = useRouter()
   const { data: room, error: roomError } = useRoom(roomId)
   const { data: messages = [], fetchNextPage, hasNextPage, isFetchingNextPage, isLoading } = useMessagesQuery(roomId)
-  const messagesRef = useRef(messages)
-  const checkReminders = useCheckReminders(roomId)
-
-  useEffect(() => {
-    messagesRef.current = messages
-  }, [messages])
 
   useEffect(() => {
     if (roomError) router.replace("/")
   }, [roomError, router])
-
-  useEffect(() => {
-    if (!room) return
-    let interval: ReturnType<typeof setInterval> | null = null
-
-    async function pollReminders() {
-      if (document.hidden) return
-      const actuallyNew = await checkReminders()
-      if (actuallyNew.length > 0) {
-        showReminderNotifications(actuallyNew, messagesRef.current, room!.name)
-      }
-    }
-
-    interval = setInterval(pollReminders, 5000)
-    return () => {
-      if (interval) clearInterval(interval)
-    }
-  }, [room, checkReminders])
 
   if (!room && !roomError) {
     return (
