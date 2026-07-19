@@ -224,11 +224,9 @@ export const messageRouter = router({
     }),
 
   checkReminders: protectedProcedure
-    .input(z.object({ roomId: z.string() }))
-    .mutation(async ({ ctx, input }) => {
+    .mutation(async ({ ctx }) => {
       const pendingReminders = await ctx.prisma.message.findMany({
         where: {
-          roomId: input.roomId,
           userId: ctx.userId,
           isBot: false,
           isRemindDone: false,
@@ -244,7 +242,7 @@ export const messageRouter = router({
           text: "",
           isBot: true,
           sourceMessageId: reminder.id,
-          roomId: input.roomId,
+          roomId: reminder.roomId,
           userId: ctx.userId,
         })),
         skipDuplicates: true,
@@ -252,7 +250,6 @@ export const messageRouter = router({
 
       return ctx.prisma.message.findMany({
         where: {
-          roomId: input.roomId,
           userId: ctx.userId,
           isBot: true,
           sourceMessageId: { in: pendingReminders.map((r) => r.id) },
