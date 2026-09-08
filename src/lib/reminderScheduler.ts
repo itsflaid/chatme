@@ -1,4 +1,5 @@
-import type { Message, PrismaClient } from "@prisma/client"
+import type { Message } from "@prisma/client"
+import type { PrismaClientExtended } from "./prisma"
 import { qstashClient, getAppUrl } from "./qstash"
 
 // Reminder yang udah terkirim tapi belum di-acknowledge user dinaggin ULANG SATU KALI
@@ -24,7 +25,7 @@ type CancelableRow = Pick<Message, "id" | "remindQstashId">
 // kepake / expired / gak ketemu di sisi QStash, kegagalannya diabaikan aja. Perlindungan
 // utama terhadap job basi tetap dari reminderVersion check di endpoint trigger; fungsi ini
 // cuma optimisasi supaya gak ada job nganggur numpuk di QStash.
-export async function cancelReminderJob(prisma: PrismaClient, message: CancelableRow) {
+export async function cancelReminderJob(prisma: PrismaClientExtended, message: CancelableRow) {
   if (!message.remindQstashId) return
   try {
     await qstashClient.messages.cancel(message.remindQstashId)
@@ -37,7 +38,7 @@ export async function cancelReminderJob(prisma: PrismaClient, message: Cancelabl
   })
 }
 
-async function scheduleReminderJob(prisma: PrismaClient, message: ReminderRow) {
+async function scheduleReminderJob(prisma: PrismaClientExtended, message: ReminderRow) {
   if (!message.remindAt) return
   // Math.ceil (bukan floor) + buffer 2 detik: delay dijamin selalu >= selisih asli ke
   // remindAt, biar job gak pernah nembak SEBELUM remindAt. Kalau nembak lebih awal walau
@@ -64,7 +65,7 @@ async function scheduleReminderJob(prisma: PrismaClient, message: ReminderRow) {
 // Kegagalan publish ke QStash sengaja gak dilempar ke caller — reminder tetap tersimpan
 // di database (source of truth), cuma job pengingatnya belum sempat terjadwal.
 export async function rescheduleReminderJob(
-  prisma: PrismaClient,
+  prisma: PrismaClientExtended,
   message: ReminderRow & CancelableRow
 ) {
   await cancelReminderJob(prisma, message)

@@ -3,6 +3,7 @@ import { verifySignatureAppRouter } from "@upstash/qstash/nextjs"
 import { prisma } from "@/lib/prisma"
 import { sendPushToUser } from "@/lib/webPush"
 import { qstashClient } from "@/lib/qstash"
+import { encryptField } from "@/lib/encryption"
 import {
   NAG_DELAY_MS,
   RETRY_DELAY_SECONDS,
@@ -99,6 +100,9 @@ async function handler(req: Request) {
   }
 
   const reminder = await prisma.message.findUniqueOrThrow({ where: { id: body.messageId } })
+  // reminder.text di sini SUDAH plaintext (auto-decrypt lewat extension di src/lib/prisma.ts) —
+  // aman dipakai langsung buat body push, tapi HARUS dienkripsi ulang sebelum ditulis lagi
+  // ke DB sebagai row baru (bot bubble) di bawah, kalau enggak bakal kesimpan plaintext.
 
   // Jadwalin nag susulan DULUAN, sebelum kirim push — supaya kalau pengiriman push gagal
   // (mis. layanan push lagi down), reminder tetap dapat 1 kesempatan lagi, bukan diam
@@ -113,7 +117,7 @@ async function handler(req: Request) {
   await prisma.message.createMany({
     data: [
       {
-        text: reminder.text,
+        text: encryptField(reminder.text),
         isBot: true,
         sourceMessageId: reminder.id,
         roomId: reminder.roomId,
