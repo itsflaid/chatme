@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { FiBell, FiCheckCircle } from "react-icons/fi"
 import { usePushSubscription } from "@/hooks/usePushSubscription"
 
@@ -8,6 +8,19 @@ export default function EnablePushButton() {
   const { enablePush } = usePushSubscription()
   const [loading, setLoading] = useState(false)
   const [done, setDone] = useState(false)
+
+  // Cek subscription yang SUDAH ada saat komponen mount. Sebelumnya tombol ini selalu mulai
+  // dari "Aktifkan Notifikasi" walau user udah pernah subscribe, jadi gak bisa dipakai buat
+  // mastiin push beneran aktif di browser ini — sekarang bisa dipakai buat cross-check cepat
+  // tanpa harus buka database, salah satu langkah diagnosa notif yang gak muncul.
+  useEffect(() => {
+    if (!("serviceWorker" in navigator) || !("PushManager" in window)) return
+    if (Notification.permission !== "granted") return
+    navigator.serviceWorker.ready
+      .then((registration) => registration.pushManager.getSubscription())
+      .then((subscription) => setDone(!!subscription))
+      .catch(() => {})
+  }, [])
 
   async function handleClick() {
     if (loading || done) return

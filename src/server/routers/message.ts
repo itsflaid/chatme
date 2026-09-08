@@ -4,6 +4,7 @@ import { router, protectedProcedure, rateLimitedProcedure } from "../trpc"
 import { TRPCError } from "@trpc/server"
 import { EDIT_WINDOW_MS } from "@/lib/editWindow"
 import { rescheduleReminderJob, cancelReminderJob } from "@/lib/reminderScheduler"
+import { encryptField } from "@/lib/encryption"
 
 export const messageRouter = router({
   //list catatan per room (pagination)
@@ -103,13 +104,13 @@ export const messageRouter = router({
 
       return ctx.prisma.message.create({
         data: {
-          text: input.text.trim(),
+          text: encryptField(input.text.trim()),
           type: input.type === MessageType.CHECKLIST ? MessageType.CHECKLIST : MessageType.TEXT,
           roomId: input.roomId,
           userId: ctx.userId,
           ...(input.type === MessageType.CHECKLIST && {
             checklistItems: {
-              create: normalizedItems.map((item, position) => ({ text: item, position })),
+              create: normalizedItems.map((item, position) => ({ text: encryptField(item), position })),
             },
           }),
         },
@@ -146,6 +147,12 @@ export const messageRouter = router({
       }
       if ("text" in data && Date.now() - owned.createdAt.getTime() > EDIT_WINDOW_MS) {
         throw new TRPCError({ code: "BAD_REQUEST", message: "Batas waktu edit (24 jam) sudah lewat" })
+      }
+
+      // Enkripsi PALING TERAKHIR, setelah semua validasi di atas jalan di teks asli (plaintext) —
+      // termasuk pengecekan kosong & window edit 24 jam.
+      if (typeof data.text === "string") {
+        data.text = encryptField(data.text as string)
       }
 
       return ctx.prisma.message.update({ where: { id }, data })
@@ -319,9 +326,15 @@ export const messageRouter = router({
         await tx.message.update({
           where: { id: input.id },
           data: {
-            text: normalizedTitle,
+            text: encryptField(normalizedTitle),
             taskStatus: normalizedItems.every((item) => item.isDone) ? "DONE" : "PENDING",
-            checklistItems: { create: normalizedItems.map((item, position) => ({ ...item, position })) },
+            checklistItems: {
+              create: normalizedItems.map((item, position) => ({
+                ...item,
+                text: encryptField(item.text),
+                position,
+              })),
+            },
           },
         })
         return tx.message.findUniqueOrThrow({
