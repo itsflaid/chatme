@@ -2,7 +2,7 @@ import { z } from "zod"
 import { MessageType } from "@prisma/client"
 import { router, protectedProcedure, rateLimitedProcedure } from "../trpc"
 import { TRPCError } from "@trpc/server"
-import { EDIT_WINDOW_MS } from "@/lib/editWindow"
+import { EDIT_WINDOW_MS, CHECKLIST_EDIT_WINDOW_MS } from "@/lib/editWindow"
 import { rescheduleReminderJob, cancelReminderJob } from "@/lib/reminderScheduler"
 import { encryptField } from "@/lib/encryption"
 
@@ -317,8 +317,8 @@ export const messageRouter = router({
         select: { id: true, createdAt: true },
       })
       if (!message) throw new TRPCError({ code: "NOT_FOUND" })
-      if (Date.now() - message.createdAt.getTime() > EDIT_WINDOW_MS) {
-        throw new TRPCError({ code: "BAD_REQUEST", message: "Batas waktu edit (24 jam) sudah lewat" })
+      if (Date.now() - message.createdAt.getTime() > CHECKLIST_EDIT_WINDOW_MS) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "Batas waktu edit checklist (7 hari) sudah lewat" })
       }
 
       return ctx.prisma.$transaction(async (tx) => {
