@@ -6,6 +6,7 @@ import { useQueryClient } from "@tanstack/react-query"
 import { trpc } from "@/lib/trpc"
 import { BottomSheet } from "@/components/ui/BottomSheet"
 import { useToggleChecklistItemOptimistic, updateMessagesCache, getMessagesKey } from "@/hooks/useMessages"
+import { CHECKLIST_EDIT_WINDOW_MS } from "@/lib/editWindow"
 import type { ChatMessage } from "@/types/chat"
 
 type Props = {
@@ -40,6 +41,7 @@ const ChecklistBubble = memo(function ChecklistBubble({
   const total = message.checklistItems.length
   const progress = total ? Math.round((completed / total) * 100) : 0
   const isPending = message.id.startsWith("temp-")
+  const canEditByTime = Date.now() - new Date(message.createdAt).getTime() <= CHECKLIST_EDIT_WINDOW_MS
 
   function toggleItem(itemId: string, isDone: boolean) {
     if (isPending) return
@@ -112,7 +114,7 @@ const ChecklistBubble = memo(function ChecklistBubble({
           <button
             type="button"
             onClick={startEditing}
-            disabled={isPending}
+            disabled={isPending || !canEditByTime}
             className="neo-button flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-[var(--surface)] disabled:opacity-40"
             aria-label="Edit checklist"
           >
@@ -138,7 +140,7 @@ const ChecklistBubble = memo(function ChecklistBubble({
               <input
                 type="checkbox"
                 checked={item.isDone}
-                disabled={isPending}
+                disabled={isPending || !canEditByTime}
                 onChange={(event) => toggleItem(item.id, event.target.checked)}
                 className="sr-only"
               />
