@@ -9,11 +9,25 @@ export type RoomData = {
   name: string
   icon: string
   description: string | null
+  isPinned: boolean
+  pinnedAt: Date | null
   userId: string
   createdAt: Date
   updatedAt: Date
   _count: { messages: number }
   messages: { text: string; createdAt: Date }[]
+}
+
+export function sortRoomsPinnedFirst(rooms: RoomData[]): RoomData[] {
+  return [...rooms].sort((a, b) => {
+    if (a.isPinned !== b.isPinned) return a.isPinned ? -1 : 1
+    if (a.isPinned && b.isPinned) {
+      return (b.pinnedAt?.getTime() ?? 0) - (a.pinnedAt?.getTime() ?? 0)
+    }
+    const aTime = a.messages[0]?.createdAt?.getTime() ?? new Date(a.createdAt).getTime()
+    const bTime = b.messages[0]?.createdAt?.getTime() ?? new Date(b.createdAt).getTime()
+    return bTime - aTime
+  })
 }
 
 export default function useRooms(serverRooms?: RoomData[] | null) {
@@ -37,7 +51,10 @@ export function useCreateRoom() {
     onSuccess: (newRoom) => {
       queryClient.setQueryData(roomsKey, (old: RoomData[] | undefined) => {
         if (!old) return old
-        return [{ ...newRoom, _count: { messages: 0 }, messages: [] }, ...old]
+        return sortRoomsPinnedFirst([
+          { ...newRoom, _count: { messages: 0 }, messages: [] },
+          ...old,
+        ])
       })
     },
   })
@@ -53,6 +70,33 @@ export function useUpdateRoom() {
       const previous = queryClient.getQueryData<RoomData[]>(roomsKey)
       queryClient.setQueryData(roomsKey, (old: RoomData[] | undefined) =>
         old?.map((r) => (r.id === variables.id ? { ...r, ...variables } : r))
+      )
+      return { previous }
+    },
+    onError: (_err, _variables, context) => {
+      if (context?.previous) queryClient.setQueryData(roomsKey, context.previous)
+    },
+  })
+}
+
+export function useTogglePinRoom() {
+  const queryClient = useQueryClient()
+  const roomsKey = getRoomsKey()
+
+  return trpc.room.togglePin.useMutation({
+    onMutate: async (variables) => {
+      await queryClient.cancelQueries({ queryKey: roomsKey })
+      const previous = queryClient.getQueryData<RoomData[]>(roomsKey)
+      queryClient.setQueryData(roomsKey, (old: RoomData[] | undefined) =>
+        old
+          ? sortRoomsPinnedFirst(
+              old.map((r) =>
+                r.id === variables.id
+                  ? { ...r, isPinned: variables.isPinned, pinnedAt: variables.isPinned ? new Date() : null }
+                  : r
+              )
+            )
+          : old
       )
       return { previous }
     },

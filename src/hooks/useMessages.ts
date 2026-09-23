@@ -139,6 +139,10 @@ function updateSidebarPreview(
         : r
     )
     updated.sort((a, b) => {
+      if (a.isPinned !== b.isPinned) return a.isPinned ? -1 : 1
+      if (a.isPinned && b.isPinned) {
+        return (b.pinnedAt?.getTime() ?? 0) - (a.pinnedAt?.getTime() ?? 0)
+      }
       const aTime = a.messages[0]?.createdAt?.getTime() ?? 0
       const bTime = b.messages[0]?.createdAt?.getTime() ?? 0
       return bTime - aTime

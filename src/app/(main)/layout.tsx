@@ -18,6 +18,8 @@ export default async function MainLayout({ children }: { children: React.ReactNo
     name: r.name,
     icon: r.icon,
     description: r.description,
+    isPinned: r.isPinned,
+    pinnedAt: r.pinnedAt?.toISOString() ?? null,
     userId: r.userId,
     createdAt: r.createdAt.toISOString(),
     updatedAt: r.updatedAt.toISOString(),

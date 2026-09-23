@@ -21,6 +21,10 @@ export async function getRoomsForUser(prisma: PrismaClientExtended, userId: stri
   })
 
   return rawRooms.sort((a, b) => {
+    if (a.isPinned !== b.isPinned) return a.isPinned ? -1 : 1
+    if (a.isPinned && b.isPinned) {
+      return (b.pinnedAt?.getTime() ?? 0) - (a.pinnedAt?.getTime() ?? 0)
+    }
     const aActivity = a.messages[0]?.createdAt ?? a.createdAt
     const bActivity = b.messages[0]?.createdAt ?? b.createdAt
     return bActivity.getTime() - aActivity.getTime()
