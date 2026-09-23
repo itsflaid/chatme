@@ -10,6 +10,8 @@ export type RoomHeaderData = {
   name: string
   icon: string
   description: string | null
+  isPinned: boolean
+  pinnedAt: Date | null
 }
 
 export type RoomInfoData = {
@@ -42,6 +44,8 @@ export function useRoom(roomId: string) {
         name: fromList.name,
         icon: fromList.icon,
         description: fromList.description,
+        isPinned: fromList.isPinned,
+        pinnedAt: fromList.pinnedAt,
       }
     : undefined
 

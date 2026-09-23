@@ -1,23 +1,26 @@
 "use client"
 
-import { FiInfo, FiEdit2, FiTrash2 } from "react-icons/fi"
+import { FiInfo, FiEdit2, FiTrash2, FiBookmark } from "react-icons/fi"
 import { ModalPortal } from "@/components/ui/ModalPortal"
 
 type Props = {
   x: number
   y: number
+  isPinned: boolean
+  onTogglePin: () => void
   onInfo: () => void
   onEdit: () => void
   onDelete: () => void
   onClose: () => void
 }
 
-export default function RoomItemMenu({ x, y, onInfo, onEdit, onDelete, onClose }: Props) {
+export default function RoomItemMenu({ x, y, isPinned, onTogglePin, onInfo, onEdit, onDelete, onClose }: Props) {
   // pastiin menu tidak keluar dari viewport
-  const safeY = Math.min(y, window.innerHeight - 280)
+  const safeY = Math.min(y, window.innerHeight - 340)
   const safeX = Math.max(8, Math.min(x - 100, window.innerWidth - 210))
 
   const items = [
+    { icon: <FiBookmark size={15} />, label: isPinned ? "Unpin Room" : "Pin Room", onClick: onTogglePin, danger: false },
     { icon: <FiInfo size={15} />, label: "Info Room", onClick: onInfo, danger: false },
     { icon: <FiEdit2 size={15} />, label: "Edit Room", onClick: onEdit, danger: false },
     { icon: <FiTrash2 size={15} />, label: "Hapus Room", onClick: onDelete, danger: true },

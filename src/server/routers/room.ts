@@ -3,6 +3,7 @@ import { router, protectedProcedure, strictRateLimitedProcedure } from "../trpc"
 import { TRPCError } from "@trpc/server"
 import { getRoomsForUser } from "@/server/services/rooms"
 import { DEFAULT_ROOM_ICON, ROOM_ICON_REGEX } from "@/lib/roomIcons"
+import { MAX_PINNED_ROOMS, PIN_LIMIT_MESSAGE } from "@/lib/roomPin"
 
 export const roomRouter = router({
   //list semua room user
@@ -58,7 +59,7 @@ export const roomRouter = router({
     .query(async ({ ctx, input }) => {
       const room = await ctx.prisma.room.findFirst({
         where: { id: input.id, userId: ctx.userId },
-        select: { id: true, name: true, icon: true, description: true },
+        select: { id: true, name: true, icon: true, description: true, isPinned: true, pinnedAt: true },
       })
       if (!room) throw new TRPCError({ code: "NOT_FOUND" })
       return room
@@ -70,7 +71,7 @@ export const roomRouter = router({
     .query(async ({ ctx, input }) => {
       const room = await ctx.prisma.room.findFirst({
         where: { id: input.id, userId: ctx.userId },
-        select: { id: true, name: true, icon: true, description: true, createdAt: true },
+        select: { id: true, name: true, icon: true, description: true, isPinned: true, pinnedAt: true, createdAt: true },
       })
       if (!room) throw new TRPCError({ code: "NOT_FOUND" })
 
@@ -97,6 +98,8 @@ export const roomRouter = router({
         name: room.name,
         icon: room.icon,
         description: room.description,
+        isPinned: room.isPinned,
+        pinnedAt: room.pinnedAt,
         createdAt: room.createdAt,
         totalPesan,
         pesanDipin,
@@ -104,6 +107,36 @@ export const roomRouter = router({
         checklist: { total: checklistTotal, selesai: checklistSelesai },
         aktivitasTerakhir: lastMessage?.createdAt ?? null,
       }
+    }),
+
+  //pin / lepas pin room (maksimal MAX_PINNED_ROOMS)
+  togglePin: protectedProcedure
+    .input(z.object({ id: z.string(), isPinned: z.boolean() }))
+    .mutation(async ({ ctx, input }) => {
+      if (input.isPinned) {
+        const room = await ctx.prisma.room.findFirst({
+          where: { id: input.id, userId: ctx.userId },
+          select: { id: true, isPinned: true },
+        })
+        if (!room) throw new TRPCError({ code: "NOT_FOUND" })
+        if (!room.isPinned) {
+          const pinnedCount = await ctx.prisma.room.count({
+            where: { userId: ctx.userId, isPinned: true },
+          })
+          if (pinnedCount >= MAX_PINNED_ROOMS) {
+            throw new TRPCError({ code: "BAD_REQUEST", message: PIN_LIMIT_MESSAGE })
+          }
+        }
+      }
+      const result = await ctx.prisma.room.updateMany({
+        where: { id: input.id, userId: ctx.userId },
+        data: { isPinned: input.isPinned, pinnedAt: input.isPinned ? new Date() : null },
+      })
+      if (result.count === 0) throw new TRPCError({ code: "NOT_FOUND" })
+
+      return ctx.prisma.room.findUniqueOrThrow({
+        where: { id: input.id },
+      })
     }),
 
   //hapus room

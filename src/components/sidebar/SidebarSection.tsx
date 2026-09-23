@@ -9,6 +9,8 @@ type ServerRoom = {
   name: string
   icon: string
   description: string | null
+  isPinned: boolean
+  pinnedAt: string | null
   userId: string
   createdAt: string
   updatedAt: string

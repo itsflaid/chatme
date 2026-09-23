@@ -4,8 +4,11 @@ import Image from "next/image"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import { useCallback, useEffect, useRef, useState } from "react"
+import { FiBookmark } from "react-icons/fi"
 import { trpc } from "@/lib/trpc"
 import { getRoomIconSrc } from "@/lib/roomIcons"
+import { PIN_LIMIT_MESSAGE } from "@/lib/roomPin"
+import { useTogglePinRoom } from "@/hooks/useRooms"
 import RoomItemMenu from "./RoomItemMenu"
 import EditRoomModal from "@/components/chat/modals/EditRoomModal"
 import DeleteRoomModal from "@/components/chat/modals/DeleteRoomModal"
@@ -15,6 +18,8 @@ type Props = {
   name: string
   icon: string
   description: string | null
+  isPinned: boolean
+  canPin: boolean
   pendingCount: number
   lastMessage: { text: string; createdAt: Date } | null
   eagerPrefetch?: boolean
@@ -37,6 +42,8 @@ export default function RoomItem({
   name,
   icon,
   description,
+  isPinned,
+  canPin,
   pendingCount,
   lastMessage,
   eagerPrefetch = false,
@@ -45,13 +52,39 @@ export default function RoomItem({
   const router = useRouter()
   const isActive = pathname === `/room/${id}`
   const utils = trpc.useUtils()
+  const togglePin = useTogglePinRoom()
   const linkRef = useRef<HTMLAnchorElement>(null)
   const hasPrefetched = useRef(false)
   const [menuPos, setMenuPos] = useState<{ x: number; y: number } | null>(null)
   const [showEdit, setShowEdit] = useState(false)
   const [showDelete, setShowDelete] = useState(false)
+  const [pinError, setPinError] = useState<string | null>(null)
   const touchTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const pinErrorTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const suppressNextClick = useRef(false)
+
+  const showPinError = useCallback((message: string) => {
+    setPinError(message)
+    if (pinErrorTimer.current) clearTimeout(pinErrorTimer.current)
+    pinErrorTimer.current = setTimeout(() => setPinError(null), 3000)
+  }, [])
+
+  useEffect(() => {
+    return () => {
+      if (pinErrorTimer.current) clearTimeout(pinErrorTimer.current)
+    }
+  }, [])
+
+  function handleTogglePin() {
+    if (!isPinned && !canPin) {
+      showPinError(PIN_LIMIT_MESSAGE)
+      return
+    }
+    togglePin.mutate(
+      { id, isPinned: !isPinned },
+      { onError: (err) => showPinError(err.message || PIN_LIMIT_MESSAGE) }
+    )
+  }
 
   function openMenu(x: number, y: number) {
     setMenuPos({ x, y })
@@ -163,10 +196,11 @@ export default function RoomItem({
       <div className="flex-1 min-w-0">
         <div className="flex items-center justify-between gap-2 mb-0.5">
           <p
-            className="text-sm font-semibold font-sora truncate"
+            className="text-sm font-semibold font-sora truncate flex items-center gap-1.5"
             style={{ color: isActive ? "var(--accent-ink)" : "var(--text)" }}
           >
-            {name}
+            {isPinned && <FiBookmark size={12} className="flex-shrink-0" />}
+            <span className="truncate">{name}</span>
           </p>
           {lastMessage && (
             <span className="text-[11px] flex-shrink-0" style={{ color: isActive ? "var(--accent-ink)" : "var(--text3)" }}>
@@ -199,11 +233,18 @@ export default function RoomItem({
         <RoomItemMenu
           x={menuPos.x}
           y={menuPos.y}
+          isPinned={isPinned}
+          onTogglePin={handleTogglePin}
           onInfo={() => router.push(`/room/${id}/info`)}
           onEdit={() => setShowEdit(true)}
           onDelete={() => setShowDelete(true)}
           onClose={() => setMenuPos(null)}
         />
+      )}
+      {pinError && (
+        <div className="fixed bottom-6 left-1/2 z-50 -translate-x-1/2 neo-panel rounded-xl bg-[var(--surface2)] px-4 py-2.5 text-sm font-medium text-[#fca5a5]">
+          {pinError}
+        </div>
       )}
       {showEdit && (
         <EditRoomModal roomId={id} initialName={name} initialIcon={icon} initialDescription={description} onClose={() => setShowEdit(false)} />
