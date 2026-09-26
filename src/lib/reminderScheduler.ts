@@ -3,8 +3,7 @@ import type { PrismaClientExtended } from "./prisma"
 import { qstashClient, getAppUrl } from "./qstash"
 
 // Reminder yang udah terkirim tapi belum di-acknowledge user dinaggin ULANG SATU KALI
-// setelah interval ini, abis itu berhenti — ganti dari mekanisme lama yang ngulang tiap
-// REMINDER_REPEAT_MINUTES tanpa batas selama belum ditandai selesai.
+// setelah interval ini, abis itu berhenti.
 export const NAG_DELAY_MS = (Number(process.env.REMINDER_NAG_MINUTES) || 15) * 60 * 1000
 
 // Kalau claim pertama gagal karena job ini kepanggil dikit lebih awal dari remindAt (race

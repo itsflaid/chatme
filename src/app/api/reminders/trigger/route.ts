@@ -22,7 +22,7 @@ const payloadSchema = z.object({
 })
 
 // Jadwalkan SATU KALI nag susulan kalau reminder ini belum di-acknowledge user setelah
-// dikirim. Ganti mekanisme lama yang ngulang tiap REMINDER_REPEAT_MINUTES tanpa batas.
+// dikirim.
 async function scheduleNag(messageId: string, version: number) {
   try {
     const res = await qstashClient.publishJSON({
@@ -138,5 +138,5 @@ async function handler(req: Request) {
   return Response.json({ ok: true })
 }
 
-// Sama seperti /api/cron/check-reminders: request wajib ditandatangani QStash.
+// Request wajib ditandatangani QStash.
 export const POST = verifySignatureAppRouter(handler)

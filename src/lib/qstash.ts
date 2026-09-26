@@ -1,7 +1,7 @@
 import { Client } from "@upstash/qstash"
 
-// Pakai kredensial region-pinned yang sama dengan script stop-cron kamu kalau
-// tersedia (US_EAST_1_QSTASH_*), fallback ke default QSTASH_TOKEN/QSTASH_URL bawaan SDK.
+// Pakai kredensial region-pinned kalau tersedia (US_EAST_1_QSTASH_*),
+// fallback ke default QSTASH_TOKEN/QSTASH_URL bawaan SDK.
 const token = process.env.US_EAST_1_QSTASH_TOKEN || process.env.QSTASH_TOKEN
 const baseUrl = process.env.US_EAST_1_QSTASH_URL || process.env.QSTASH_URL
 
