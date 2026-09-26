@@ -179,6 +179,13 @@ export default function RoomItem({
       {isActive && (
         <div className="absolute -left-2 top-3 h-5 w-5 rotate-12 rounded-md border-2 border-[var(--neo-line)] bg-[var(--bg)]" />
       )}
+      {isPinned && (
+        <div className="absolute -left-2 top-1/2 z-10 -translate-y-1/2" title="Disematkan" aria-label="Room disematkan">
+          <div className="flex h-6 w-6 -rotate-6 items-center justify-center rounded-md border-2 border-[var(--neo-line)] bg-[var(--accent)] shadow-[2px_2px_0_var(--neo-shadow)]">
+            <FiBookmark size={11} className="text-[var(--accent-ink)]" aria-hidden="true" />
+          </div>
+        </div>
+      )}
 
       <div
         className="w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0 neo-button !p-0 overflow-hidden"
@@ -196,10 +203,9 @@ export default function RoomItem({
       <div className="flex-1 min-w-0">
         <div className="flex items-center justify-between gap-2 mb-0.5">
           <p
-            className="text-sm font-semibold font-sora truncate flex items-center gap-1.5"
+            className="text-sm font-semibold font-sora truncate"
             style={{ color: isActive ? "var(--accent-ink)" : "var(--text)" }}
           >
-            {isPinned && <FiBookmark size={12} className="flex-shrink-0" />}
             <span className="truncate">{name}</span>
           </p>
           {lastMessage && (
