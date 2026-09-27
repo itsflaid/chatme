@@ -73,7 +73,7 @@ export default async function ProfilePage() {
   const initial = name.charAt(0).toUpperCase()
   const joinedLabel = new Intl.DateTimeFormat("id-ID", { month: "long", year: "numeric" }).format(dbUser.createdAt)
 
-  const ADMIN_WA_NUMBER = "6281349726973"
+  const ADMIN_WA_NUMBER = "6281348726973"
   const waMessage = `Halo Admin Chatme, saya ${name} (${email}).\n\nSaya mau: `
   const waHref = `https://wa.me/${ADMIN_WA_NUMBER}?text=${encodeURIComponent(waMessage)}`
 
