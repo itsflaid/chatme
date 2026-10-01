@@ -140,7 +140,7 @@ const ChecklistBubble = memo(function ChecklistBubble({
               <input
                 type="checkbox"
                 checked={item.isDone}
-                disabled={isPending || !canEditByTime}
+                disabled={isPending}
                 onChange={(event) => toggleItem(item.id, event.target.checked)}
                 className="sr-only"
               />
