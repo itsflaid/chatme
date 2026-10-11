@@ -34,6 +34,7 @@ export default function MobileLayout({ sidebar, children }: Props) {
 
         <motion.div
           className="absolute inset-0 min-h-0 flex flex-col"
+          initial={false}
           animate={{ x: isContentPage ? "-100%" : "0%" }}
           transition={slideTransition}
         >
@@ -42,6 +43,7 @@ export default function MobileLayout({ sidebar, children }: Props) {
 
         <motion.div
           className="absolute inset-0 min-h-0 flex flex-col"
+          initial={false}
           animate={{ x: isContentPage ? "0%" : "100%" }}
           transition={slideTransition}
         >
