@@ -2,6 +2,7 @@
 
 import { usePathname } from "next/navigation"
 import { motion } from "framer-motion"
+import { useSidebarCollapse } from "./SidebarCollapse"
 
 type Props = {
   sidebar: React.ReactNode
@@ -16,6 +17,7 @@ const slideTransition = {
 export default function MobileLayout({ sidebar, children }: Props) {
   const pathname = usePathname()
   const isContentPage = pathname.startsWith("/room/") || pathname === "/profile"
+  const { collapsed } = useSidebarCollapse()
 
   return (
     <div
@@ -23,8 +25,17 @@ export default function MobileLayout({ sidebar, children }: Props) {
       style={{ height: "100dvh" }}
     >
 
-      <div className="hidden md:flex w-80 flex-col flex-shrink-0 border-r-2 border-[var(--neo-line)] relative">
-        {sidebar}
+      <div
+        className={`hidden md:flex flex-shrink-0 overflow-hidden transition-[width] duration-200 ease-out motion-reduce:transition-none ${
+          collapsed ? "w-0" : "w-80"
+        }`}
+      >
+        <div
+          className="relative flex w-80 flex-shrink-0 flex-col border-r-2 border-[var(--neo-line)]"
+          inert={collapsed}
+        >
+          {sidebar}
+        </div>
       </div>
       <div className="hidden md:flex flex-1 flex-col overflow-hidden">
         {children}
