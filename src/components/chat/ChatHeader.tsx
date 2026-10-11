@@ -13,6 +13,7 @@ import PinnedMessagesModal from "./modals/PinnedMessagesModal"
 import ReminderListModal from "./modals/ReminderListModal"
 import ClearMessagesModal from "./modals/ClearMessagesModal"
 import { getRoomIconSrc } from "@/lib/roomIcons"
+import SidebarToggleButton from "@/components/layouts/SidebarToggleButton"
 
 type Props = {
   roomId: string
@@ -142,10 +143,12 @@ export default function ChatHeader({
             <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-3">
               <button
                 onClick={handleBack}
-                className="neo-button w-8 h-8 flex items-center justify-center rounded-lg bg-[var(--paper)] transition text-[var(--text)]"
+                className="neo-button w-8 h-8 flex items-center justify-center rounded-lg bg-[var(--paper)] transition text-[var(--text)] md:hidden"
               >
                 <FiArrowLeft size={20} />
               </button>
+
+              <SidebarToggleButton />
 
               <button
                 onClick={() => router.push(`/room/${roomId}/info`)}

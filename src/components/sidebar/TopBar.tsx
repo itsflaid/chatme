@@ -5,6 +5,7 @@ import Image from "next/image"
 import Link from "next/link"
 import { signOut } from "next-auth/react"
 import { FiLogOut, FiUser } from "react-icons/fi"
+import SidebarToggleButton from "@/components/layouts/SidebarToggleButton"
 
 type Props = {
   userName: string | null | undefined
@@ -39,6 +40,7 @@ export default function Topbar({ userName, userImage, userEmail }: Props) {
         </span>
       </h1>
       <div ref={menuRef} className="relative flex items-center gap-2">
+        <SidebarToggleButton />
         <button
           type="button"
           onClick={() => setOpen(value => !value)}

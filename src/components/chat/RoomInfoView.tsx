@@ -12,6 +12,7 @@ import { useRoomInfo } from "@/hooks/useRoom"
 import { useRoomPinnedMessages, useRoomActiveReminders, useMarkRemindedAndDone } from "@/hooks/useMessages"
 import { getRoomIconSrc } from "@/lib/roomIcons"
 import { SkeletonBlock } from "@/components/ui/Skeleton"
+import SidebarToggleButton from "@/components/layouts/SidebarToggleButton"
 import EditRoomModal from "./modals/EditRoomModal"
 import DeleteRoomModal from "./modals/DeleteRoomModal"
 import PinnedMessagesModal from "./modals/PinnedMessagesModal"
@@ -118,6 +119,7 @@ export default function RoomInfoView({ roomId }: Props) {
           <FiArrowLeft size={20} />
         </button>
         <p className="font-semibold font-sora text-base text-[var(--text)]">Info Room</p>
+        <SidebarToggleButton className="ml-auto" />
       </div>
 
       <div className="relative m-3 mt-4 rounded-xl bg-[var(--surface)] neo-panel overflow-hidden">

@@ -180,7 +180,7 @@ export default function RoomItem({
         <div className="absolute -left-2 top-3 h-5 w-5 rotate-12 rounded-md border-2 border-[var(--neo-line)] bg-[var(--bg)]" />
       )}
       {isPinned && (
-        <div className="absolute -left-2 top-1/2 z-10 -translate-y-1/2" title="Disematkan" aria-label="Room disematkan">
+        <div className="absolute -left-2 top-1/2 -translate-y-1/2" title="Disematkan" aria-label="Room disematkan">
           <div className="flex h-6 w-6 -rotate-6 items-center justify-center rounded-md border-2 border-[var(--neo-line)] bg-[var(--accent)] shadow-[2px_2px_0_var(--neo-shadow)]">
             <FiBookmark size={11} className="text-[var(--accent-ink)]" aria-hidden="true" />
           </div>
