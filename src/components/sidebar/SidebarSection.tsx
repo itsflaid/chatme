@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import SearchBar from "./SearchBar"
-import SidebarWrapper from "./SidebarWrapper"
+import SidebarWrapper, { type SidebarView } from "./SidebarWrapper"
 
 type ServerRoom = {
   id: string
@@ -26,11 +26,12 @@ type Props = {
 
 export default function SidebarSection({ serverRooms }: Props) {
   const [searchQuery, setSearchQuery] = useState("")
+  const [view, setView] = useState<SidebarView>("active")
 
   return (
     <>
       <SearchBar query={searchQuery} onQueryChange={setSearchQuery} />
-      <SidebarWrapper serverRooms={serverRooms} searchQuery={searchQuery} />
+      <SidebarWrapper serverRooms={serverRooms} searchQuery={searchQuery} view={view} onViewChange={setView} />
     </>
   )
 }

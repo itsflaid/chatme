@@ -8,7 +8,7 @@ import { FiBookmark } from "react-icons/fi"
 import { trpc } from "@/lib/trpc"
 import { getRoomIconSrc } from "@/lib/roomIcons"
 import { PIN_LIMIT_MESSAGE } from "@/lib/roomPin"
-import { useTogglePinRoom } from "@/hooks/useRooms"
+import { useTogglePinRoom, useToggleArchiveRoom } from "@/hooks/useRooms"
 import RoomItemMenu from "./RoomItemMenu"
 import EditRoomModal from "@/components/chat/modals/EditRoomModal"
 import DeleteRoomModal from "@/components/chat/modals/DeleteRoomModal"
@@ -19,6 +19,7 @@ type Props = {
   icon: string
   description: string | null
   isPinned: boolean
+  isArchived: boolean
   canPin: boolean
   pendingCount: number
   lastMessage: { text: string; createdAt: Date } | null
@@ -43,6 +44,7 @@ export default function RoomItem({
   icon,
   description,
   isPinned,
+  isArchived,
   canPin,
   pendingCount,
   lastMessage,
@@ -53,6 +55,7 @@ export default function RoomItem({
   const isActive = pathname === `/room/${id}`
   const utils = trpc.useUtils()
   const togglePin = useTogglePinRoom()
+  const toggleArchive = useToggleArchiveRoom()
   const linkRef = useRef<HTMLAnchorElement>(null)
   const hasPrefetched = useRef(false)
   const [menuPos, setMenuPos] = useState<{ x: number; y: number } | null>(null)
@@ -84,6 +87,10 @@ export default function RoomItem({
       { id, isPinned: !isPinned },
       { onError: (err) => showPinError(err.message || PIN_LIMIT_MESSAGE) }
     )
+  }
+
+  function handleToggleArchive() {
+    toggleArchive.mutate({ id, isArchived: !isArchived })
   }
 
   function openMenu(x: number, y: number) {
@@ -240,7 +247,9 @@ export default function RoomItem({
           x={menuPos.x}
           y={menuPos.y}
           isPinned={isPinned}
+          isArchived={isArchived}
           onTogglePin={handleTogglePin}
+          onToggleArchive={handleToggleArchive}
           onInfo={() => router.push(`/room/${id}/info`)}
           onEdit={() => setShowEdit(true)}
           onDelete={() => setShowDelete(true)}

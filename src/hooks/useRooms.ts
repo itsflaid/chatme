@@ -108,6 +108,35 @@ export function useTogglePinRoom() {
   })
 }
 
+export function useToggleArchiveRoom() {
+  const queryClient = useQueryClient()
+  const roomsKey = getRoomsKey()
+
+  return trpc.room.setArchived.useMutation({
+    onMutate: async (variables) => {
+      await queryClient.cancelQueries({ queryKey: roomsKey })
+      const previous = queryClient.getQueryData<RoomData[]>(roomsKey)
+      queryClient.setQueryData(roomsKey, (old: RoomData[] | undefined) =>
+        old
+          ? sortRoomsPinnedFirst(
+              old.map((r) =>
+                r.id === variables.id
+                  ? variables.isArchived
+                    ? { ...r, isArchived: true, archivedAt: new Date(), isPinned: false, pinnedAt: null }
+                    : { ...r, isArchived: false, archivedAt: null }
+                  : r
+              )
+            )
+          : old
+      )
+      return { previous }
+    },
+    onError: (_err, _variables, context) => {
+      if (context?.previous) queryClient.setQueryData(roomsKey, context.previous)
+    },
+  })
+}
+
 export function useDeleteRoom() {
   const queryClient = useQueryClient()
   const roomsKey = getRoomsKey()

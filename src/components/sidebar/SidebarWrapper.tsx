@@ -3,6 +3,9 @@
 import { useMemo } from "react"
 import useRooms from "@/hooks/useRooms"
 import RoomList from "./RoomList"
+import ArchivedRoomList from "./ArchivedRoomList"
+
+export type SidebarView = "active" | "archived"
 
 type ServerRoom = {
   id: string
@@ -23,9 +26,11 @@ type ServerRoom = {
 type Props = {
   serverRooms?: ServerRoom[]
   searchQuery?: string
+  view: SidebarView
+  onViewChange: (view: SidebarView) => void
 }
 
-export default function SidebarWrapper({ serverRooms, searchQuery = "" }: Props) {
+export default function SidebarWrapper({ serverRooms, searchQuery = "", view, onViewChange }: Props) {
   const initialRooms = useMemo(
     () =>
       serverRooms?.map((r) => ({
@@ -45,17 +50,30 @@ export default function SidebarWrapper({ serverRooms, searchQuery = "" }: Props)
 
   const { rooms, loading } = useRooms(initialRooms)
 
-  const filteredRooms = useMemo(() => {
-    if (!searchQuery.trim()) return rooms
-    const q = searchQuery.toLowerCase()
-    return rooms.filter((r) => r.name.toLowerCase().includes(q))
+  const { activeRooms, archivedRooms } = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase()
+    const matched = q ? rooms.filter((r) => r.name.toLowerCase().includes(q)) : rooms
+    return {
+      activeRooms: matched.filter((r) => !r.isArchived),
+      archivedRooms: matched.filter((r) => r.isArchived),
+    }
   }, [rooms, searchQuery])
 
   if (loading && rooms.length === 0) {
     return <SidebarSkeleton />
   }
 
-  return <RoomList rooms={filteredRooms} />
+  if (view === "archived") {
+    return <ArchivedRoomList rooms={archivedRooms} onBack={() => onViewChange("active")} />
+  }
+
+  return (
+    <RoomList
+      rooms={activeRooms}
+      archivedCount={archivedRooms.length}
+      onOpenArchive={() => onViewChange("archived")}
+    />
+  )
 }
 
 function SidebarSkeleton() {
