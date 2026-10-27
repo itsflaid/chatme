@@ -48,6 +48,8 @@ model Room {
   description String?
   isPinned    Boolean  @default(false)
   pinnedAt    DateTime?
+  isArchived  Boolean  @default(false)
+  archivedAt  DateTime?
   userId      String
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt

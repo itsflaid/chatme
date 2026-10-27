@@ -116,9 +116,12 @@ export const roomRouter = router({
       if (input.isPinned) {
         const room = await ctx.prisma.room.findFirst({
           where: { id: input.id, userId: ctx.userId },
-          select: { id: true, isPinned: true },
+          select: { id: true, isPinned: true, isArchived: true },
         })
         if (!room) throw new TRPCError({ code: "NOT_FOUND" })
+        if (room.isArchived) {
+          throw new TRPCError({ code: "BAD_REQUEST", message: "Room yang diarsipkan tidak bisa di-pin" })
+        }
         if (!room.isPinned) {
           const pinnedCount = await ctx.prisma.room.count({
             where: { userId: ctx.userId, isPinned: true },
@@ -131,6 +134,23 @@ export const roomRouter = router({
       const result = await ctx.prisma.room.updateMany({
         where: { id: input.id, userId: ctx.userId },
         data: { isPinned: input.isPinned, pinnedAt: input.isPinned ? new Date() : null },
+      })
+      if (result.count === 0) throw new TRPCError({ code: "NOT_FOUND" })
+
+      return ctx.prisma.room.findUniqueOrThrow({
+        where: { id: input.id },
+      })
+    }),
+
+  //arsipkan / keluarkan room dari arsip (room yang diarsipkan otomatis di-unpin)
+  setArchived: protectedProcedure
+    .input(z.object({ id: z.string(), isArchived: z.boolean() }))
+    .mutation(async ({ ctx, input }) => {
+      const result = await ctx.prisma.room.updateMany({
+        where: { id: input.id, userId: ctx.userId },
+        data: input.isArchived
+          ? { isArchived: true, archivedAt: new Date(), isPinned: false, pinnedAt: null }
+          : { isArchived: false, archivedAt: null },
       })
       if (result.count === 0) throw new TRPCError({ code: "NOT_FOUND" })
 

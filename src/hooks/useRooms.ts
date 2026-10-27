@@ -11,6 +11,8 @@ export type RoomData = {
   description: string | null
   isPinned: boolean
   pinnedAt: Date | null
+  isArchived: boolean
+  archivedAt: Date | null
   userId: string
   createdAt: Date
   updatedAt: Date
@@ -93,6 +95,35 @@ export function useTogglePinRoom() {
               old.map((r) =>
                 r.id === variables.id
                   ? { ...r, isPinned: variables.isPinned, pinnedAt: variables.isPinned ? new Date() : null }
+                  : r
+              )
+            )
+          : old
+      )
+      return { previous }
+    },
+    onError: (_err, _variables, context) => {
+      if (context?.previous) queryClient.setQueryData(roomsKey, context.previous)
+    },
+  })
+}
+
+export function useToggleArchiveRoom() {
+  const queryClient = useQueryClient()
+  const roomsKey = getRoomsKey()
+
+  return trpc.room.setArchived.useMutation({
+    onMutate: async (variables) => {
+      await queryClient.cancelQueries({ queryKey: roomsKey })
+      const previous = queryClient.getQueryData<RoomData[]>(roomsKey)
+      queryClient.setQueryData(roomsKey, (old: RoomData[] | undefined) =>
+        old
+          ? sortRoomsPinnedFirst(
+              old.map((r) =>
+                r.id === variables.id
+                  ? variables.isArchived
+                    ? { ...r, isArchived: true, archivedAt: new Date(), isPinned: false, pinnedAt: null }
+                    : { ...r, isArchived: false, archivedAt: null }
                   : r
               )
             )
