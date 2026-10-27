@@ -11,6 +11,8 @@ type ServerRoom = {
   description: string | null
   isPinned: boolean
   pinnedAt: string | null
+  isArchived: boolean
+  archivedAt: string | null
   userId: string
   createdAt: string
   updatedAt: string
@@ -29,6 +31,7 @@ export default function SidebarWrapper({ serverRooms, searchQuery = "" }: Props)
       serverRooms?.map((r) => ({
         ...r,
         pinnedAt: r.pinnedAt ? new Date(r.pinnedAt) : null,
+        archivedAt: r.archivedAt ? new Date(r.archivedAt) : null,
         createdAt: new Date(r.createdAt),
         updatedAt: new Date(r.updatedAt),
         messages: r.messages.map((m) => ({

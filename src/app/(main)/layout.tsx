@@ -26,6 +26,8 @@ export default async function MainLayout({ children }: { children: React.ReactNo
     description: r.description,
     isPinned: r.isPinned,
     pinnedAt: r.pinnedAt?.toISOString() ?? null,
+    isArchived: r.isArchived,
+    archivedAt: r.archivedAt?.toISOString() ?? null,
     userId: r.userId,
     createdAt: r.createdAt.toISOString(),
     updatedAt: r.updatedAt.toISOString(),

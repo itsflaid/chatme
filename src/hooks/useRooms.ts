@@ -11,6 +11,8 @@ export type RoomData = {
   description: string | null
   isPinned: boolean
   pinnedAt: Date | null
+  isArchived: boolean
+  archivedAt: Date | null
   userId: string
   createdAt: Date
   updatedAt: Date

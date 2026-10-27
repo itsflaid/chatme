@@ -11,6 +11,8 @@ type ServerRoom = {
   description: string | null
   isPinned: boolean
   pinnedAt: string | null
+  isArchived: boolean
+  archivedAt: string | null
   userId: string
   createdAt: string
   updatedAt: string
