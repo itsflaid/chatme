@@ -118,13 +118,6 @@ Quickly find old ideas, notes, and reminders.
 
 ---
 
-## Status
-
-🚧 Currently in Development
-
-Chatme is actively being built and improved.
-
----
 
 <p align="center">
   <img src="https://img.shields.io/badge/Portfolio-flaid.my.id-black?style=flat-square" alt="Portfolio" />
